@@ -12,6 +12,7 @@ const database = require('./database/database.service');
 // Import modules
 const { GameService, GameController, createGameRoutes } = require('./modules/game');
 const { WebSocketService } = require('./modules/websocket');
+const { TreasuryService, TreasuryController, createTreasuryRoutes } = require('./modules/treasury');
 
 // Create Express app
 const app = express();
@@ -21,6 +22,8 @@ const server = http.createServer(app);
 let gameService;
 let gameController;
 let wsService;
+let treasuryService;
+let treasuryController;
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -166,6 +169,12 @@ const gracefulShutdown = async (signal) => {
     logger.info('WebSocket service cleaned up');
   }
 
+  // Cleanup Treasury service
+  if (treasuryService) {
+    treasuryService.cleanup();
+    logger.info('Treasury service cleaned up');
+  }
+
   // Stop accepting new connections
   server.close(() => {
     logger.info('HTTP server closed');
@@ -227,8 +236,16 @@ const startServer = async () => {
     
     logger.info('Game module initialized successfully');
 
+    // Initialize Treasury Module
+    treasuryService = new TreasuryService();
+    treasuryController = new TreasuryController(treasuryService);
+    
+    // Mount treasury routes
+    app.use('/api/treasury', createTreasuryRoutes(treasuryController));
+    
+    logger.info('Treasury module initialized successfully');
+
     // TODO: Initialize other modules here
-    // - Treasury module
     // - AI module
 
     // Start listening
@@ -251,4 +268,4 @@ const startServer = async () => {
 // Start the server
 startServer();
 
-module.exports = { app, server, gameService, gameController, wsService }; 
+module.exports = { app, server, gameService, gameController, wsService, treasuryService, treasuryController }; 

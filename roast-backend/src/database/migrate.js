@@ -103,6 +103,60 @@ const migrations = [
     down: `
       DROP TABLE IF EXISTS migrations;
     `
+  },
+  {
+    version: 3,
+    name: 'add_treasury_tables',
+    up: `
+      -- Payment transactions tracking
+      CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tx_hash TEXT NOT NULL UNIQUE,
+        player_address TEXT NOT NULL,
+        round_id TEXT NOT NULL,
+        amount DECIMAL(10,8) NOT NULL,
+        block_number INTEGER NOT NULL,
+        gas_used TEXT,
+        confirmed BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Prize payout transactions tracking
+      CREATE TABLE IF NOT EXISTS payouts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tx_hash TEXT NOT NULL UNIQUE,
+        winner_address TEXT NOT NULL,
+        round_id TEXT NOT NULL,
+        amount DECIMAL(10,8) NOT NULL,
+        house_fee DECIMAL(10,8) NOT NULL,
+        block_number INTEGER NOT NULL,
+        gas_used TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Indexes for performance
+      CREATE INDEX IF NOT EXISTS idx_payments_player ON payments(player_address);
+      CREATE INDEX IF NOT EXISTS idx_payments_round ON payments(round_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_tx_hash ON payments(tx_hash);
+      CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at);
+      CREATE INDEX IF NOT EXISTS idx_payouts_winner ON payouts(winner_address);
+      CREATE INDEX IF NOT EXISTS idx_payouts_round ON payouts(round_id);
+      CREATE INDEX IF NOT EXISTS idx_payouts_tx_hash ON payouts(tx_hash);
+      CREATE INDEX IF NOT EXISTS idx_payouts_created_at ON payouts(created_at);
+    `,
+    down: `
+      DROP INDEX IF EXISTS idx_payouts_created_at;
+      DROP INDEX IF EXISTS idx_payouts_tx_hash;
+      DROP INDEX IF EXISTS idx_payouts_round;
+      DROP INDEX IF EXISTS idx_payouts_winner;
+      DROP INDEX IF EXISTS idx_payments_created_at;
+      DROP INDEX IF EXISTS idx_payments_tx_hash;
+      DROP INDEX IF EXISTS idx_payments_round;
+      DROP INDEX IF EXISTS idx_payments_player;
+      
+      DROP TABLE IF EXISTS payouts;
+      DROP TABLE IF EXISTS payments;
+    `
   }
 ];
 

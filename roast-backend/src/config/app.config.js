@@ -52,9 +52,14 @@ const config = {
 
   // 0G Network Configuration
   zg: {
-    networkRpc: process.env.ZG_NETWORK_RPC || 'https://evmrpc-testnet.0g.ai',
-    chainId: parseInt(process.env.ZG_CHAIN_ID) || 16601,
-    hotWalletPrivateKey: process.env.ZG_HOT_WALLET_PRIVATE_KEY,
+    networkRpc: process.env.ZERO_G_NETWORK_RPC || process.env.ZG_NETWORK_RPC || 'https://evmrpc-testnet.0g.ai',
+    chainId: parseInt(process.env.ZERO_G_CHAIN_ID || process.env.ZG_CHAIN_ID) || 16601,
+    networkName: process.env.ZERO_G_NETWORK_NAME || '0G-Galileo-Testnet',
+    explorer: process.env.ZERO_G_EXPLORER || 'https://chainscan-galileo.0g.ai/',
+    currencySymbol: process.env.ZERO_G_CURRENCY_SYMBOL || '0G',
+    currencyDecimals: parseInt(process.env.ZERO_G_CURRENCY_DECIMALS) || 18,
+    hotWalletPrivateKey: process.env.TREASURY_PRIVATE_KEY || process.env.ZG_HOT_WALLET_PRIVATE_KEY,
+    treasuryPublicAddress: process.env.TREASURY_PUBLIC_ADDRESS,
     entryFee: parseFloat(process.env.ZG_ENTRY_FEE) || 0.025,
     houseFeePercentage: parseInt(process.env.ZG_HOUSE_FEE_PERCENTAGE) || 5
   },
@@ -119,7 +124,11 @@ const validateConfig = () => {
   const errors = [];
 
   if (!config.zg.hotWalletPrivateKey && config.server.env === 'production') {
-    errors.push('ZG_HOT_WALLET_PRIVATE_KEY is required in production');
+    errors.push('TREASURY_PRIVATE_KEY (or ZG_HOT_WALLET_PRIVATE_KEY) is required in production');
+  }
+
+  if (!config.zg.treasuryPublicAddress && config.server.env === 'production') {
+    errors.push('TREASURY_PUBLIC_ADDRESS is required in production');
   }
 
   if (!config.jwt.secret || config.jwt.secret === 'default-secret-change-in-production') {
@@ -130,6 +139,15 @@ const validateConfig = () => {
 
   if (config.admin.addresses.length === 0 && config.server.env === 'production') {
     errors.push('At least one ADMIN_ADDRESS must be configured in production');
+  }
+
+  // Validate 0G Network configuration
+  if (!config.zg.networkRpc) {
+    errors.push('0G Network RPC URL is required (ZERO_G_NETWORK_RPC)');
+  }
+
+  if (!config.zg.chainId || config.zg.chainId <= 0) {
+    errors.push('Valid 0G Chain ID is required (ZERO_G_CHAIN_ID)');
   }
 
   if (errors.length > 0) {
