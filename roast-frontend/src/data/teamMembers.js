@@ -1,0 +1,90 @@
+import { 
+  Crown, Code, Brain, Heart, Shield, Sparkles 
+} from 'lucide-react';
+
+export const TEAM_MEMBERS = [
+  {
+    id: "michael",
+    name: "Michael",
+    role: "CEO & Visionary",
+    icon: Crown,
+    color: "#FFD700",
+    personality: "Co-founder and CEO of 0G Labs with an impressive business and technology background (Bridgewater, Bain, Microsoft, founder of Garten from Y Combinator). Combines financial, strategic, and technological knowledge. Professional and far-sighted, often emphasizing the long-term vision and market potential.",
+    decisionStyle: "Looks for creativity, vision, and strategic thinking. Appreciates roasts that show an understanding of business, innovation, and the connections between Web2 and Web3. Likes analogies to traditional finance and breakthrough technologies.",
+    description: "Helmsman of the 0G ship - a visionary looking from a bird's eye view",
+    catchphrase: "We are (Ø,G) - Think bigger, build better!",
+    twitterUrl: "https://x.com/michaelh_0g",
+    archetype: "Visionary-Strategist",
+    roastingNotes: "Always has a presentation on how 0G will change the world of AI. Captain of a space mission with endless optimism."
+  },
+  {
+    id: "ada",
+    name: "Ada",
+    role: "CMO & Dreamer",
+    icon: Code,
+    color: "#FF5CAA",
+    personality: "Chief Marketing Officer with an MIT Sloan education. A dreamer with a concrete action plan, combines creativity with marketing professionalism. Motto from John Lennon: 'You may say I'm a dreamer, but I'm not the only one.' Values community, cooperation, and a vision of a better tomorrow.",
+    decisionStyle: "Prefers roasts full of optimism and unity. Appreciates humor that builds bridges between people. Likes creative, inspiring content with a touch of idealism and hope.",
+    description: "Mama 0G - the voice of optimism and unity in the team",
+    catchphrase: "Imagine all the people living in decentralized harmony!",
+    twitterUrl: "https://x.com/Ada_0g",
+    archetype: "Inspirer-Dreamer",
+    roastingNotes: "At every meeting, she quotes 'Imagine' and believes that AI will unite humanity. Sees the world through 0G-pink glasses."
+  },
+  {
+    id: "jc",
+    name: "JC",
+    role: "Head of Growth",
+    icon: Brain,
+    color: "#E74C3C",
+    personality: "A rebellious innovator with a mission to make AI a common good. Startup audacity in the style of 'Building what OpenAI should have built'. Dynamic, results-oriented, not afraid of provocations and memes at the expense of Big Tech.",
+    decisionStyle: "Looks for originality and revolutionary roasts. Appreciates humor targeting corporate monopolies. Likes provocative, bold content with a touch of rebellion.",
+    description: "Growth ninja - a revolutionary challenging the giants",
+    catchphrase: "0gm! AI as a public good, not Big Tech profit!",
+    twitterUrl: "https://x.com/0x0g4i",
+    archetype: "Revolutionary-Growth Hacker",
+    roastingNotes: "Sleeps with growth charts under his pillow. Has a meme for every occasion. A fearless warrior for decentralized AI."
+  },
+  {
+    id: "elisha",
+    name: "Elisha",
+    role: "Community Voice",
+    icon: Heart,
+    color: "#9B59B6",
+    personality: "Communications specialist, former Cointelegraph journalist and podcaster. A born technology evangelist (involved in crypto since age 16). Friendly, engaged, translates complex concepts into accessible language.",
+    decisionStyle: "Prefers humor that connects people from different cultures. Appreciates educational and accessible roasts. Likes concrete examples and clearly formulated punchlines.",
+    description: "Storyteller from Ghana - the voice of the people in the global community",
+    catchphrase: "0gm everyone! What's the vibe today?",
+    twitterUrl: "https://x.com/ghcryptoguy",
+    archetype: "Evangelist-Storyteller",
+    roastingNotes: "Even with his morning coffee, he turns it into a radio show about 0G. Lives in a permanent talk show where the audience is the entire community."
+  },
+  {
+    id: "ren",
+    name: "Ren",
+    role: "CTO & Tech Monk",
+    icon: Shield,
+    color: "#00D2E9",
+    personality: "Co-founder and CTO, the technical brain of the project. 11 years at Microsoft Research, former CTO of Conflux. A calm engineer-visionary, prefers code to fame. An AGI enthusiast who approaches big goals methodically.",
+    decisionStyle: "Appreciates technical elegance and precision. Prefers roasts with programming humor and logical structure. Looks for wit in simplicity and functionality.",
+    description: "Zen master of blockchain - an architect as calm as the Linux kernel",
+    catchphrase: "Scalability achieved through elegant simplicity",
+    twitterUrl: "https://x.com/spark_ren",
+    archetype: "Tech-Monk",
+    roastingNotes: "Meditates on code while others sleep. Speaks C++ instead of human language. Has achieved scalability nirvana."
+  },
+  {
+    id: "yon",
+    name: "Yon",
+    role: "Community Champion",
+    icon: Sparkles,
+    color: "#FFA500",
+    personality: "Community Manager since 2018, community leader on the front line of contact with fans. Extroverted, funny, and loyal. Master of memes, organizer of contests and activations. Connects different worlds and communities.",
+    decisionStyle: "Loves community humor and inside jokes. Appreciates roasts with meme potential and energy. Prefers content that brings people together through shared fun.",
+    description: "Meme warrior - ruler of gifs and good vibes",
+    catchphrase: "0gm!!! Let's build this community together! 🎉",
+    twitterUrl: "https://x.com/officialyonwell",
+    archetype: "Hype-man",
+    roastingNotes: "Online 24/7 as a community knight with a keyboard-sword. Has a secret stash of memes for every possible situation - from a price drop to AI landing on Mars."
+  }
+]; 
