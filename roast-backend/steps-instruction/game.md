@@ -1,120 +1,120 @@
-# Game Module - Implementation Status
+# Moduł Game - Status Implementacji
 
-## ✅ COMPLETED (100%)
+## ✅ UKOŃCZONE (100%)
 
-### 1. Core Game Service (`game.service.js` - 549 lines)
-**Round Lifecycle Management:**
-- ✅ `createNewRound()` - Creates new round with random character selection
-- ✅ `joinRound()` - Player joins with roast submission, auto-starts at 2 players
-- ✅ `startRound()` - Transitions from WAITING → ACTIVE with 120s timer
-- ✅ `transitionToJudging()` - ACTIVE → JUDGING phase (15s)
-- ✅ `completeRound()` - JUDGING → COMPLETED with winner selection and prizes
+### 1. Główny Serwis Game (`game.service.js` - 549 linii)
+**Zarządzanie Cyklem Rund:**
+- ✅ `createNewRound()` - Tworzy nową rundę z losowym wyborem postaci
+- ✅ `joinRound()` - Gracz dołącza z roastem, auto-start przy 2 graczach
+- ✅ `startRound()` - Przejście z WAITING → ACTIVE z timerem 120s
+- ✅ `transitionToJudging()` - ACTIVE → JUDGING faza (15s)
+- ✅ `completeRound()` - JUDGING → COMPLETED z wyborem zwycięzcy i nagrodami
 
-**Timer System:**
-- ✅ Map-based timer storage (`activeTimers`)
-- ✅ WebSocket updates every 1 second
-- ✅ 30-second warning emissions
-- ✅ Smart recovery on server restart (calculates elapsed time from DB)
-- ✅ Auto-round scheduling (30s delay between rounds)
+**System Timerów:**
+- ✅ Przechowywanie timerów w Map (`activeTimers`)
+- ✅ Aktualizacje WebSocket co 1 sekundę
+- ✅ Ostrzeżenia 30-sekundowe
+- ✅ Inteligentne odzyskiwanie po restarcie serwera (oblicza czas z bazy danych)
+- ✅ Automatyczne planowanie rund (30s opóźnienie między rundami)
 
-**Features:**
-- ✅ Random character selection per round
-- ✅ 2-player minimum with auto-start
-- ✅ Prize pool calculation (95% winner, 5% house fee)
-- ✅ WebSocket integration (dependency injection ready)
-- ✅ Memory cleanup and graceful shutdown
-- ✅ TEST_ENV logging integration
+**Funkcjonalności:**
+- ✅ Losowy wybór postaci na rundę
+- ✅ Minimum 2 graczy z auto-startem
+- ✅ Kalkulacja puli nagród (95% zwycięzca, 5% prowizja domu)
+- ✅ Integracja WebSocket (gotowe dependency injection)
+- ✅ Czyszczenie pamięci i graceful shutdown
+- ✅ Integracja logowania TEST_ENV
 
-### 2. REST API Controller (`game.controller.js` - 481 lines)
-**Public Endpoints:**
-- ✅ `GET /api/game/current` - Current active round
-- ✅ `GET /api/game/rounds` - Recent rounds with pagination
-- ✅ `GET /api/game/rounds/:id` - Specific round details
-- ✅ `GET /api/game/rounds/:id/submissions` - Round submissions
-- ✅ `GET /api/game/stats` - Global game statistics
-- ✅ `POST /api/game/join` - Join round with roast submission
-- ✅ `GET /api/game/health` - Service health check
+### 2. Kontroler REST API (`game.controller.js` - 481 linii)
+**Publiczne Endpointy:**
+- ✅ `GET /api/game/current` - Obecna aktywna runda
+- ✅ `GET /api/game/rounds` - Ostatnie rundy z paginacją
+- ✅ `GET /api/game/rounds/:id` - Szczegóły konkretnej rundy
+- ✅ `GET /api/game/rounds/:id/submissions` - Zgłoszenia w rundzie
+- ✅ `GET /api/game/stats` - Globalne statystyki gry
+- ✅ `POST /api/game/join` - Dołącz do rundy ze zgłoszeniem roasta
+- ✅ `GET /api/game/health` - Sprawdzenie stanu serwisu
 
-**Admin Endpoints:**
-- ✅ `POST /api/game/rounds` - Force create new round
-- ✅ `POST /api/game/rounds/:id/complete` - Force complete round
+**Endpointy Administratora:**
+- ✅ `POST /api/game/rounds` - Wymuś utworzenie nowej rundy
+- ✅ `POST /api/game/rounds/:id/complete` - Wymuś zakończenie rundy
 
-**Features:**
-- ✅ Admin permission validation (`x-admin-address` header)
-- ✅ Input validation and sanitization
-- ✅ Comprehensive error handling
-- ✅ Pagination support
-- ✅ Full text access control (completed rounds only)
+**Funkcjonalności:**
+- ✅ Walidacja uprawnień administratora (nagłówek `x-admin-address`)
+- ✅ Walidacja i sanityzacja danych wejściowych
+- ✅ Kompleksowa obsługa błędów
+- ✅ Wsparcie paginacji
+- ✅ Kontrola dostępu do pełnego tekstu (tylko zakończone rundy)
 
-### 3. Express Router (`game.routes.js` - 91 lines)
-- ✅ Route definitions and middleware
-- ✅ Request logging for TEST_ENV
-- ✅ Error handling middleware
+### 3. Router Express (`game.routes.js` - 91 linii)
+- ✅ Definicje tras i middleware
+- ✅ Logowanie żądań dla TEST_ENV
+- ✅ Middleware obsługi błędów
 
-### 4. Module Integration (`index.js` + `server.js`)
-- ✅ Module exports structure
-- ✅ Server integration with route mounting
-- ✅ Graceful shutdown with cleanup
-- ✅ Game service initialization
+### 4. Integracja Modułu (`index.js` + `server.js`)
+- ✅ Struktura eksportów modułu
+- ✅ Integracja z serwerem z montowaniem tras
+- ✅ Graceful shutdown z czyszczeniem
+- ✅ Inicjalizacja serwisu game
 
-## 🎮 CURRENT GAME FLOW STATUS
+## 🎮 OBECNY STATUS PRZEPŁYWU GRY
 
 ```
 WAITING → ACTIVE (120s) → JUDGING (15s) → COMPLETED → auto-restart (30s)
    ✅        ✅             ✅             ✅            ✅
 ```
 
-**Game Mechanics:**
-- ✅ Entry fee: 0.025 0G (from config)
-- ✅ Random character selection from 6 AI judges
-- ✅ 2-player minimum, auto-start
-- ✅ Timer warnings and transitions
-- ✅ Random winner selection (placeholder for AI evaluation)
-- ✅ Server restart recovery
+**Mechanika Gry:**
+- ✅ Opłata wejściowa: 0.025 0G (z konfiguracji)
+- ✅ Losowy wybór postaci z 6 sędziów AI
+- ✅ Minimum 2 graczy, auto-start
+- ✅ Ostrzeżenia timerów i przejścia
+- ✅ Losowy wybór zwycięzcy (placeholder dla oceny AI)
+- ✅ Odzyskiwanie po restarcie serwera
 
-## 📊 TECHNICAL ACHIEVEMENTS
+## 📊 OSIĄGNIĘCIA TECHNICZNE
 
-- **Architecture:** Clean service/controller/routes separation
-- **Performance:** Non-persistent timers with smart recovery
-- **Scalability:** WebSocket emitter dependency injection ready
-- **Security:** Admin permissions, input validation
-- **Logging:** Comprehensive game events and TEST_ENV support
-- **Error Handling:** Graceful degradation and recovery
-- **Memory Management:** Timer cleanup and graceful shutdown
+- **Architektura:** Czyste rozdzielenie service/controller/routes
+- **Wydajność:** Niepersystentne timery z inteligentnym odzyskiwaniem
+- **Skalowalność:** Gotowe dependency injection dla WebSocket emitter
+- **Bezpieczeństwo:** Uprawnienia administratora, walidacja danych wejściowych
+- **Logowanie:** Kompleksowe wydarzenia gry i wsparcie TEST_ENV
+- **Obsługa Błędów:** Graceful degradation i odzyskiwanie
+- **Zarządzanie Pamięcią:** Czyszczenie timerów i graceful shutdown
 
-## 🔄 NEXT STEPS
+## 🔄 NASTĘPNE KROKI
 
-### Priority 1: WebSocket Module
-- Implement WebSocket service for real-time updates
-- Connect to Game Module (wsEmitter injection)
-- Real-time timer updates and phase transitions
+### Priorytet 1: Moduł WebSocket ✅ UKOŃCZONY
+- ✅ Implementacja serwisu WebSocket dla aktualizacji real-time
+- ✅ Połączenie z Modułem Game (wsEmitter injection)
+- ✅ Aktualizacje timerów i przejścia faz w czasie rzeczywistym
 
-### Priority 2: Treasury Module  
-- Payment validation for round joining
-- Prize distribution to winners
-- 0G blockchain integration
+### Priorytet 2: Moduł Treasury  
+- Walidacja płatności do dołączania do rund
+- Dystrybucja nagród zwycięzcom
+- Integracja z blockchainem 0G
 
-### Priority 3: AI Module
-- Replace random winner with AI evaluation
-- Character-specific judging criteria
-- Integration with configured AI service
+### Priorytet 3: Moduł AI
+- Zastąpienie losowego zwycięzcy oceną AI
+- Kryteria oceniania specyficzne dla postaci
+- Integracja ze skonfigurowanym serwisem AI
 
-### Priority 4: Players Module
-- Player statistics and history
-- Leaderboards and rankings
-- Player authentication
+### Priorytet 4: Moduł Players
+- Statystyki i historia graczy
+- Tabele wyników i rankingi
+- Uwierzytelnianie graczy
 
-## 🛠️ IMPLEMENTATION NOTES
+## 🛠️ NOTATKI IMPLEMENTACYJNE
 
-**Design Decisions Made:**
-- ✅ Random character selection (not rotational)
-- ✅ Non-persistent timers with smart resume
-- ✅ Single concurrent round for all players
-- ✅ WebSocket integration within Game Service
-- ✅ 400-line file limit maintained
+**Podjęte Decyzje Projektowe:**
+- ✅ Losowy wybór postaci (nie rotacyjny)
+- ✅ Niepersystentne timery z inteligentnym wznowieniem
+- ✅ Pojedyncza współbieżna runda dla wszystkich graczy
+- ✅ Integracja WebSocket w ramach Game Service
+- ✅ Utrzymany limit 400 linii na plik
 
-**Ready for Testing:**
-- All endpoints functional
-- Database integration complete
-- Timer system operational
-- Error handling comprehensive
+**Gotowe do Testowania:**
+- Wszystkie endpointy funkcjonalne
+- Integracja z bazą danych kompletna
+- System timerów operacyjny
+- Kompleksowa obsługa błędów

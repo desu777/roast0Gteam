@@ -53,7 +53,7 @@ const config = {
   // 0G Network Configuration
   zg: {
     networkRpc: process.env.ZG_NETWORK_RPC || 'https://evmrpc-testnet.0g.ai',
-    chainId: parseInt(process.env.ZG_CHAIN_ID) || 16600,
+    chainId: parseInt(process.env.ZG_CHAIN_ID) || 16601,
     hotWalletPrivateKey: process.env.ZG_HOT_WALLET_PRIVATE_KEY,
     entryFee: parseFloat(process.env.ZG_ENTRY_FEE) || 0.025,
     houseFeePercentage: parseInt(process.env.ZG_HOUSE_FEE_PERCENTAGE) || 5

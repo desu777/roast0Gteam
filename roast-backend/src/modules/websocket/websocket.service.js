@@ -154,7 +154,7 @@ class WebSocketService {
         }
       }
 
-      wsLogger.connection(socket.id, userInfo.address);
+      wsLogger.connection(socket.id, userAddress);
 
       socket.emit('authenticated', {
         success: true,
