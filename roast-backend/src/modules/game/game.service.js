@@ -24,9 +24,10 @@ const {
 } = require('../../utils/formatters');
 
 class GameService {
-  constructor(wsEmitter = null, aiService = null) {
+  constructor(wsEmitter = null, aiService = null, treasuryService = null) {
     this.wsEmitter = wsEmitter;
     this.aiService = aiService;
+    this.treasuryService = treasuryService;
     this.activeTimers = new Map(); // roundId -> timer info
     this.autoStartTimer = null;
     
@@ -119,6 +120,64 @@ class GameService {
         };
       }
 
+      // Verify entry fee payment
+      if (this.treasuryService && paymentTxHash) {
+        try {
+          if (config.logging.testEnv) {
+            logger.info('Verifying entry fee payment', { 
+              roundId: currentRound.id, 
+              playerAddress, 
+              paymentTxHash 
+            });
+          }
+
+          const verification = await this.treasuryService.verifyEntryFeePayment(
+            paymentTxHash, 
+            playerAddress, 
+            currentRound.id
+          );
+          
+          if (!verification.valid) {
+            return { 
+              success: false, 
+              error: ERROR_CODES.PAYMENT_FAILED,
+              message: `Payment verification failed: ${verification.reason}`
+            };
+          }
+
+          gameLogger.paymentProcessed(playerAddress, verification.amount, paymentTxHash);
+
+          if (config.logging.testEnv) {
+            logger.info('Entry fee payment verified successfully', { 
+              roundId: currentRound.id, 
+              playerAddress, 
+              amount: verification.amount 
+            });
+          }
+
+        } catch (paymentError) {
+          logger.error('Payment verification error', { 
+            error: paymentError.message, 
+            playerAddress, 
+            paymentTxHash 
+          });
+          
+          return { 
+            success: false, 
+            error: ERROR_CODES.PAYMENT_FAILED,
+            message: 'Payment verification failed. Please try again.'
+          };
+        }
+      } else if (config.server.env === 'production') {
+        // In production, payment is required
+        return { 
+          success: false, 
+          error: ERROR_CODES.PAYMENT_FAILED,
+          message: 'Payment transaction hash is required'
+        };
+      }
+      // In development, allow joining without payment for testing
+
       // Create submission
       const submissionId = database.createSubmission(
         currentRound.id, 
@@ -145,7 +204,8 @@ class GameService {
         roundId: currentRound.id,
         playerAddress,
         playerCount: playerCount + 1,
-        prizePool: newPrizePool
+        prizePool: newPrizePool,
+        paymentVerified: !!paymentTxHash
       });
 
       // Emit round update
@@ -156,7 +216,8 @@ class GameService {
         logger.info('Player joined round', { 
           roundId: currentRound.id, 
           playerAddress, 
-          playerCount: playerCount + 1 
+          playerCount: playerCount + 1,
+          paymentVerified: !!paymentTxHash
         });
       }
 
@@ -164,7 +225,8 @@ class GameService {
         success: true, 
         submissionId,
         playerCount: playerCount + 1,
-        round: formatRoundResponse(updatedRound)
+        round: formatRoundResponse(updatedRound),
+        paymentVerified: !!paymentTxHash
       };
 
     } catch (error) {
@@ -357,6 +419,84 @@ class GameService {
 
       gameLogger.roundCompleted(roundId, winnerSubmission.id, winnerSubmission.player_address, prizeAmount);
 
+      // Automatic prize distribution
+      let payoutTxHash = null;
+      if (this.treasuryService && prizeAmount > 0) {
+        try {
+          if (config.logging.testEnv) {
+            logger.info('Initiating automatic prize payout', { 
+              roundId, 
+              winnerAddress: winnerSubmission.player_address, 
+              prizeAmount 
+            });
+          }
+
+          const payout = await this.treasuryService.sendPrizePayout(
+            winnerSubmission.player_address,
+            roundId,
+            round.prize_pool
+          );
+          
+          payoutTxHash = payout.txHash;
+
+          // Update result with transaction hash
+          database.db.prepare(`
+            UPDATE results SET payout_tx_hash = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+          `).run(payoutTxHash, resultId);
+
+          // Emit prize distributed event
+          this.emitToRoom(roundId, WS_EVENTS.PRIZE_DISTRIBUTED, {
+            roundId,
+            winnerAddress: winnerSubmission.player_address,
+            prizeAmount: payout.amount,
+            transactionHash: payoutTxHash,
+            currency: config.zg.currencySymbol
+          });
+
+          this.emitToAll(WS_EVENTS.PRIZE_DISTRIBUTED, {
+            roundId,
+            winnerAddress: winnerSubmission.player_address,
+            prizeAmount: payout.amount,
+            transactionHash: payoutTxHash
+          });
+
+          if (config.logging.testEnv) {
+            logger.info('Prize payout completed successfully', { 
+              roundId, 
+              winnerAddress: winnerSubmission.player_address, 
+              prizeAmount: payout.amount,
+              txHash: payoutTxHash
+            });
+          }
+
+        } catch (payoutError) {
+          logger.error('Automatic prize payout failed', { 
+            roundId, 
+            winnerAddress: winnerSubmission.player_address, 
+            prizeAmount,
+            error: payoutError.message 
+          });
+
+          // Emit payout failed event
+          this.emitToRoom(roundId, WS_EVENTS.ERROR, {
+            roundId,
+            type: 'PAYOUT_FAILED',
+            message: 'Prize payout failed, manual intervention required',
+            winnerAddress: winnerSubmission.player_address,
+            prizeAmount
+          });
+
+          // Continue with round completion even if payout fails
+        }
+      } else if (config.server.env === 'production' && prizeAmount > 0) {
+        logger.warn('No treasury service available for prize payout', { 
+          roundId, 
+          winnerAddress: winnerSubmission.player_address, 
+          prizeAmount 
+        });
+      }
+
       // Emit completion events
       this.emitToRoom(roundId, WS_EVENTS.ROUND_COMPLETED, {
         roundId,
@@ -365,20 +505,23 @@ class GameService {
         winningRoast: winnerSubmission.roast_text,
         aiReasoning,
         prizeAmount,
-        character: round.judge_character
+        character: round.judge_character,
+        payoutTxHash
       });
 
       this.emitToAll(WS_EVENTS.ROUND_COMPLETED, {
         roundId,
         winnerAddress: winnerSubmission.player_address,
-        prizeAmount
+        prizeAmount,
+        payoutTxHash
       });
 
       if (config.logging.testEnv) {
         logger.info('Round completed', { 
           roundId, 
           winner: winnerSubmission.player_address, 
-          prizeAmount 
+          prizeAmount,
+          payoutTxHash
         });
       }
 
@@ -389,7 +532,8 @@ class GameService {
         success: true, 
         winner: winnerSubmission,
         prizeAmount,
-        aiReasoning
+        aiReasoning,
+        payoutTxHash
       };
 
     } catch (error) {

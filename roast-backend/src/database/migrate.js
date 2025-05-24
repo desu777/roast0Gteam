@@ -157,6 +157,44 @@ const migrations = [
       DROP TABLE IF EXISTS payouts;
       DROP TABLE IF EXISTS payments;
     `
+  },
+  {
+    version: 4,
+    name: 'add_payout_tx_hash_to_results',
+    up: `
+      -- Add payout transaction hash to results table
+      ALTER TABLE results ADD COLUMN payout_tx_hash TEXT;
+      
+      -- Add index for performance
+      CREATE INDEX IF NOT EXISTS idx_results_payout_tx_hash ON results(payout_tx_hash);
+    `,
+    down: `
+      -- Remove index
+      DROP INDEX IF EXISTS idx_results_payout_tx_hash;
+      
+      -- SQLite doesn't support DROP COLUMN, so we recreate the table
+      CREATE TABLE IF NOT EXISTS results_backup AS SELECT 
+        id, round_id, winner_submission_id, ai_reasoning, prize_amount, 
+        transaction_hash, processed_at 
+      FROM results;
+      
+      DROP TABLE results;
+      
+      CREATE TABLE results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        round_id INTEGER NOT NULL,
+        winner_submission_id INTEGER NOT NULL,
+        ai_reasoning TEXT NOT NULL,
+        prize_amount DECIMAL(10,8) NOT NULL,
+        transaction_hash TEXT,
+        processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (round_id) REFERENCES rounds(id),
+        FOREIGN KEY (winner_submission_id) REFERENCES submissions(id)
+      );
+      
+      INSERT INTO results SELECT * FROM results_backup;
+      DROP TABLE results_backup;
+    `
   }
 ];
 

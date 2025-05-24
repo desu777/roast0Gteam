@@ -261,8 +261,7 @@ class GameController {
         });
       }
 
-      // TODO: Validate payment transaction when treasury module is ready
-      // For now, we'll skip payment validation
+      // Payment verification is now handled by GameService
 
       const result = await this.gameService.joinRound(
         playerAddress, 

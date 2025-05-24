@@ -14,6 +14,7 @@ const { GameService, GameController, createGameRoutes } = require('./modules/gam
 const { WebSocketService } = require('./modules/websocket');
 const { TreasuryService, TreasuryController, createTreasuryRoutes } = require('./modules/treasury');
 const { AIService, AIController, createAIRoutes } = require('./modules/ai');
+const { PlayersService, PlayersController, createPlayersRoutes } = require('./modules/players');
 
 // Create Express app
 const app = express();
@@ -27,6 +28,8 @@ let treasuryService;
 let treasuryController;
 let aiService;
 let aiController;
+let playersService;
+let playersController;
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -184,6 +187,12 @@ const gracefulShutdown = async (signal) => {
     logger.info('AI service cleaned up');
   }
 
+  // Cleanup Players service
+  if (playersService) {
+    playersService.cleanup();
+    logger.info('Players service cleaned up');
+  }
+
   // Stop accepting new connections
   server.close(() => {
     logger.info('HTTP server closed');
@@ -242,8 +251,26 @@ const startServer = async () => {
     
     logger.info('AI module initialized successfully');
 
-    // Initialize Game Module with WebSocket emitter and AI service
-    gameService = new GameService(wsService, aiService); // Pass WebSocket and AI services
+    // Initialize Treasury Module
+    treasuryService = new TreasuryService();
+    treasuryController = new TreasuryController(treasuryService);
+    
+    // Mount treasury routes
+    app.use('/api/treasury', createTreasuryRoutes(treasuryController));
+    
+    logger.info('Treasury module initialized successfully');
+
+    // Initialize Players Module
+    playersService = new PlayersService();
+    playersController = new PlayersController(playersService);
+    
+    // Mount players routes
+    app.use('/api/players', createPlayersRoutes(playersController));
+    
+    logger.info('Players module initialized successfully');
+
+    // Initialize Game Module with WebSocket emitter, AI service, and Treasury service
+    gameService = new GameService(wsService, aiService, treasuryService); // Pass WebSocket, AI, and Treasury services
     gameController = new GameController(gameService);
     
     // Connect Game Service to WebSocket Service
@@ -253,15 +280,6 @@ const startServer = async () => {
     app.use('/api/game', createGameRoutes(gameController));
     
     logger.info('Game module initialized successfully');
-
-    // Initialize Treasury Module
-    treasuryService = new TreasuryService();
-    treasuryController = new TreasuryController(treasuryService);
-    
-    // Mount treasury routes
-    app.use('/api/treasury', createTreasuryRoutes(treasuryController));
-    
-    logger.info('Treasury module initialized successfully');
 
     // TODO: Initialize other modules here
     // - AI module
@@ -286,4 +304,4 @@ const startServer = async () => {
 // Start the server
 startServer();
 
-module.exports = { app, server, gameService, gameController, wsService, treasuryService, treasuryController, aiService, aiController }; 
+module.exports = { app, server, gameService, gameController, wsService, treasuryService, treasuryController, aiService, aiController, playersService, playersController }; 
