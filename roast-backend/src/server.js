@@ -13,6 +13,7 @@ const database = require('./database/database.service');
 const { GameService, GameController, createGameRoutes } = require('./modules/game');
 const { WebSocketService } = require('./modules/websocket');
 const { TreasuryService, TreasuryController, createTreasuryRoutes } = require('./modules/treasury');
+const { AIService, AIController, createAIRoutes } = require('./modules/ai');
 
 // Create Express app
 const app = express();
@@ -24,6 +25,8 @@ let gameController;
 let wsService;
 let treasuryService;
 let treasuryController;
+let aiService;
+let aiController;
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -175,6 +178,12 @@ const gracefulShutdown = async (signal) => {
     logger.info('Treasury service cleaned up');
   }
 
+  // Cleanup AI service
+  if (aiService) {
+    aiService.cleanup();
+    logger.info('AI service cleaned up');
+  }
+
   // Stop accepting new connections
   server.close(() => {
     logger.info('HTTP server closed');
@@ -224,8 +233,17 @@ const startServer = async () => {
     wsService = new WebSocketService(server);
     logger.info('WebSocket service initialized successfully');
 
-    // Initialize Game Module with WebSocket emitter
-    gameService = new GameService(wsService); // Pass WebSocket service as emitter
+    // Initialize AI Module
+    aiService = new AIService();
+    aiController = new AIController(aiService);
+    
+    // Mount AI routes
+    app.use('/api/ai', createAIRoutes(aiController));
+    
+    logger.info('AI module initialized successfully');
+
+    // Initialize Game Module with WebSocket emitter and AI service
+    gameService = new GameService(wsService, aiService); // Pass WebSocket and AI services
     gameController = new GameController(gameService);
     
     // Connect Game Service to WebSocket Service
@@ -268,4 +286,4 @@ const startServer = async () => {
 // Start the server
 startServer();
 
-module.exports = { app, server, gameService, gameController, wsService, treasuryService, treasuryController }; 
+module.exports = { app, server, gameService, gameController, wsService, treasuryService, treasuryController, aiService, aiController }; 

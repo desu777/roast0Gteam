@@ -68,7 +68,32 @@ const config = {
   ai: {
     enabled: process.env.AI_SERVICE_ENABLED !== 'false',
     evaluationTimeout: parseInt(process.env.AI_EVALUATION_TIMEOUT) || 15000,
-    fallbackEnabled: process.env.AI_FALLBACK_ENABLED !== 'false'
+    fallbackEnabled: process.env.AI_FALLBACK_ENABLED !== 'false',
+    
+    // OpenRouter Configuration
+    model: process.env.AI_MODEL || 'meta-llama/llama-4-maverick:free',
+    siteUrl: process.env.AI_SITE_URL || 'https://roastarena.0g.ai',
+    siteName: process.env.AI_SITE_NAME || '0G Roast Arena',
+    maxRequestsPerKey: parseInt(process.env.AI_MAX_REQUESTS_PER_KEY) || 1000,
+    keyResetHours: parseInt(process.env.AI_KEY_RESET_HOURS) || 24,
+    
+    // API Keys (rotacja sekwencyjna)
+    apiKeys: [
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY2,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY3,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY4,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY5,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY6,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY7,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY8,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY9,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY10,
+      process.env.REACT_APP_OPEN_ROUTER_API_KEY11
+    ].filter(key => key && key.trim() !== ''), // Filtrujemy puste klucze
+    
+    // OpenRouter API
+    apiBaseUrl: 'https://openrouter.ai/api/v1/chat/completions'
   },
 
   // Game Configuration

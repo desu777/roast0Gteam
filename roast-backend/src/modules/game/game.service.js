@@ -24,8 +24,9 @@ const {
 } = require('../../utils/formatters');
 
 class GameService {
-  constructor(wsEmitter = null) {
+  constructor(wsEmitter = null, aiService = null) {
     this.wsEmitter = wsEmitter;
+    this.aiService = aiService;
     this.activeTimers = new Map(); // roundId -> timer info
     this.autoStartTimer = null;
     
@@ -281,11 +282,69 @@ class GameService {
         return { success: false, message: completionValidation.reason };
       }
 
-      // TODO: AI evaluation will be implemented in AI module
-      // For now, select random winner
-      const winnerSubmission = submissions[Math.floor(Math.random() * submissions.length)];
-      const aiReasoning = `${round.judge_character.toUpperCase()}: This roast perfectly captures the essence of what I look for. Well done!`;
-      
+      // AI evaluation or fallback to random
+      let winnerSubmission;
+      let aiReasoning;
+      let evaluationResult = null;
+
+      // Try AI evaluation if AI service is available
+      if (this.aiService && config.ai.enabled) {
+        try {
+          if (config.logging.testEnv) {
+            logger.info('Starting AI evaluation', { 
+              roundId, 
+              character: round.judge_character, 
+              submissionsCount: submissions.length 
+            });
+          }
+
+          evaluationResult = await this.aiService.evaluateRoasts(
+            roundId,
+            round.judge_character,
+            submissions
+          );
+
+          if (evaluationResult.success) {
+            // Find winner by ID
+            winnerSubmission = submissions.find(sub => sub.id === evaluationResult.winnerId);
+            if (winnerSubmission) {
+              aiReasoning = evaluationResult.reasoning;
+              
+              if (config.logging.testEnv) {
+                logger.info('AI evaluation successful', { 
+                  roundId, 
+                  winnerId: evaluationResult.winnerId,
+                  fallback: evaluationResult.fallback || false,
+                  duration: evaluationResult.duration
+                });
+              }
+            } else {
+              throw new Error(`AI selected invalid winner ID: ${evaluationResult.winnerId}`);
+            }
+          } else {
+            throw new Error('AI evaluation failed without result');
+          }
+
+        } catch (aiError) {
+          logger.error('AI evaluation failed, using fallback', { 
+            roundId, 
+            error: aiError.message 
+          });
+          
+          // Fallback to random selection
+          winnerSubmission = submissions[Math.floor(Math.random() * submissions.length)];
+          aiReasoning = `${round.judge_character.toUpperCase()}: Due to technical difficulties, this roast was selected. The creativity shown here is noteworthy! (Random selection)`;
+        }
+      } else {
+        // AI service not available, use random selection
+        if (config.logging.testEnv) {
+          logger.info('AI service not available, using random selection', { roundId });
+        }
+        
+        winnerSubmission = submissions[Math.floor(Math.random() * submissions.length)];
+        aiReasoning = `${round.judge_character.toUpperCase()}: This roast perfectly captures the essence of what I look for. Well done!`;
+      }
+
       const prizeAmount = round.prize_pool * 0.95; // 95% to winner, 5% house fee
 
       // Create result and update stats
