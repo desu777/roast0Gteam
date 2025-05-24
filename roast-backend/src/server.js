@@ -9,8 +9,9 @@ const { config, validateConfig } = require('./config/app.config');
 const { logger, perfLogger } = require('./services/logger.service');
 const database = require('./database/database.service');
 
-// Import game module
+// Import modules
 const { GameService, GameController, createGameRoutes } = require('./modules/game');
+const { WebSocketService } = require('./modules/websocket');
 
 // Create Express app
 const app = express();
@@ -19,6 +20,7 @@ const server = http.createServer(app);
 // Variables for services that will be initialized later
 let gameService;
 let gameController;
+let wsService;
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -158,6 +160,12 @@ const gracefulShutdown = async (signal) => {
     logger.info('Game service cleaned up');
   }
 
+  // Cleanup WebSocket service
+  if (wsService) {
+    wsService.cleanup();
+    logger.info('WebSocket service cleaned up');
+  }
+
   // Stop accepting new connections
   server.close(() => {
     logger.info('HTTP server closed');
@@ -203,9 +211,16 @@ const startServer = async () => {
     database.initialize();
     logger.info('Database initialized successfully');
 
-    // Initialize Game Module
-    gameService = new GameService(); // No WebSocket emitter for now
+    // Initialize WebSocket module first
+    wsService = new WebSocketService(server);
+    logger.info('WebSocket service initialized successfully');
+
+    // Initialize Game Module with WebSocket emitter
+    gameService = new GameService(wsService); // Pass WebSocket service as emitter
     gameController = new GameController(gameService);
+    
+    // Connect Game Service to WebSocket Service
+    wsService.setGameService(gameService);
     
     // Mount game routes
     app.use('/api/game', createGameRoutes(gameController));
@@ -213,7 +228,6 @@ const startServer = async () => {
     logger.info('Game module initialized successfully');
 
     // TODO: Initialize other modules here
-    // - WebSocket module (will pass to gameService later)
     // - Treasury module
     // - AI module
 
@@ -237,4 +251,4 @@ const startServer = async () => {
 // Start the server
 startServer();
 
-module.exports = { app, server, gameService, gameController }; 
+module.exports = { app, server, gameService, gameController, wsService }; 
