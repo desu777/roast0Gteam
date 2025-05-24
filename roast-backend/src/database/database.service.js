@@ -22,22 +22,8 @@ class DatabaseService {
       // Create database connection
       this.db = new Database(config.database.path, {
         verbose: config.logging.testEnv ? (sql, ...params) => {
-          const start = Date.now();
-          try {
-            const result = this.db.prepare(sql).run(...params);
-            const duration = Date.now() - start;
-            
-            if (duration > 100) {
-              perfLogger.slowQuery(sql, duration, params);
-            } else {
-              perfLogger.dbQuery(sql, duration, params);
-            }
-            
-            return result;
-          } catch (err) {
-            logger.error('Database query error', { sql, params, error: err.message });
-            throw err;
-          }
+          // Just log the SQL query, don't execute it
+          perfLogger.dbQuery(sql, 0, params);
         } : null
       });
 
