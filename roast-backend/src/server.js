@@ -9,9 +9,16 @@ const { config, validateConfig } = require('./config/app.config');
 const { logger, perfLogger } = require('./services/logger.service');
 const database = require('./database/database.service');
 
+// Import game module
+const { GameService, GameController, createGameRoutes } = require('./modules/game');
+
 // Create Express app
 const app = express();
 const server = http.createServer(app);
+
+// Variables for services that will be initialized later
+let gameService;
+let gameController;
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -145,6 +152,12 @@ app.use((req, res) => {
 const gracefulShutdown = async (signal) => {
   logger.info(`${signal} received, starting graceful shutdown...`);
 
+  // Cleanup game service timers
+  if (gameService) {
+    gameService.cleanup();
+    logger.info('Game service cleaned up');
+  }
+
   // Stop accepting new connections
   server.close(() => {
     logger.info('HTTP server closed');
@@ -190,9 +203,17 @@ const startServer = async () => {
     database.initialize();
     logger.info('Database initialized successfully');
 
-    // TODO: Initialize modules here
-    // - Game module
-    // - WebSocket module
+    // Initialize Game Module
+    gameService = new GameService(); // No WebSocket emitter for now
+    gameController = new GameController(gameService);
+    
+    // Mount game routes
+    app.use('/api/game', createGameRoutes(gameController));
+    
+    logger.info('Game module initialized successfully');
+
+    // TODO: Initialize other modules here
+    // - WebSocket module (will pass to gameService later)
     // - Treasury module
     // - AI module
 
@@ -216,4 +237,4 @@ const startServer = async () => {
 // Start the server
 startServer();
 
-module.exports = { app, server }; 
+module.exports = { app, server, gameService, gameController }; 
