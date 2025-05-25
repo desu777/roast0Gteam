@@ -18,6 +18,7 @@ export const useWallet = () => {
   const [authToken, setAuthToken] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState(null);
 
   // Sprawdź czy jesteśmy na właściwym chainie
@@ -30,10 +31,12 @@ export const useWallet = () => {
 
   // Uwierzytelnienie użytkownika - zachowuję pełną logikę komunikacji z backendem
   const authenticate = useCallback(async () => {
-    if (!address || !isConnected || !isCorrectChain) {
+    if (!address || !isConnected || !isCorrectChain || isAuthenticating || isAuthenticated) {
       return false;
     }
 
+    console.log('Starting authentication for:', address);
+    setIsAuthenticating(true);
     setIsLoading(true);
     setError(null);
 
@@ -53,17 +56,21 @@ export const useWallet = () => {
         timestamp
       });
 
-      if (response.data.valid) {
+      if (response.data.success) {
         setIsAuthenticated(true);
         setAuthToken(signature); // Używamy podpisu jako tokenu
         
-        // Pobierz profil użytkownika
-        await loadUserProfile(address);
+        // Pobierz profil użytkownika z odpowiedzi lub załaduj osobno
+        if (response.data.player) {
+          setUserProfile(response.data.player);
+        } else {
+          await loadUserProfile(address);
+        }
         
         console.log('User authenticated successfully');
         return true;
       } else {
-        throw new Error(response.data.reason || 'Authentication failed');
+        throw new Error(response.data.message || 'Authentication failed');
       }
 
     } catch (err) {
@@ -74,8 +81,9 @@ export const useWallet = () => {
       return false;
     } finally {
       setIsLoading(false);
+      setIsAuthenticating(false);
     }
-  }, [address, isConnected, isCorrectChain, signMessageAsync]);
+  }, [address, isConnected, isCorrectChain, isAuthenticating, isAuthenticated, signMessageAsync]);
 
   // Załaduj profil użytkownika
   const loadUserProfile = useCallback(async (userAddress) => {
@@ -119,7 +127,7 @@ export const useWallet = () => {
 
   // Auto-authenticate gdy wallet się połączy
   useEffect(() => {
-    if (isConnected && address && isCorrectChain && !isAuthenticated) {
+    if (isConnected && address && isCorrectChain && !isAuthenticated && !isAuthenticating) {
       // Dodaj małe opóźnienie aby upewnić się że połączenie jest stabilne
       const timer = setTimeout(() => {
         authenticate();
@@ -127,7 +135,7 @@ export const useWallet = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, isCorrectChain, isAuthenticated, authenticate]);
+  }, [isConnected, address, isCorrectChain, isAuthenticated, isAuthenticating]);
 
   // Reset stanu gdy wallet się rozłączy
   useEffect(() => {
@@ -136,6 +144,7 @@ export const useWallet = () => {
       setAuthToken(null);
       setUserProfile(null);
       setError(null);
+      setIsAuthenticating(false);
     }
   }, [isConnected]);
 

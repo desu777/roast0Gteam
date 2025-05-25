@@ -129,36 +129,6 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    ip: req.ip
-  });
-
-  // Don't leak error details in production
-  const message = config.server.env === 'production' 
-    ? 'Internal server error' 
-    : err.message;
-
-  res.status(err.status || 500).json({
-    error: true,
-    message: message,
-    ...(config.server.env !== 'production' && { stack: err.stack })
-  });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: true,
-    message: 'Resource not found'
-  });
-});
-
 // Graceful shutdown handler
 const gracefulShutdown = async (signal) => {
   logger.info(`${signal} received, starting graceful shutdown...`);
@@ -270,7 +240,7 @@ const startServer = async () => {
     logger.info('Players module initialized successfully');
 
     // Initialize Game Module with WebSocket emitter, AI service, and Treasury service
-    gameService = new GameService(wsService, aiService, treasuryService); // Pass WebSocket, AI, and Treasury services
+    gameService = new GameService(wsService, aiService, treasuryService);
     gameController = new GameController(gameService);
     
     // Connect Game Service to WebSocket Service
@@ -281,8 +251,35 @@ const startServer = async () => {
     
     logger.info('Game module initialized successfully');
 
-    // TODO: Initialize other modules here
-    // - AI module
+    // Error handling middleware - AFTER routes mounting
+    app.use((err, req, res, next) => {
+      logger.error('Unhandled error:', {
+        error: err.message,
+        stack: err.stack,
+        url: req.url,
+        method: req.method,
+        ip: req.ip
+      });
+
+      // Don't leak error details in production
+      const message = config.server.env === 'production' 
+        ? 'Internal server error' 
+        : err.message;
+
+      res.status(err.status || 500).json({
+        error: true,
+        message: message,
+        ...(config.server.env !== 'production' && { stack: err.stack })
+      });
+    });
+
+    // 404 handler - AFTER routes mounting
+    app.use((req, res) => {
+      res.status(404).json({
+        error: true,
+        message: 'Resource not found'
+      });
+    });
 
     // Start listening
     server.listen(config.server.port, config.server.host, () => {
