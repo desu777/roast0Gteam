@@ -231,10 +231,26 @@ class WebSocketService {
         return;
       }
 
+      if (config.logging.testEnv) {
+        logger.debug('Submit roast request', { 
+          socketId: socket.id,
+          address: userInfo.address,
+          data: { ...data, roastText: data.roastText?.substring(0, 50) + '...' }
+        });
+      }
+
       // Validate input
       if (!data || typeof data.roundId !== 'number' || !data.roastText) {
+        const errorMsg = 'Invalid submission data';
+        if (config.logging.testEnv) {
+          logger.warn('Submit roast validation failed - invalid data', { 
+            hasData: !!data,
+            roundIdType: typeof data?.roundId,
+            hasRoastText: !!data?.roastText
+          });
+        }
         socket.emit(WS_EVENTS.ERROR, {
-          message: 'Invalid submission data',
+          message: errorMsg,
           code: ERROR_CODES.VALIDATION_ERROR
         });
         return;
@@ -243,8 +259,15 @@ class WebSocketService {
       // Validate roast content
       const contentValidation = validateRoastContent(data.roastText);
       if (!contentValidation.valid) {
+        const errorMsg = contentValidation.errors?.join(', ') || 'Invalid roast content';
+        if (config.logging.testEnv) {
+          logger.warn('Submit roast validation failed - content', { 
+            roastLength: data.roastText.length,
+            errors: contentValidation.errors
+          });
+        }
         socket.emit(WS_EVENTS.ERROR, {
-          message: contentValidation.reason,
+          message: errorMsg,
           code: ERROR_CODES.VALIDATION_ERROR
         });
         return;
@@ -252,6 +275,14 @@ class WebSocketService {
 
       // Forward to game service if available
       if (this.gameService) {
+        if (config.logging.testEnv) {
+          logger.debug('Forwarding to game service', { 
+            address: userInfo.address,
+            roundId: data.roundId,
+            paymentTx: data.paymentTx
+          });
+        }
+
         const result = await this.gameService.joinRound(
           userInfo.address, 
           data.roastText, 
@@ -265,6 +296,12 @@ class WebSocketService {
             roundId: data.roundId
           });
         } else {
+          if (config.logging.testEnv) {
+            logger.warn('Game service rejected submission', { 
+              error: result.error,
+              message: result.message
+            });
+          }
           socket.emit(WS_EVENTS.ERROR, {
             message: result.message || result.error,
             code: result.error || ERROR_CODES.INTERNAL_ERROR

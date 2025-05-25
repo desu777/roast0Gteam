@@ -48,7 +48,7 @@ const canStartRound = (round, playerCount) => {
 const canSubmitRoast = (round, playerAddress, existingSubmissions) => {
   if (!round) return { valid: false, reason: 'Round not found' };
   
-  if (round.phase !== GAME_PHASES.ACTIVE) {
+  if (round.phase !== GAME_PHASES.WAITING && round.phase !== GAME_PHASES.ACTIVE) {
     return { valid: false, reason: 'Round is not accepting submissions' };
   }
   
@@ -132,7 +132,7 @@ const validateRoastContent = (text) => {
     errors.push(`Roast cannot exceed ${LIMITS.MAX_ROAST_LENGTH} characters`);
   }
   
-  // Check for excessive repetition
+  // Check for excessive repetition (zwiększam tolerancję)
   const words = text.toLowerCase().split(/\s+/);
   const wordCount = {};
   
@@ -142,18 +142,18 @@ const validateRoastContent = (text) => {
     }
   });
   
-  const maxRepetition = Math.ceil(words.length * 0.3); // 30% threshold
+  const maxRepetition = Math.ceil(words.length * 0.5); // Zwiększam z 30% do 50%
   const tooRepetitive = Object.values(wordCount).some(count => count > maxRepetition);
   
   if (tooRepetitive) {
     errors.push('Roast contains too much repetition');
   }
   
-  // Check for spam patterns
+  // Check for spam patterns (złagodzone)
   const spamPatterns = [
-    /(.)\1{9,}/g, // Same character repeated 10+ times
-    /(\w+\s*){10,}/g, // Same word repeated 10+ times
-    /^[A-Z\s]+$/g // All caps
+    /(.)\1{15,}/g, // Same character repeated 15+ times (było 10+)
+    // Usuwam wzorzec dla powtarzających się słów - zbyt restrykcyjny
+    // Usuwam wzorzec dla wielkich liter - normalny roast może być caps
   ];
   
   const hasSpamPattern = spamPatterns.some(pattern => pattern.test(text));

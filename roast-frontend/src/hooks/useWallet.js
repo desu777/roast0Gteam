@@ -35,7 +35,6 @@ export const useWallet = () => {
       return false;
     }
 
-    console.log('Starting authentication for:', address);
     setIsAuthenticating(true);
     setIsLoading(true);
     setError(null);
@@ -135,7 +134,7 @@ export const useWallet = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, isCorrectChain, isAuthenticated, isAuthenticating]);
+  }, [isConnected, address, isCorrectChain, isAuthenticated, isAuthenticating, authenticate]);
 
   // Reset stanu gdy wallet się rozłączy
   useEffect(() => {

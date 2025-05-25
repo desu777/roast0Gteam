@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+console.log('🌐 API Base URL:', API_BASE_URL);
+
 // Konfiguracja axios
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,11 +13,26 @@ const api = axios.create({
   },
 });
 
+// Interceptor dla logowania zapytań
+api.interceptors.request.use(
+  (config) => {
+    console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.error('📤 API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
 // Interceptor dla logowania błędów
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`📥 API Response: ${response.status} ${response.config.url}`, response.data);
+    return response;
+  },
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
+    console.error('📥 API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );

@@ -43,24 +43,47 @@ export const useGameState = () => {
   // Załaduj aktualną rundę z backendu
   const loadCurrentRound = useCallback(async () => {
     try {
+      console.log('🔍 Loading current round from API...');
       const response = await gameApi.getCurrentRound();
-      const round = response.data;
+      console.log('✅ API Response:', response);
+      
+      // Backend zwraca {success: true, data: roundData}
+      const round = response.data.data; // Poprawka: dane są w response.data.data
       
       if (round) {
+        console.log('📊 Round data received:', round);
         setCurrentRound(round);
         setRoundNumber(round.id);
-        setCurrentPhase(round.phase);
-        setPrizePool(parseFloat(round.prize_pool || 0));
-        setTimeLeft(round.time_left || 120);
+        
+        // Mapowanie faz z backendu na frontend
+        let mappedPhase = round.phase;
+        if (round.phase === 'active') {
+          mappedPhase = GAME_PHASES.WRITING;
+        } else if (round.phase === 'completed') {
+          mappedPhase = GAME_PHASES.RESULTS;
+        } else if (round.phase === 'waiting') {
+          mappedPhase = GAME_PHASES.WAITING;
+        } else if (round.phase === 'judging') {
+          mappedPhase = GAME_PHASES.JUDGING;
+        }
+        
+        console.log(`🎮 Phase mapping: ${round.phase} -> ${mappedPhase}`);
+        setCurrentPhase(mappedPhase);
+        setPrizePool(parseFloat(round.prizePool || round.prize_pool || 0));
+        setTimeLeft(round.timeLeft || round.time_left || 120);
         
         // Znajdź sędziego na podstawie character ID
-        const judge = TEAM_MEMBERS.find(member => member.id === round.judge_character);
+        const judgeCharacter = round.judgeCharacter || round.judge_character;
+        const judge = TEAM_MEMBERS.find(member => member.id === judgeCharacter);
         if (judge) {
+          console.log('👨‍⚖️ Judge found:', judge.name);
           setCurrentJudge(judge);
+        } else {
+          console.warn('⚠️ Judge not found for character:', judgeCharacter);
         }
 
         // Załaduj uczestników jeśli runda jest aktywna
-        if (round.phase === GAME_PHASES.ACTIVE || round.phase === GAME_PHASES.JUDGING) {
+        if (round.phase === 'active' || round.phase === 'judging') {
           setParticipants(round.participants || []);
           
           // Sprawdź czy użytkownik już wysłał roast
@@ -70,18 +93,26 @@ export const useGameState = () => {
             );
             setUserSubmitted(!!userParticipant);
           }
+        } else if (round.phase === 'waiting') {
+          // W fazie waiting może nie być participants w odpowiedzi, ale mamy playerCount
+          const playerCount = round.playerCount || 0;
+          // Tworzymy pustą tablicę participants o długości playerCount
+          setParticipants(Array(playerCount).fill({}));
+          setUserSubmitted(false);
         }
 
         // Jeśli runda zakończona, pokaż wyniki
-        if (round.phase === GAME_PHASES.COMPLETED && round.result) {
+        if (round.phase === 'completed' && round.result) {
           setWinner(round.result.winner);
           setAiReasoning(round.result.ai_reasoning);
           setShowParticles(true);
           setTimeout(() => setShowParticles(false), 5000);
         }
+      } else {
+        console.log('❌ No round data in response');
       }
     } catch (err) {
-      console.error('Failed to load current round:', err);
+      console.error('💥 Failed to load current round:', err);
       setError('Failed to load game data');
     }
   }, [address]);
@@ -90,7 +121,7 @@ export const useGameState = () => {
   const loadGameStats = useCallback(async () => {
     try {
       const response = await gameApi.getStats();
-      const stats = response.data;
+      const stats = response.data.data; // Poprawka: dane są w response.data.data
       
       if (stats) {
         setTotalParticipants(stats.totalPlayers || 0);
@@ -144,6 +175,17 @@ export const useGameState = () => {
     // Connection status
     wsService.on('connection-status', (data) => {
       setWsConnected(data.connected);
+    });
+
+    // Authentication
+    wsService.on('authenticated', (data) => {
+      console.log('🔐 WebSocket authenticated successfully:', data);
+      
+      // Dołącz do aktualnej rundy po uwierzytelnieniu
+      if (currentRound?.id) {
+        console.log('🎮 Joining round after authentication:', currentRound.id);
+        wsService.joinRound(currentRound.id);
+      }
     });
 
     // Round events
@@ -206,6 +248,7 @@ export const useGameState = () => {
     // Cleanup
     return () => {
       wsService.off('connection-status');
+      wsService.off('authenticated');
       wsService.off('round-created');
       wsService.off('round-updated');
       wsService.off('timer-update');
@@ -220,16 +263,15 @@ export const useGameState = () => {
   // Połącz WebSocket gdy użytkownik jest uwierzytelniony
   useEffect(() => {
     if (isAuthenticated && address) {
+      console.log('🔌 Connecting WebSocket with address:', address);
       wsService.connect(address);
       
-      // Dołącz do aktualnej rundy jeśli istnieje
-      if (currentRound?.id) {
-        wsService.joinRound(currentRound.id);
-      }
+      // Dołączanie do rundy będzie obsługiwane w event handlerze 'authenticated'
     } else {
+      console.log('🔌 Disconnecting WebSocket');
       wsService.disconnect();
     }
-  }, [isAuthenticated, address, currentRound?.id]);
+  }, [isAuthenticated, address]);
 
   // Countdown do następnej rundy
   useEffect(() => {

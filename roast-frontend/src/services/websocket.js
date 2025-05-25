@@ -7,11 +7,14 @@ class WebSocketService {
     this.listeners = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
+    this.userAddress = null;
   }
 
   // Połącz z serwerem WebSocket
   connect(userAddress = null) {
     const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
+    
+    this.userAddress = userAddress;
     
     this.socket = io(WS_URL, {
       transports: ['websocket', 'polling'],
@@ -21,18 +24,16 @@ class WebSocketService {
 
     this.setupEventHandlers();
 
-    // Jeśli mamy adres użytkownika, uwierzytelnij
-    if (userAddress) {
-      this.authenticate(userAddress);
-    }
-
     return this.socket;
   }
 
   // Uwierzytelnienie użytkownika
   authenticate(address) {
     if (this.socket && this.isConnected) {
+      console.log('🔐 Authenticating WebSocket with address:', address);
       this.socket.emit('authenticate', { address });
+    } else {
+      console.warn('⚠️ Cannot authenticate - WebSocket not connected');
     }
   }
 
@@ -43,6 +44,10 @@ class WebSocketService {
       this.isConnected = true;
       this.reconnectAttempts = 0;
       this.emit('connection-status', { connected: true });
+      
+      if (this.userAddress) {
+        this.authenticate(this.userAddress);
+      }
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -140,11 +145,14 @@ class WebSocketService {
   // Wyślij roast
   submitRoast(roundId, roastText, paymentTx) {
     if (this.socket && this.isConnected) {
+      console.log('📤 Submitting roast via WebSocket:', { roundId, roastText: roastText.substring(0, 50) + '...', paymentTx });
       this.socket.emit('submit-roast', {
         roundId,
         roastText,
         paymentTx
       });
+    } else {
+      console.error('❌ Cannot submit roast - WebSocket not connected');
     }
   }
 

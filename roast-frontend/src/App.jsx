@@ -82,6 +82,69 @@ const App = () => {
           />
 
           {/* Phase-specific content */}
+          {currentPhase === GAME_PHASES.WAITING && (
+            <div className="waiting-phase">
+              <div className="waiting-content">
+                <h2>🎯 Waiting for Players</h2>
+                <p>A new round is starting soon! Get ready to roast the 0G team!</p>
+                <div className="waiting-stats">
+                  <div className="stat">
+                    <span className="stat-label">Prize Pool:</span>
+                    <span className="stat-value">{prizePool.toFixed(3)} 0G</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-label">Entry Fee:</span>
+                    <span className="stat-value">0.025 0G</span>
+                  </div>
+                </div>
+                
+                {/* Formularz do roasta - tak jak w fazie WRITING */}
+                {isConnected && currentJudge && (
+                  <div className="roast-form">
+                    <div className="timer-section">
+                      <div className="timer">⏱️ Waiting for 2nd player</div>
+                      <div className="participants-count">👥 {participants.length} roasters joined</div>
+                    </div>
+                    
+                    <div className="roast-section">
+                      <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
+                      <div className="judge-style">
+                        <strong>🎯 Judge's Style:</strong> {currentJudge.decisionStyle}
+                      </div>
+                      
+                      <div className="roast-input">
+                        <textarea
+                          value={roastText}
+                          onChange={(e) => setRoastText(e.target.value)}
+                          placeholder={`Write your best roast for ${currentJudge.name} to judge...`}
+                          maxLength={280}
+                          disabled={userSubmitted || isSubmitting}
+                        />
+                        <div className="char-count">{roastText.length}/280</div>
+                      </div>
+                      
+                      <button
+                        className="submit-button"
+                        onClick={joinRound}
+                        disabled={!roastText.trim() || userSubmitted || isSubmitting}
+                      >
+                        {isSubmitting ? '⏳ Submitting...' : userSubmitted ? '✅ Roast Submitted' : '⚡ Connect to Submit'}
+                      </button>
+                      
+                      <div className="entry-fee">💰 0.025 0G entry</div>
+                    </div>
+                  </div>
+                )}
+                
+                {!isConnected && (
+                  <div className="connect-prompt">
+                    <p>Connect your wallet to join the round!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {currentPhase === GAME_PHASES.WRITING && (
             <WritingPhase 
               currentJudge={currentJudge}
@@ -165,6 +228,172 @@ const App = () => {
           opacity: 0.7;
         }
 
+        .waiting-phase {
+          text-align: center;
+          padding: 40px 20px;
+        }
+
+        .waiting-content h2 {
+          color: #FFD700;
+          margin-bottom: 16px;
+          font-size: 28px;
+        }
+
+        .waiting-content p {
+          color: #B0B0B0;
+          margin-bottom: 32px;
+          font-size: 16px;
+        }
+
+        .waiting-stats {
+          display: flex;
+          justify-content: center;
+          gap: 40px;
+          margin-bottom: 32px;
+        }
+
+        .stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .stat-label {
+          color: #888;
+          font-size: 14px;
+        }
+
+        .stat-value {
+          color: #FFD700;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .connect-prompt {
+          padding: 20px;
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          border-radius: 12px;
+          color: #FFD700;
+        }
+
+        .roast-form {
+          margin-top: 32px;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .timer-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 24px;
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          border-radius: 12px;
+          margin-bottom: 24px;
+        }
+
+        .timer {
+          color: #FFD700;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .participants-count {
+          color: #00D2E9;
+          font-size: 14px;
+        }
+
+        .roast-section h3 {
+          color: #FF6B6B;
+          text-align: center;
+          margin-bottom: 16px;
+          font-size: 24px;
+        }
+
+        .judge-style {
+          background: rgba(255, 107, 107, 0.1);
+          border: 1px solid rgba(255, 107, 107, 0.3);
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 20px;
+          color: #E6E6E6;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .roast-input {
+          position: relative;
+          margin-bottom: 20px;
+        }
+
+        .roast-input textarea {
+          width: 100%;
+          min-height: 120px;
+          padding: 16px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          color: #E6E6E6;
+          font-size: 16px;
+          font-family: inherit;
+          resize: vertical;
+          transition: border-color 0.3s ease;
+        }
+
+        .roast-input textarea:focus {
+          outline: none;
+          border-color: #FFD700;
+        }
+
+        .roast-input textarea:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .char-count {
+          position: absolute;
+          bottom: 8px;
+          right: 12px;
+          color: #888;
+          font-size: 12px;
+        }
+
+        .submit-button {
+          width: 100%;
+          padding: 16px;
+          background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+          border: none;
+          border-radius: 12px;
+          color: white;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin-bottom: 12px;
+        }
+
+        .submit-button:hover:not(:disabled) {
+          background: linear-gradient(135deg, #FF5252, #FF7979);
+          transform: translateY(-2px);
+        }
+
+        .submit-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .entry-fee {
+          text-align: center;
+          color: #FFD700;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
           .arena-main {
@@ -173,6 +402,21 @@ const App = () => {
 
           .error-message {
             margin: 15px;
+          }
+
+          .waiting-stats {
+            flex-direction: column;
+            gap: 20px;
+          }
+
+          .timer-section {
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
+          }
+
+          .roast-form {
+            margin-top: 24px;
           }
         }
       `}</style>
