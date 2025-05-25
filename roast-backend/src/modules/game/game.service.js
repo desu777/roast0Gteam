@@ -194,8 +194,9 @@ class GameService {
 
       gameLogger.playerJoined(currentRound.id, playerAddress, playerCount + 1);
 
-      // Check if round should start (2nd player joined)
-      if (playerCount === 1) { // This will be the 2nd player (playerCount is before adding new player)
+      // Check if round should start (2+ players)
+      const newPlayerCount = playerCount + 1;
+      if (currentRound.phase === GAME_PHASES.WAITING && newPlayerCount >= LIMITS.MIN_PLAYERS_TO_START) {
         await this.startRound(currentRound.id);
       }
 
@@ -626,6 +627,9 @@ class GameService {
 
   resumeActiveRounds() {
     try {
+      // Najpierw sprawdź i uruchom oczekujące rundy z wystarczającą liczbą graczy
+      this.checkAndStartWaitingRounds();
+      
       const currentRound = database.getCurrentRound();
       if (!currentRound) {
         // No active round, schedule new one
@@ -746,6 +750,37 @@ class GameService {
 
   getGameStats() {
     return database.getGlobalStats();
+  }
+
+  /**
+   * Sprawdza wszystkie oczekujące rundy i startuje je jeśli mają wystarczającą liczbę graczy
+   */
+  async checkAndStartWaitingRounds() {
+    try {
+      // Pobierz wszystkie rundy w fazie WAITING
+      const waitingRounds = database.db.prepare(`
+        SELECT r.*, COUNT(s.id) as player_count 
+        FROM rounds r
+        LEFT JOIN submissions s ON r.id = s.round_id
+        WHERE r.phase = ?
+        GROUP BY r.id
+      `).all(GAME_PHASES.WAITING);
+
+      for (const round of waitingRounds) {
+        if (round.player_count >= LIMITS.MIN_PLAYERS_TO_START) {
+          if (config.logging.testEnv) {
+            logger.info('Starting waiting round with enough players', {
+              roundId: round.id,
+              playerCount: round.player_count
+            });
+          }
+          
+          await this.startRound(round.id);
+        }
+      }
+    } catch (error) {
+      logger.error('Error checking waiting rounds', { error: error.message });
+    }
   }
 }
 
