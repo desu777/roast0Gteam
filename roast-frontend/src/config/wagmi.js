@@ -24,7 +24,7 @@ export const zgGalileoTestnet = defineChain({
   testnet: true,
 });
 
-// Konfiguracja Wagmi z RainbowKit - poprawiona wersja
+// Konfiguracja Wagmi z RainbowKit - zgodnie z wzorcem 0G-Galileo-Deployer
 export const wagmiConfig = getDefaultConfig({
   appName: '0G Roast Arena',
   projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'your-project-id',

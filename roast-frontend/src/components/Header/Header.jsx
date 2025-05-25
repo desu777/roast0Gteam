@@ -348,6 +348,10 @@ const Header = ({
           font-weight: 600;
         }
 
+        .stat-card svg {
+          color: #00D2E9;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
           .arena-header {

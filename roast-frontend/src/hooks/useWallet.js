@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useBalance, useSignMessage, useDisconnect, useConnections } from 'wagmi';
+import { useAccount, useBalance, useSignMessage, useDisconnect } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { playersApi, treasuryApi } from '../services/api';
 import { zgGalileoTestnet } from '../config/wagmi';
 
 export const useWallet = () => {
   const { address, isConnected, chainId } = useAccount();
-  const { data: balance } = useBalance({ address, chainId: zgGalileoTestnet.id });
+  const { data: balance } = useBalance({ 
+    address, 
+    chainId: zgGalileoTestnet.id 
+  });
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
-  const connections = useConnections();
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authToken, setAuthToken] = useState(null);
@@ -26,14 +28,9 @@ export const useWallet = () => {
     return `0G Roast Arena authentication\nAddress: ${address}\nTimestamp: ${timestamp}`;
   };
 
-  // Uwierzytelnienie użytkownika - poprawiona wersja
+  // Uwierzytelnienie użytkownika - zachowuję pełną logikę komunikacji z backendem
   const authenticate = useCallback(async () => {
     if (!address || !isConnected || !isCorrectChain) {
-      return false;
-    }
-
-    // Czekamy na połączenia przed próbą podpisania
-    if (connections.length === 0) {
       return false;
     }
 
@@ -78,7 +75,7 @@ export const useWallet = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [address, isConnected, isCorrectChain, signMessageAsync, connections]);
+  }, [address, isConnected, isCorrectChain, signMessageAsync]);
 
   // Załaduj profil użytkownika
   const loadUserProfile = useCallback(async (userAddress) => {
@@ -104,7 +101,7 @@ export const useWallet = () => {
     }
   }, [address]);
 
-  // Połącz wallet
+  // Połącz wallet - uproszczona wersja zgodna z 0G-Galileo-Deployer
   const connectWallet = useCallback(async () => {
     if (openConnectModal) {
       openConnectModal();
@@ -120,12 +117,17 @@ export const useWallet = () => {
     setError(null);
   }, [disconnect]);
 
-  // Auto-authenticate gdy wallet się połączy - z warunkiem na połączenia
+  // Auto-authenticate gdy wallet się połączy
   useEffect(() => {
-    if (isConnected && address && isCorrectChain && !isAuthenticated && connections.length > 0) {
-      authenticate();
+    if (isConnected && address && isCorrectChain && !isAuthenticated) {
+      // Dodaj małe opóźnienie aby upewnić się że połączenie jest stabilne
+      const timer = setTimeout(() => {
+        authenticate();
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [isConnected, address, isCorrectChain, isAuthenticated, authenticate, connections]);
+  }, [isConnected, address, isCorrectChain, isAuthenticated, authenticate]);
 
   // Reset stanu gdy wallet się rozłączy
   useEffect(() => {
