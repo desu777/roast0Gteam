@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Flame, Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle 
+  Flame, Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader 
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 
@@ -22,7 +22,8 @@ const Header = ({
     formatAddress,
     chainInfo,
     error: walletError,
-    isLoading
+    isLoading,
+    isAuthenticating
   } = useWallet();
 
   return (
@@ -58,29 +59,58 @@ const Header = ({
                 {isLoading ? 'Connecting...' : 'Connect Wallet'}
               </button>
             ) : (
-              <div className="wallet-info">
+              <div className="wallet-container">
                 {!isCorrectChain && (
                   <div className="chain-warning">
                     <AlertTriangle size={16} />
-                    <span>Switch to {chainInfo.name}</span>
+                    <span>Wrong Network</span>
                   </div>
                 )}
                 
-                <div className="wallet-status">
-                  <div className={`status-dot ${isAuthenticated ? 'authenticated' : 'connected'}`}></div>
-                  <span>{isAuthenticated ? 'Authenticated' : 'Connected'}</span>
-                  <button 
-                    className="disconnect-btn"
-                    onClick={disconnectWallet}
-                    title="Disconnect wallet"
-                  >
-                    ×
-                  </button>
-                </div>
-                
-                <div className="wallet-details">
-                  <div className="wallet-address">{formatAddress(address)}</div>
-                  <div className="wallet-balance">{balance} {chainInfo.symbol}</div>
+                <div className="wallet-card">
+                  <div className="wallet-header">
+                    <div className="wallet-status">
+                      {isAuthenticating ? (
+                        <Loader size={16} className="status-icon spinning" />
+                      ) : isAuthenticated ? (
+                        <CheckCircle size={16} className="status-icon authenticated" />
+                      ) : (
+                        <AlertTriangle size={16} className="status-icon warning" />
+                      )}
+                      <span className="status-text">
+                        {isAuthenticating ? 'Authenticating...' : isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
+                      </span>
+                    </div>
+                    <button 
+                      className="disconnect-btn"
+                      onClick={disconnectWallet}
+                      title="Disconnect wallet"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div className="wallet-body">
+                    <div className="wallet-address">{formatAddress(address)}</div>
+                    <div className="wallet-info">
+                      <div className="balance-info">
+                        <Coins size={14} />
+                        <span>{balance} {chainInfo.symbol}</span>
+                      </div>
+                      <div className="network-info">
+                        <div className={`network-dot ${isCorrectChain ? 'correct' : 'wrong'}`}></div>
+                        <span>{isCorrectChain ? chainInfo.name : 'Wrong Network'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {!isCorrectChain && (
+                    <div className="wallet-footer">
+                      <button className="switch-network-btn">
+                        Switch to {chainInfo.name}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -234,7 +264,7 @@ const Header = ({
           cursor: not-allowed;
         }
 
-        .wallet-info {
+        .wallet-container {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
@@ -254,61 +284,153 @@ const Header = ({
           animation: pulse 2s infinite;
         }
 
+        .wallet-card {
+          background: rgba(18, 18, 24, 0.9);
+          border: 1px solid rgba(60, 75, 95, 0.3);
+          border-radius: 16px;
+          padding: 16px;
+          min-width: 280px;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .wallet-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+
         .wallet-status {
           display: flex;
           align-items: center;
           gap: 8px;
-          font-size: 14px;
-          color: #00D2E9;
         }
 
-        .status-dot {
+        .status-icon {
+          width: 16px;
+          height: 16px;
+        }
+
+        .status-icon.spinning {
+          animation: spin 1s linear infinite;
+          color: #FFD700;
+        }
+
+        .status-icon.authenticated {
+          color: #00B897;
+        }
+
+        .status-icon.warning {
+          color: #FFD700;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .status-text {
+          font-size: 12px;
+          font-weight: 600;
+          color: #9999A5;
+        }
+
+        .disconnect-btn {
+          background: rgba(255, 92, 92, 0.1);
+          border: 1px solid rgba(255, 92, 92, 0.3);
+          color: #FF5C5C;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: bold;
+          padding: 4px 8px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .disconnect-btn:hover {
+          background: rgba(255, 92, 92, 0.2);
+          transform: scale(1.1);
+        }
+
+        .wallet-body {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .wallet-address {
+          font-size: 16px;
+          font-weight: 700;
+          color: #E6E6E6;
+          font-family: monospace;
+        }
+
+        .wallet-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .balance-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #00D2E9;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .network-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          color: #9999A5;
+        }
+
+        .network-dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
           animation: pulse 2s infinite;
         }
 
-        .status-dot.connected {
-          background: #FFD700;
-        }
-
-        .status-dot.authenticated {
+        .network-dot.correct {
           background: #00B897;
         }
 
-        .disconnect-btn {
-          background: none;
-          border: none;
-          color: #9999A5;
-          cursor: pointer;
-          font-size: 18px;
-          padding: 0 4px;
-          margin-left: 8px;
-          transition: color 0.3s ease;
+        .network-dot.wrong {
+          background: #FF5C5C;
         }
 
-        .disconnect-btn:hover {
+        .wallet-footer {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(60, 75, 95, 0.3);
+        }
+
+        .switch-network-btn {
+          width: 100%;
+          background: rgba(255, 92, 92, 0.1);
+          border: 1px solid rgba(255, 92, 92, 0.3);
           color: #FF5C5C;
-        }
-
-        .wallet-details {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 2px;
-        }
-
-        .wallet-address {
-          font-size: 12px;
-          color: #9999A5;
-          font-family: monospace;
-        }
-
-        .wallet-balance {
-          font-size: 12px;
-          color: #00D2E9;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-size: 14px;
           font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .switch-network-btn:hover {
+          background: rgba(255, 92, 92, 0.2);
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
 
         .error-banner {
@@ -322,11 +444,6 @@ const Header = ({
           color: #FF5C5C;
           font-size: 14px;
           margin-bottom: 15px;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
         }
 
         .stats-bar {
@@ -364,6 +481,11 @@ const Header = ({
             text-align: center;
           }
 
+          .wallet-card {
+            min-width: unset;
+            width: 100%;
+          }
+
           .stats-bar {
             gap: 10px;
           }
@@ -375,10 +497,6 @@ const Header = ({
 
           .title-group h1 {
             font-size: 24px;
-          }
-
-          .wallet-info {
-            align-items: center;
           }
         }
       `}</style>

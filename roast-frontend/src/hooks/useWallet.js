@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount, useBalance, useSignMessage, useDisconnect } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { playersApi, treasuryApi } from '../services/api';
@@ -20,6 +20,9 @@ export const useWallet = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Używamy ref do śledzenia czy już próbujemy autentykacji
+  const authAttemptRef = useRef(false);
 
   // Sprawdź czy jesteśmy na właściwym chainie
   const isCorrectChain = chainId === zgGalileoTestnet.id;
@@ -29,12 +32,19 @@ export const useWallet = () => {
     return `0G Roast Arena authentication\nAddress: ${address}\nTimestamp: ${timestamp}`;
   };
 
-  // Uwierzytelnienie użytkownika - zachowuję pełną logikę komunikacji z backendem
+  // Uwierzytelnienie użytkownika
   const authenticate = useCallback(async () => {
-    if (!address || !isConnected || !isCorrectChain || isAuthenticating || isAuthenticated) {
+    // Sprawdź czy już próbujemy autentykacji
+    if (authAttemptRef.current) {
+      console.log('Authentication already in progress, skipping...');
       return false;
     }
 
+    if (!address || !isConnected || !isCorrectChain || isAuthenticated) {
+      return false;
+    }
+
+    authAttemptRef.current = true;
     setIsAuthenticating(true);
     setIsLoading(true);
     setError(null);
@@ -44,9 +54,11 @@ export const useWallet = () => {
       const timestamp = Math.floor(Date.now() / 1000);
       const message = createAuthMessage(address, timestamp);
 
+      console.log('🔐 Requesting signature for authentication...');
       // Podpisz wiadomość
       const signature = await signMessageAsync({ message });
 
+      console.log('✅ Signature obtained, verifying with backend...');
       // Wyślij do backendu w celu weryfikacji
       const response = await playersApi.verifySignature({
         address,
@@ -57,7 +69,7 @@ export const useWallet = () => {
 
       if (response.data.success) {
         setIsAuthenticated(true);
-        setAuthToken(signature); // Używamy podpisu jako tokenu
+        setAuthToken(signature);
         
         // Pobierz profil użytkownika z odpowiedzi lub załaduj osobno
         if (response.data.player) {
@@ -66,14 +78,14 @@ export const useWallet = () => {
           await loadUserProfile(address);
         }
         
-        console.log('User authenticated successfully');
+        console.log('✅ User authenticated successfully');
         return true;
       } else {
         throw new Error(response.data.message || 'Authentication failed');
       }
 
     } catch (err) {
-      console.error('Authentication error:', err);
+      console.error('❌ Authentication error:', err);
       setError(err.message || 'Failed to authenticate wallet');
       setIsAuthenticated(false);
       setAuthToken(null);
@@ -81,8 +93,9 @@ export const useWallet = () => {
     } finally {
       setIsLoading(false);
       setIsAuthenticating(false);
+      authAttemptRef.current = false;
     }
-  }, [address, isConnected, isCorrectChain, isAuthenticating, isAuthenticated, signMessageAsync]);
+  }, [address, isConnected, isCorrectChain, isAuthenticated, signMessageAsync]);
 
   // Załaduj profil użytkownika
   const loadUserProfile = useCallback(async (userAddress) => {
@@ -126,15 +139,15 @@ export const useWallet = () => {
 
   // Auto-authenticate gdy wallet się połączy
   useEffect(() => {
-    if (isConnected && address && isCorrectChain && !isAuthenticated && !isAuthenticating) {
+    if (isConnected && address && isCorrectChain && !isAuthenticated && !authAttemptRef.current) {
       // Dodaj małe opóźnienie aby upewnić się że połączenie jest stabilne
       const timer = setTimeout(() => {
         authenticate();
-      }, 500);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, isCorrectChain, isAuthenticated, isAuthenticating, authenticate]);
+  }, [isConnected, address, isCorrectChain, isAuthenticated, authenticate]);
 
   // Reset stanu gdy wallet się rozłączy
   useEffect(() => {
@@ -144,6 +157,7 @@ export const useWallet = () => {
       setUserProfile(null);
       setError(null);
       setIsAuthenticating(false);
+      authAttemptRef.current = false;
     }
   }, [isConnected]);
 
@@ -173,6 +187,7 @@ export const useWallet = () => {
     authToken,
     userProfile,
     isLoading,
+    isAuthenticating,
     error,
 
     // Actions

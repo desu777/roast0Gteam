@@ -195,7 +195,7 @@ class GameService {
       gameLogger.playerJoined(currentRound.id, playerAddress, playerCount + 1);
 
       // Check if round should start (2nd player joined)
-      if (playerCount === 0) { // This will be the 2nd player (counting from 0)
+      if (playerCount === 1) { // This will be the 2nd player (playerCount is before adding new player)
         await this.startRound(currentRound.id);
       }
 
