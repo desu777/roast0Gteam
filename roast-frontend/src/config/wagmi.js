@@ -24,10 +24,10 @@ export const zgGalileoTestnet = defineChain({
   testnet: true,
 });
 
-// Konfiguracja Wagmi z RainbowKit
+// Konfiguracja Wagmi z RainbowKit - poprawiona wersja
 export const wagmiConfig = getDefaultConfig({
   appName: '0G Roast Arena',
   projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'your-project-id',
-  chains: [zgGalileoTestnet], // Zawsze łączymy tylko z tym chainem
-  ssr: false,
+  chains: [zgGalileoTestnet],
+  ssr: false, // Wyłączamy SSR dla Vite
 }); 
