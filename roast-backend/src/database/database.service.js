@@ -286,7 +286,7 @@ class DatabaseService {
     return this.db.prepare(`
       SELECT 
         COUNT(DISTINCT r.id) as total_rounds,
-        COUNT(DISTINCT s.player_address) as unique_players,
+        COUNT(DISTINCT s.player_address) as totalPlayers,
         SUM(res.prize_amount) as total_prizes_paid,
         AVG(res.prize_amount) as average_prize,
         COUNT(DISTINCT CASE WHEN r.phase = 'completed' THEN r.id END) as completed_rounds
