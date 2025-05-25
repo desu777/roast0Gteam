@@ -1,17 +1,30 @@
 import React from 'react';
 import { 
-  Flame, Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw 
+  Flame, Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle 
 } from 'lucide-react';
+import { useWallet } from '../../hooks/useWallet';
 
 const Header = ({ 
   soundEnabled, 
   setSoundEnabled, 
-  isConnected, 
-  connectWallet, 
   roundNumber, 
   totalParticipants, 
   prizePool 
 }) => {
+  const { 
+    address, 
+    isConnected, 
+    isCorrectChain, 
+    isAuthenticated,
+    balance, 
+    connectWallet, 
+    disconnectWallet,
+    formatAddress,
+    chainInfo,
+    error: walletError,
+    isLoading
+  } = useWallet();
+
   return (
     <>
       <header className="arena-header">
@@ -36,21 +49,51 @@ const Header = ({
             </button>
             
             {!isConnected ? (
-              <button className="connect-wallet-btn" onClick={connectWallet}>
+              <button 
+                className="connect-wallet-btn" 
+                onClick={connectWallet}
+                disabled={isLoading}
+              >
                 <Zap size={20} />
-                Connect Wallet
+                {isLoading ? 'Connecting...' : 'Connect Wallet'}
               </button>
             ) : (
               <div className="wallet-info">
+                {!isCorrectChain && (
+                  <div className="chain-warning">
+                    <AlertTriangle size={16} />
+                    <span>Switch to {chainInfo.name}</span>
+                  </div>
+                )}
+                
                 <div className="wallet-status">
-                  <div className="status-dot"></div>
-                  Connected
+                  <div className={`status-dot ${isAuthenticated ? 'authenticated' : 'connected'}`}></div>
+                  <span>{isAuthenticated ? 'Authenticated' : 'Connected'}</span>
+                  <button 
+                    className="disconnect-btn"
+                    onClick={disconnectWallet}
+                    title="Disconnect wallet"
+                  >
+                    ×
+                  </button>
                 </div>
-                <div className="wallet-balance">5.42 0G</div>
+                
+                <div className="wallet-details">
+                  <div className="wallet-address">{formatAddress(address)}</div>
+                  <div className="wallet-balance">{balance} {chainInfo.symbol}</div>
+                </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Error Display */}
+        {walletError && (
+          <div className="error-banner">
+            <AlertTriangle size={16} />
+            <span>{walletError}</span>
+          </div>
+        )}
 
         {/* Stats Bar */}
         <div className="stats-bar">
@@ -64,7 +107,7 @@ const Header = ({
           </div>
           <div className="stat-card">
             <Coins size={16} />
-            <span>{prizePool.toFixed(3)} 0G Pool</span>
+            <span>{prizePool.toFixed(3)} {chainInfo.symbol} Pool</span>
           </div>
           <div className="stat-card">
             <RefreshCw size={16} />
@@ -181,16 +224,34 @@ const Header = ({
           transition: all 0.3s ease;
         }
 
-        .connect-wallet-btn:hover {
+        .connect-wallet-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 8px 20px rgba(0, 210, 233, 0.4);
+        }
+
+        .connect-wallet-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
 
         .wallet-info {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          gap: 4px;
+          gap: 8px;
+        }
+
+        .chain-warning {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: rgba(255, 92, 92, 0.1);
+          border: 1px solid rgba(255, 92, 92, 0.3);
+          border-radius: 8px;
+          color: #FF5C5C;
+          font-size: 12px;
+          animation: pulse 2s infinite;
         }
 
         .wallet-status {
@@ -205,18 +266,67 @@ const Header = ({
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: #00B897;
           animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+          background: #FFD700;
+        }
+
+        .status-dot.authenticated {
+          background: #00B897;
+        }
+
+        .disconnect-btn {
+          background: none;
+          border: none;
+          color: #9999A5;
+          cursor: pointer;
+          font-size: 18px;
+          padding: 0 4px;
+          margin-left: 8px;
+          transition: color 0.3s ease;
+        }
+
+        .disconnect-btn:hover {
+          color: #FF5C5C;
+        }
+
+        .wallet-details {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+        }
+
+        .wallet-address {
+          font-size: 12px;
+          color: #9999A5;
+          font-family: monospace;
+        }
+
+        .wallet-balance {
+          font-size: 12px;
+          color: #00D2E9;
+          font-weight: 600;
+        }
+
+        .error-banner {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 16px;
+          background: rgba(255, 92, 92, 0.1);
+          border: 1px solid rgba(255, 92, 92, 0.3);
+          border-radius: 8px;
+          color: #FF5C5C;
+          font-size: 14px;
+          margin-bottom: 15px;
         }
 
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
-        }
-
-        .wallet-balance {
-          font-size: 12px;
-          color: #9999A5;
         }
 
         .stats-bar {
@@ -261,6 +371,10 @@ const Header = ({
 
           .title-group h1 {
             font-size: 24px;
+          }
+
+          .wallet-info {
+            align-items: center;
           }
         }
       `}</style>

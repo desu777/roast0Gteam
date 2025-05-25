@@ -30,6 +30,7 @@ const App = () => {
     roundNumber,
     userSubmitted,
     nextRoundCountdown,
+    error,
     
     // UI State
     soundEnabled,
@@ -40,10 +41,10 @@ const App = () => {
     showParticles,
     
     // Actions
-    connectWallet,
     joinRound,
     formatTime,
-    playSound
+    playSound,
+    clearError
   } = useGameState();
 
   return (
@@ -59,12 +60,18 @@ const App = () => {
         <Header 
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
-          isConnected={isConnected}
-          connectWallet={connectWallet}
           roundNumber={roundNumber}
           totalParticipants={totalParticipants}
           prizePool={prizePool}
         />
+
+        {/* Error Display */}
+        {error && (
+          <div className="error-message">
+            <span>{error}</span>
+            <button onClick={clearError}>×</button>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="arena-main">
@@ -132,10 +139,40 @@ const App = () => {
           margin: 0 auto;
         }
 
+        .error-message {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 20px;
+          background: rgba(255, 92, 92, 0.1);
+          border: 1px solid rgba(255, 92, 92, 0.3);
+          border-radius: 8px;
+          color: #FF5C5C;
+          margin: 20px;
+          font-size: 14px;
+        }
+
+        .error-message button {
+          background: none;
+          border: none;
+          color: #FF5C5C;
+          cursor: pointer;
+          font-size: 18px;
+          padding: 0 4px;
+        }
+
+        .error-message button:hover {
+          opacity: 0.7;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
           .arena-main {
             padding: 20px 15px;
+          }
+
+          .error-message {
+            margin: 15px;
           }
         }
       `}</style>

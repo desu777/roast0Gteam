@@ -1,28 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GAME_PHASES, AI_REASONINGS } from '../constants/gameConstants';
 import { TEAM_MEMBERS } from '../data/teamMembers';
+import { gameApi } from '../services/api';
+import wsService from '../services/websocket';
+import { useWallet } from './useWallet';
+import { useSendTransaction } from 'wagmi';
+import { parseEther } from 'viem';
 
 export const useGameState = () => {
+  const { address, isAuthenticated, isConnected } = useWallet();
+  const { sendTransactionAsync } = useSendTransaction();
+
   // Game State
   const [currentPhase, setCurrentPhase] = useState(GAME_PHASES.WAITING);
   const [currentJudge, setCurrentJudge] = useState(null);
   const [roastText, setRoastText] = useState('');
   const [timeLeft, setTimeLeft] = useState(120);
   const [participants, setParticipants] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
   const [winner, setWinner] = useState(null);
   const [aiReasoning, setAiReasoning] = useState('');
-  const [prizePool, setPrizePool] = useState(2.375); // Starting pool
-  const [totalParticipants, setTotalParticipants] = useState(95); // Simulated global participants
+  const [prizePool, setPrizePool] = useState(0);
+  const [totalParticipants, setTotalParticipants] = useState(0);
+  const [currentRound, setCurrentRound] = useState(null);
   
   // UI State
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showJudgeDetails, setShowJudgeDetails] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
-  const [roundNumber, setRoundNumber] = useState(247);
+  const [roundNumber, setRoundNumber] = useState(1);
   const [userSubmitted, setUserSubmitted] = useState(false);
   const [nextRoundCountdown, setNextRoundCountdown] = useState(0);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [error, setError] = useState(null);
 
   // Sound effects
   const playSound = (type) => {
@@ -30,99 +40,229 @@ export const useGameState = () => {
     console.log(`Playing sound: ${type}`);
   };
 
-  // Connect wallet simulation
-  const connectWallet = () => {
-    setIsConnected(true);
-    playSound('connect');
-  };
+  // Załaduj aktualną rundę z backendu
+  const loadCurrentRound = useCallback(async () => {
+    try {
+      const response = await gameApi.getCurrentRound();
+      const round = response.data;
+      
+      if (round) {
+        setCurrentRound(round);
+        setRoundNumber(round.id);
+        setCurrentPhase(round.phase);
+        setPrizePool(parseFloat(round.prize_pool || 0));
+        setTimeLeft(round.time_left || 120);
+        
+        // Znajdź sędziego na podstawie character ID
+        const judge = TEAM_MEMBERS.find(member => member.id === round.judge_character);
+        if (judge) {
+          setCurrentJudge(judge);
+        }
 
-  // Random judge selection
-  const selectRandomJudge = () => {
-    const randomJudge = TEAM_MEMBERS[Math.floor(Math.random() * TEAM_MEMBERS.length)];
-    setCurrentJudge(randomJudge);
-    playSound('select');
-    return randomJudge;
-  };
+        // Załaduj uczestników jeśli runda jest aktywna
+        if (round.phase === GAME_PHASES.ACTIVE || round.phase === GAME_PHASES.JUDGING) {
+          setParticipants(round.participants || []);
+          
+          // Sprawdź czy użytkownik już wysłał roast
+          if (address && round.participants) {
+            const userParticipant = round.participants.find(p => 
+              p.player_address?.toLowerCase() === address.toLowerCase()
+            );
+            setUserSubmitted(!!userParticipant);
+          }
+        }
 
-  // Start new round
-  const startNewRound = () => {
-    const newJudge = selectRandomJudge();
-    setCurrentPhase(GAME_PHASES.WRITING);
-    setTimeLeft(120);
-    setParticipants([]);
-    setWinner(null);
-    setAiReasoning('');
-    setUserSubmitted(false);
-    setPrizePool(prev => prev + Math.random() * 0.5 + 0.1); // Pool grows
-    setTotalParticipants(prev => prev + Math.floor(Math.random() * 10) + 3);
-    playSound('start');
-  };
+        // Jeśli runda zakończona, pokaż wyniki
+        if (round.phase === GAME_PHASES.COMPLETED && round.result) {
+          setWinner(round.result.winner);
+          setAiReasoning(round.result.ai_reasoning);
+          setShowParticles(true);
+          setTimeout(() => setShowParticles(false), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load current round:', err);
+      setError('Failed to load game data');
+    }
+  }, [address]);
 
-  // Join round
-  const joinRound = async () => {
-    if (!isConnected || !roastText.trim() || isSubmitting || userSubmitted) return;
-    
-    setIsSubmitting(true);
-    playSound('join');
-    
-    // Simulate transaction
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const newParticipant = {
-      address: `0x${Math.random().toString(16).substr(2, 8)}`,
-      roast: roastText,
-      timestamp: Date.now(),
-      isUser: true
-    };
-    
-    setParticipants(prev => [...prev, newParticipant]);
-    setPrizePool(prev => prev + 0.025);
-    setRoastText('');
-    setIsSubmitting(false);
-    setUserSubmitted(true);
-  };
+  // Załaduj statystyki gry
+  const loadGameStats = useCallback(async () => {
+    try {
+      const response = await gameApi.getStats();
+      const stats = response.data;
+      
+      if (stats) {
+        setTotalParticipants(stats.totalPlayers || 0);
+      }
+    } catch (err) {
+      console.error('Failed to load game stats:', err);
+    }
+  }, []);
 
-  // Add simulated participants
-  const addSimulatedParticipants = () => {
-    const numberOfParticipants = Math.floor(Math.random() * 8) + 3; // 3-10 participants
-    const newParticipants = [];
-    
-    for (let i = 0; i < numberOfParticipants; i++) {
-      newParticipants.push({
-        address: `0x${Math.random().toString(16).substr(2, 8)}`,
-        roast: `Simulated roast #${i + 1}`,
-        timestamp: Date.now() + i * 1000,
-        isUser: false
-      });
+  // Dołącz do rundy (wyślij płatność + roast)
+  const joinRound = useCallback(async () => {
+    if (!isAuthenticated || !currentRound || !roastText.trim() || isSubmitting || userSubmitted) {
+      return;
     }
     
-    setParticipants(prev => [...prev, ...newParticipants]);
-    setPrizePool(prev => prev + (numberOfParticipants * 0.025));
-  };
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      // 1. Wyślij płatność 0.025 0G do treasury
+      const treasuryAddress = import.meta.env.VITE_TREASURY_ADDRESS;
+      if (!treasuryAddress) {
+        throw new Error('Treasury address not configured');
+      }
 
-  // Generate AI reasoning based on judge personality
-  const generateAIReasoning = (judge, winner) => {
-    const judgeReasons = AI_REASONINGS[judge.id] || AI_REASONINGS.michael;
-    return judgeReasons[Math.floor(Math.random() * judgeReasons.length)];
-  };
+      const entryFee = parseEther('0.025'); // 0.025 0G
+      
+      const txHash = await sendTransactionAsync({
+        to: treasuryAddress,
+        value: entryFee,
+      });
 
-  // AI judging simulation
-  const judgeRoasts = () => {
-    const allParticipants = [...participants];
-    const randomWinner = allParticipants[Math.floor(Math.random() * allParticipants.length)];
-    const reasoning = generateAIReasoning(currentJudge, randomWinner);
-    
-    setWinner(randomWinner);
-    setAiReasoning(reasoning);
-    setCurrentPhase(GAME_PHASES.RESULTS);
-    setShowParticles(true);
-    playSound('winner');
-    
-    // Start countdown for next round
-    setNextRoundCountdown(15);
-    
-    setTimeout(() => setShowParticles(false), 5000);
-  };
+      console.log('Payment transaction sent:', txHash);
+      playSound('join');
+
+      // 2. Wyślij roast przez WebSocket
+      wsService.submitRoast(currentRound.id, roastText, txHash);
+
+      // Reset form
+      setRoastText('');
+      
+    } catch (err) {
+      console.error('Failed to join round:', err);
+      setError(err.message || 'Failed to join round');
+      setIsSubmitting(false);
+    }
+  }, [isAuthenticated, currentRound, roastText, isSubmitting, userSubmitted, sendTransactionAsync]);
+
+  // Konfiguracja WebSocket event handlerów
+  useEffect(() => {
+    // Connection status
+    wsService.on('connection-status', (data) => {
+      setWsConnected(data.connected);
+    });
+
+    // Round events
+    wsService.on('round-created', (data) => {
+      console.log('New round created:', data);
+      loadCurrentRound();
+      playSound('start');
+    });
+
+    wsService.on('round-updated', (data) => {
+      console.log('Round updated:', data);
+      loadCurrentRound();
+    });
+
+    wsService.on('timer-update', (data) => {
+      if (data.roundId === currentRound?.id) {
+        setTimeLeft(data.timeLeft);
+      }
+    });
+
+    wsService.on('player-joined', (data) => {
+      console.log('Player joined:', data);
+      // Odśwież uczestników
+      loadCurrentRound();
+    });
+
+    wsService.on('judging-started', (data) => {
+      console.log('Judging started:', data);
+      setCurrentPhase(GAME_PHASES.JUDGING);
+      playSound('judging');
+    });
+
+    wsService.on('round-completed', (data) => {
+      console.log('Round completed:', data);
+      setCurrentPhase(GAME_PHASES.RESULTS);
+      setWinner(data.winner);
+      setAiReasoning(data.ai_reasoning);
+      setShowParticles(true);
+      playSound('winner');
+      
+      setTimeout(() => setShowParticles(false), 5000);
+      
+      // Ustaw countdown do następnej rundy
+      setNextRoundCountdown(30);
+    });
+
+    wsService.on('roast-submitted', (data) => {
+      console.log('Roast submitted successfully:', data);
+      setIsSubmitting(false);
+      setUserSubmitted(true);
+      playSound('submit');
+    });
+
+    wsService.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      setError(error.message);
+      setIsSubmitting(false);
+    });
+
+    // Cleanup
+    return () => {
+      wsService.off('connection-status');
+      wsService.off('round-created');
+      wsService.off('round-updated');
+      wsService.off('timer-update');
+      wsService.off('player-joined');
+      wsService.off('judging-started');
+      wsService.off('round-completed');
+      wsService.off('roast-submitted');
+      wsService.off('error');
+    };
+  }, [currentRound?.id, loadCurrentRound]);
+
+  // Połącz WebSocket gdy użytkownik jest uwierzytelniony
+  useEffect(() => {
+    if (isAuthenticated && address) {
+      wsService.connect(address);
+      
+      // Dołącz do aktualnej rundy jeśli istnieje
+      if (currentRound?.id) {
+        wsService.joinRound(currentRound.id);
+      }
+    } else {
+      wsService.disconnect();
+    }
+  }, [isAuthenticated, address, currentRound?.id]);
+
+  // Countdown do następnej rundy
+  useEffect(() => {
+    if (nextRoundCountdown > 0) {
+      const timer = setTimeout(() => {
+        setNextRoundCountdown(prev => {
+          if (prev <= 1) {
+            // Załaduj nową rundę
+            loadCurrentRound();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [nextRoundCountdown, loadCurrentRound]);
+
+  // Załaduj dane przy starcie
+  useEffect(() => {
+    loadCurrentRound();
+    loadGameStats();
+  }, [loadCurrentRound, loadGameStats]);
+
+  // Odśwież dane co 30 sekund
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadCurrentRound();
+      loadGameStats();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [loadCurrentRound, loadGameStats]);
 
   // Format time helper
   const formatTime = (seconds) => {
@@ -130,47 +270,6 @@ export const useGameState = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Initialize first round
-  useEffect(() => {
-    startNewRound();
-  }, []);
-
-  // Timer effect for writing phase
-  useEffect(() => {
-    if (currentPhase === GAME_PHASES.WRITING && timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            // Add simulated participants before judging
-            addSimulatedParticipants();
-            setCurrentPhase(GAME_PHASES.JUDGING);
-            setTimeout(judgeRoasts, 3000);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [currentPhase, timeLeft]);
-
-  // Next round countdown
-  useEffect(() => {
-    if (nextRoundCountdown > 0) {
-      const timer = setTimeout(() => {
-        setNextRoundCountdown(prev => {
-          if (prev <= 1) {
-            setRoundNumber(prev => prev + 1);
-            startNewRound();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [nextRoundCountdown]);
 
   return {
     // Game State
@@ -180,7 +279,7 @@ export const useGameState = () => {
     setRoastText,
     timeLeft,
     participants,
-    isConnected,
+    isConnected: isConnected && wsConnected,
     winner,
     aiReasoning,
     prizePool,
@@ -188,6 +287,8 @@ export const useGameState = () => {
     roundNumber,
     userSubmitted,
     nextRoundCountdown,
+    currentRound,
+    error,
     
     // UI State
     soundEnabled,
@@ -198,9 +299,14 @@ export const useGameState = () => {
     showParticles,
     
     // Actions
-    connectWallet,
+    connectWallet: () => {}, // Będzie obsługiwane przez useWallet
     joinRound,
     formatTime,
-    playSound
+    playSound,
+    
+    // Utils
+    loadCurrentRound,
+    loadGameStats,
+    clearError: () => setError(null)
   };
 }; 
