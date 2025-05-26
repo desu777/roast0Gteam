@@ -442,7 +442,7 @@ class GameService {
 
           // Update result with transaction hash
           database.db.prepare(`
-            UPDATE results SET payout_tx_hash = ?, updated_at = CURRENT_TIMESTAMP 
+            UPDATE results SET payout_tx_hash = ? 
             WHERE id = ?
           `).run(payoutTxHash, resultId);
 
@@ -734,7 +734,12 @@ class GameService {
       ...formatRoundResponse(round),
       playerCount,
       timeLeft,
-      character: CHARACTERS[round.judge_character] || null
+      character: CHARACTERS[round.judge_character] || null,
+      submissions: submissions.map(sub => ({
+        id: sub.id,
+        player_address: sub.player_address,
+        roast_text: sub.roast_text
+      }))
     };
   }
 

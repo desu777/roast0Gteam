@@ -94,11 +94,23 @@ export const useGameState = () => {
             setUserSubmitted(!!userParticipant);
           }
         } else if (round.phase === 'waiting') {
-          // W fazie waiting może nie być participants w odpowiedzi, ale mamy playerCount
-          const playerCount = round.playerCount || 0;
-          // Tworzymy pustą tablicę participants o długości playerCount
-          setParticipants(Array(playerCount).fill({}));
-          setUserSubmitted(false);
+          // Załaduj prawdziwych uczestników jeśli są
+          const roundSubmissions = round.submissions || [];
+          const mappedParticipants = roundSubmissions.map(sub => ({
+            id: sub.id,
+            address: sub.player_address || sub.playerAddress,
+            roastText: sub.roast_text || sub.roastText,
+            isUser: address && sub.player_address?.toLowerCase() === address.toLowerCase()
+          }));
+          setParticipants(mappedParticipants);
+          
+          // Sprawdź czy użytkownik już wysłał
+          if (address) {
+            const userSubmitted = mappedParticipants.some(p => 
+              p.address?.toLowerCase() === address.toLowerCase()
+            );
+            setUserSubmitted(userSubmitted);
+          }
         }
 
         // Jeśli runda zakończona, pokaż wyniki
@@ -109,11 +121,29 @@ export const useGameState = () => {
           setTimeout(() => setShowParticles(false), 5000);
         }
       } else {
-        console.log('❌ No round data in response');
+        // Nie ma aktywnej rundy - to normalne między rundami
+        console.log('⏳ No active round - waiting for next round');
+        setCurrentRound(null);
+        setCurrentPhase(GAME_PHASES.WAITING);
+        setCurrentJudge(null);
+        setParticipants([]);
+        setUserSubmitted(false);
+        // NIE ustawiamy błędu
       }
     } catch (err) {
-      console.error('💥 Failed to load current round:', err);
-      setError('Failed to load game data');
+      // Sprawdź czy to błąd 404 (brak rundy)
+      if (err.response?.status === 404) {
+        console.log('⏳ No active round found - this is normal between rounds');
+        setCurrentRound(null);
+        setCurrentPhase(GAME_PHASES.WAITING);
+        setCurrentJudge(null);
+        setParticipants([]);
+        setUserSubmitted(false);
+        // NIE ustawiamy błędu dla 404
+      } else {
+        console.error('💥 Failed to load current round:', err);
+        setError('Failed to load game data');
+      }
     }
   }, [address]);
 
@@ -202,7 +232,7 @@ export const useGameState = () => {
 
     wsService.on('timer-update', (data) => {
       if (data.roundId === currentRound?.id) {
-        setTimeLeft(data.timeLeft);
+        setTimeLeft(Math.max(0, data.timeLeft));
       }
     });
 

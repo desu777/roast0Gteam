@@ -61,7 +61,7 @@ const App = () => {
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
           roundNumber={roundNumber}
-          totalParticipants={totalParticipants}
+          currentPlayerCount={participants.length}
           prizePool={prizePool}
         />
 

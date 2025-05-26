@@ -8,7 +8,7 @@ const Header = ({
   soundEnabled, 
   setSoundEnabled, 
   roundNumber, 
-  totalParticipants, 
+  currentPlayerCount,
   prizePool 
 }) => {
   const { 
@@ -133,7 +133,7 @@ const Header = ({
           </div>
           <div className="stat-card">
             <Users size={16} />
-            <span>{totalParticipants} Total Players</span>
+            <span>{currentPlayerCount} Players in Round</span>
           </div>
           <div className="stat-card">
             <Coins size={16} />

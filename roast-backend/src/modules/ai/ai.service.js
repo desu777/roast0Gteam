@@ -181,18 +181,45 @@ class AIService {
         throw new Error('No content in AI response');
       }
 
-      // Parsuj JSON
+      // Parsuj JSON - ulepszona wersja
       let evaluationResult;
       try {
-        // Czasami AI może dodać dodatkowy tekst, więc szukamy JSON
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        // Najpierw spróbuj usunąć bloki markdown
+        let cleanContent = content;
+        
+        // Usuń ```json na początku i ``` na końcu
+        if (cleanContent.includes('```json')) {
+          cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+        } else if (cleanContent.includes('```')) {
+          cleanContent = cleanContent.replace(/```\s*/g, '');
+        }
+        
+        // Znajdź JSON w treści
+        const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           evaluationResult = JSON.parse(jsonMatch[0]);
         } else {
-          evaluationResult = JSON.parse(content);
+          evaluationResult = JSON.parse(cleanContent);
         }
       } catch (parseError) {
-        throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+        // Jeśli dalej nie działa, spróbuj różnych metod
+        if (config.logging.testEnv) {
+          logger.debug('Initial parse failed, trying alternative methods...', {
+            error: parseError.message,
+            contentPreview: content.substring(0, 200)
+          });
+        }
+        
+        // Metoda 2: Usuń wszystko przed pierwszym { i po ostatnim }
+        const startIdx = content.indexOf('{');
+        const endIdx = content.lastIndexOf('}');
+        
+        if (startIdx !== -1 && endIdx !== -1) {
+          const jsonContent = content.substring(startIdx, endIdx + 1);
+          evaluationResult = JSON.parse(jsonContent);
+        } else {
+          throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+        }
       }
 
       // Waliduj odpowiedź
