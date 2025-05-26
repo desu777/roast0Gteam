@@ -1,7 +1,5 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
-import { createConfig, http } from 'wagmi';
-import { injected, walletConnect } from 'wagmi/connectors';
 
 // Definicja custom chain 0G-Galileo-Testnet
 export const zgGalileoTestnet = defineChain({
@@ -26,19 +24,12 @@ export const zgGalileoTestnet = defineChain({
   testnet: true,
 });
 
-// Konfiguracja Wagmi - zaktualizowana wersja
-export const wagmiConfig = createConfig({
+// Konfiguracja Wagmi z RainbowKit - lepsza kompatybilność z różnymi przeglądarkami
+export const wagmiConfig = getDefaultConfig({
+  appName: '0G Roast Arena',
+  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'fc8b80dcdc0b7f7f08f8c89e3f95e866',
   chains: [zgGalileoTestnet],
-  connectors: [
-    injected({ chains: [zgGalileoTestnet] }),
-    walletConnect({
-      projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'your-project-id',
-      chains: [zgGalileoTestnet],
-    }),
-  ],
-  transports: {
-    [zgGalileoTestnet.id]: http(),
-  },
+  ssr: false,
 });
 
 // Alternatywnie, jeśli powyższe nie działa, użyj getDefaultConfig ale z dodatkową konfiguracją

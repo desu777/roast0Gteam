@@ -514,7 +514,8 @@ class GameService {
         roundId,
         winnerAddress: winnerSubmission.player_address,
         prizeAmount,
-        payoutTxHash
+        payoutTxHash,
+        aiReasoning
       });
 
       if (config.logging.testEnv) {
@@ -607,6 +608,17 @@ class GameService {
     // Clear any existing auto-start timer
     if (this.autoStartTimer) {
       clearTimeout(this.autoStartTimer);
+    }
+
+    // Natychmiast wybierz nowego sędziego dla następnej rundy
+    const characters = Object.keys(CHARACTERS);
+    const nextCharacter = characters[Math.floor(Math.random() * characters.length)];
+    
+    if (config.logging.testEnv) {
+      logger.info('Next round character selected', { 
+        character: nextCharacter,
+        delay: config.game.nextRoundDelay 
+      });
     }
 
     // Schedule new round creation

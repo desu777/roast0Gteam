@@ -1,5 +1,5 @@
 const { config } = require('../../config/app.config');
-const { logger, perfLogger } = require('../../services/logger.service');
+const { logger, gameLogger } = require('../../services/logger.service');
 const { OpenRouterService } = require('./openrouter.service');
 const { CharacterService } = require('./character.service');
 const { ERROR_CODES } = require('../../utils/constants');
@@ -91,8 +91,8 @@ class AIService {
 
       // Wywołaj OpenRouter API z timeoutem
       const aiResponse = await this.callAIWithTimeout(messages, {
-        maxTokens: 800,
-        temperature: 0.3, // Niższa temperatura dla bardziej konsystentnych wyników
+        maxTokens: 1600,
+        temperature: 0.3,
       });
 
       // Parsuj i waliduj odpowiedź
@@ -101,7 +101,7 @@ class AIService {
       const duration = Date.now() - startTime;
 
       // Loguj sukces
-      perfLogger.aiEvaluation(roundId, characterId, submissions.length, duration);
+      gameLogger.aiEvaluation(roundId, characterId, submissions.length, duration);
 
       if (config.logging.testEnv) {
         logger.info('AI evaluation completed successfully', {
@@ -181,6 +181,14 @@ class AIService {
         throw new Error('No content in AI response');
       }
 
+      if (config.logging.testEnv) {
+        logger.debug('AI response received', {
+          contentLength: content.length,
+          contentPreview: content.substring(0, 100) + '...',
+          fullContent: content.length < 500 ? content : 'Content too long to log'
+        });
+      }
+
       // Parsuj JSON - ulepszona wersja
       let evaluationResult;
       try {
@@ -216,7 +224,15 @@ class AIService {
         
         if (startIdx !== -1 && endIdx !== -1) {
           const jsonContent = content.substring(startIdx, endIdx + 1);
-          evaluationResult = JSON.parse(jsonContent);
+          
+          // Próbuj naprawić uszkodzony JSON
+          try {
+            evaluationResult = JSON.parse(jsonContent);
+          } catch (e) {
+            // Spróbuj naprawić niezamknięty string
+            const fixedJson = jsonContent.replace(/:\s*"([^"]*?)$/m, ': "$1"');
+            evaluationResult = JSON.parse(fixedJson);
+          }
         } else {
           throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
         }

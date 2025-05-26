@@ -25,8 +25,14 @@ const ResultsPhase = ({
                 {winner.isUser && <span className="winner-you">That's YOU! 🎉</span>}
               </div>
               <div className="prize-amount">
-                Wins {(prizePool * 0.85).toFixed(3)} 0G
+                Wins {(prizePool * 0.95).toFixed(3)} 0G
               </div>
+              {winner.roastText && (
+                <div className="winning-roast">
+                  <div className="roast-label">Winning Roast:</div>
+                  <p className="roast-text">"{winner.roastText}"</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -41,9 +47,9 @@ const ResultsPhase = ({
           <div className="next-round-info">
             <div className="countdown-display">
               <RefreshCw size={20} />
-              <span>Next round in {nextRoundCountdown}s</span>
+              <span>New round starting in {nextRoundCountdown}s</span>
             </div>
-            <p>New AI judge will be randomly selected</p>
+            <p>Get ready for the next roast battle!</p>
           </div>
         </div>
       </div>
@@ -62,6 +68,18 @@ const ResultsPhase = ({
           border: 2px solid #FFD700;
           position: relative;
           overflow: hidden;
+          animation: fadeInScale 0.5s ease-out;
+        }
+
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
 
         .winner-announcement::before {
@@ -140,6 +158,31 @@ const ResultsPhase = ({
           font-size: 20px;
           font-weight: 800;
           color: #00D2E9;
+        }
+
+        .winning-roast {
+          margin-top: 20px;
+          padding: 16px;
+          background: rgba(255, 92, 170, 0.05);
+          border: 1px solid rgba(255, 92, 170, 0.2);
+          border-radius: 12px;
+        }
+
+        .roast-label {
+          font-size: 12px;
+          color: #FF5CAA;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 8px;
+          font-weight: 700;
+        }
+
+        .roast-text {
+          color: #E6E6E6;
+          font-size: 16px;
+          line-height: 1.5;
+          font-style: italic;
+          margin: 0;
         }
 
         .ai-verdict {

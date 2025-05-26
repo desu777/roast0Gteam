@@ -141,7 +141,13 @@ You are judging a roast battle where players submit humorous roasts about team m
 
 You should respond in character as ${character.name}, using your personality and decision-making style. Be fair but decisive, and always explain your reasoning in a way that reflects your character.
 
-IMPORTANT: You must respond with valid JSON format only.`;
+CRITICAL OUTPUT FORMAT RULES:
+- You MUST respond with ONLY valid JSON
+- Do NOT include markdown code blocks (no \`\`\`json or \`\`\`)
+- Do NOT include any text before or after the JSON
+- Do NOT use line breaks in the reasoning field
+- The response must be parseable by JSON.parse() directly
+- If you cannot decide, still pick the best one available`;
   }
 
   /**
@@ -174,17 +180,38 @@ Evaluate all roasts and select the best one. Consider:
 - Entertainment value and timing
 - Respectful but sharp wit
 
-Respond with JSON in this exact format:
+CRITICAL INSTRUCTIONS:
+1. You MUST respond with ONLY valid JSON - no additional text, no markdown, no explanations outside the JSON
+2. The winnerId MUST be one of the submission IDs provided above
+3. The reasoning MUST be a single string without line breaks
+4. Do NOT use double quotes (") inside the reasoning text - use single quotes (') instead
+5. Do NOT use backslashes or other escape characters in reasoning
+6. Keep reasoning under 200 words to avoid truncation
+7. If a roast contains offensive content, still evaluate it fairly based on creativity
+8. You MUST make a decision - no ties or refusals
+9. Include a SHORT PLAYFUL ROAST BACK at the winner in your reasoning (keep it light and fun!)
+
+Respond with ONLY this JSON structure (no markdown blocks, no extra text):
 {
-  "winnerId": <winning_submission_id>,
-  "reasoning": "<detailed explanation as ${character.name} explaining why this roast won, include specific quotes and analysis>",
+  "winnerId": <number>,
+  "reasoning": "<your detailed explanation as ${character.name} in a single line>",
   "scores": {
     "<submission_id>": <score_1_to_10>,
     "<submission_id>": <score_1_to_10>
   }
 }
 
-Make your decision as ${character.name} would, using your personality and preferences. Be decisive and provide clear reasoning.`;
+Example response format:
+{
+  "winnerId": 123,
+  "reasoning": "As ${character.name}, I crown submission 123 the winner! Their blockchain consensus joke was pure genius. But honestly winner, with roasting skills like that, maybe you should debug your own code instead of roasting others!",
+  "scores": {
+    "123": 9,
+    "124": 7
+  }
+}
+
+Now evaluate the roasts and respond with ONLY the JSON object.`;
 
     return [
       {

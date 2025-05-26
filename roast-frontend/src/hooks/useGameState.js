@@ -33,12 +33,24 @@ export const useGameState = () => {
   const [nextRoundCountdown, setNextRoundCountdown] = useState(0);
   const [wsConnected, setWsConnected] = useState(false);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   // Sound effects
   const playSound = (type) => {
     if (!soundEnabled) return;
     console.log(`Playing sound: ${type}`);
   };
+
+  // Funkcja do dodawania powiadomień
+  const addNotification = useCallback((notification) => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { ...notification, id }]);
+  }, []);
+
+  // Funkcja do usuwania powiadomień
+  const removeNotification = useCallback((id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
 
   // Załaduj aktualną rundę z backendu
   const loadCurrentRound = useCallback(async () => {
@@ -70,7 +82,15 @@ export const useGameState = () => {
         console.log(`🎮 Phase mapping: ${round.phase} -> ${mappedPhase}`);
         setCurrentPhase(mappedPhase);
         setPrizePool(parseFloat(round.prizePool || round.prize_pool || 0));
-        setTimeLeft(round.timeLeft || round.time_left || 120);
+        
+        // Ustaw czas pozostały - priorytet dla timeLeft z API
+        if (round.phase === 'active' && (round.timeLeft !== undefined || round.time_left !== undefined)) {
+          const apiTimeLeft = round.timeLeft !== undefined ? round.timeLeft : round.time_left;
+          setTimeLeft(apiTimeLeft);
+          console.log(`⏱️ Timer set from API: ${apiTimeLeft}s`);
+        } else {
+          setTimeLeft(120); // Default timer duration
+        }
         
         // Znajdź sędziego na podstawie character ID
         const judgeCharacter = round.judgeCharacter || round.judge_character;
@@ -84,14 +104,22 @@ export const useGameState = () => {
 
         // Załaduj uczestników jeśli runda jest aktywna
         if (round.phase === 'active' || round.phase === 'judging') {
-          setParticipants(round.participants || []);
+          // Sprawdź czy mamy submissions w odpowiedzi
+          const roundSubmissions = round.submissions || [];
+          const mappedParticipants = roundSubmissions.map(sub => ({
+            id: sub.id,
+            address: sub.player_address || sub.playerAddress,
+            roastText: sub.roast_text || sub.roastText,
+            isUser: address && sub.player_address?.toLowerCase() === address.toLowerCase()
+          }));
+          setParticipants(mappedParticipants);
           
           // Sprawdź czy użytkownik już wysłał roast
-          if (address && round.participants) {
-            const userParticipant = round.participants.find(p => 
-              p.player_address?.toLowerCase() === address.toLowerCase()
+          if (address) {
+            const userSubmitted = mappedParticipants.some(p => 
+              p.address?.toLowerCase() === address.toLowerCase()
             );
-            setUserSubmitted(!!userParticipant);
+            setUserSubmitted(userSubmitted);
           }
         } else if (round.phase === 'waiting') {
           // Załaduj prawdziwych uczestników jeśli są
@@ -186,6 +214,13 @@ export const useGameState = () => {
 
       console.log('Payment transaction sent:', txHash);
       playSound('join');
+      
+      // Dodaj powiadomienie o transakcji
+      addNotification({
+        type: 'success',
+        message: 'Entry fee payment sent! Submitting your roast...',
+        txHash: txHash
+      });
 
       // 2. Wyślij roast przez WebSocket
       wsService.submitRoast(currentRound.id, roastText, txHash);
@@ -198,7 +233,7 @@ export const useGameState = () => {
       setError(err.message || 'Failed to join round');
       setIsSubmitting(false);
     }
-  }, [isAuthenticated, currentRound, roastText, isSubmitting, userSubmitted, sendTransactionAsync]);
+  }, [isAuthenticated, currentRound, roastText, isSubmitting, userSubmitted, sendTransactionAsync, addNotification]);
 
   // Konfiguracja WebSocket event handlerów
   useEffect(() => {
@@ -251,15 +286,23 @@ export const useGameState = () => {
     wsService.on('round-completed', (data) => {
       console.log('Round completed:', data);
       setCurrentPhase(GAME_PHASES.RESULTS);
-      setWinner(data.winner);
-      setAiReasoning(data.ai_reasoning);
+      
+      // Utwórz obiekt winner z danych otrzymanych z backendu
+      const winnerData = {
+        address: data.winnerAddress,
+        roastText: data.winningRoast,
+        isUser: address && data.winnerAddress?.toLowerCase() === address.toLowerCase()
+      };
+      
+      setWinner(winnerData);
+      setAiReasoning(data.aiReasoning);
       setShowParticles(true);
       playSound('winner');
       
       setTimeout(() => setShowParticles(false), 5000);
       
       // Ustaw countdown do następnej rundy
-      setNextRoundCountdown(30);
+      setNextRoundCountdown(20);
     });
 
     wsService.on('roast-submitted', (data) => {
@@ -267,6 +310,25 @@ export const useGameState = () => {
       setIsSubmitting(false);
       setUserSubmitted(true);
       playSound('submit');
+      
+      // Dodaj powiadomienie o wysłaniu roastu
+      addNotification({
+        type: 'success',
+        message: 'Your roast has been successfully submitted! Good luck! 🔥',
+      });
+    });
+
+    wsService.on('prize-distributed', (data) => {
+      console.log('Prize distributed:', data);
+      
+      // Jeśli to nasz adres, pokaż powiadomienie
+      if (address && data.winnerAddress?.toLowerCase() === address.toLowerCase()) {
+        addNotification({
+          type: 'success',
+          message: `Congratulations! You won ${data.prizeAmount.toFixed(3)} 0G! 🎉`,
+          txHash: data.transactionHash
+        });
+      }
     });
 
     wsService.on('error', (error) => {
@@ -286,9 +348,10 @@ export const useGameState = () => {
       wsService.off('judging-started');
       wsService.off('round-completed');
       wsService.off('roast-submitted');
+      wsService.off('prize-distributed');
       wsService.off('error');
     };
-  }, [currentRound?.id, loadCurrentRound]);
+  }, [currentRound?.id, loadCurrentRound, address, addNotification]);
 
   // Połącz WebSocket gdy użytkownik jest uwierzytelniony
   useEffect(() => {
@@ -379,6 +442,11 @@ export const useGameState = () => {
     // Utils
     loadCurrentRound,
     loadGameStats,
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    
+    // Notifications
+    notifications,
+    addNotification,
+    removeNotification
   };
 }; 

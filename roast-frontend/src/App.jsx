@@ -10,6 +10,7 @@ import WritingPhase from './components/WritingPhase/WritingPhase';
 import JudgingPhase from './components/JudgingPhase/JudgingPhase';
 import ResultsPhase from './components/ResultsPhase/ResultsPhase';
 import JudgeModal from './components/JudgeModal/JudgeModal';
+import TransactionNotification from './components/TransactionNotification/TransactionNotification';
 
 const App = () => {
   const containerRef = useRef(null);
@@ -31,6 +32,7 @@ const App = () => {
     userSubmitted,
     nextRoundCountdown,
     error,
+    notifications,
     
     // UI State
     soundEnabled,
@@ -44,7 +46,9 @@ const App = () => {
     joinRound,
     formatTime,
     playSound,
-    clearError
+    clearError,
+    addNotification,
+    removeNotification
   } = useGameState();
 
   return (
@@ -128,10 +132,20 @@ const App = () => {
                         onClick={joinRound}
                         disabled={!roastText.trim() || userSubmitted || isSubmitting}
                       >
-                        {isSubmitting ? '⏳ Submitting...' : userSubmitted ? '✅ Roast Submitted' : '⚡ Connect to Submit'}
+                        {isSubmitting ? '⏳ Submitting...' : userSubmitted ? '✅ Roast Submitted' : '🔥 Submit your roast!'}
                       </button>
                       
-                      <div className="entry-fee">💰 0.025 0G entry</div>
+                      {userSubmitted && (
+                        <div className="submitted-status">
+                          <div className="submitted-badge">
+                            <div className="trophy-icon">🏆</div>
+                            <h3>Roast Submitted!</h3>
+                            <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!userSubmitted && <div className="entry-fee">💰 0.025 0G entry</div>}
                     </div>
                   </div>
                 )}
@@ -184,6 +198,15 @@ const App = () => {
           judge={showJudgeDetails}
           onClose={() => setShowJudgeDetails(null)}
         />
+        
+        {/* Transaction Notifications */}
+        {notifications.map(notification => (
+          <TransactionNotification
+            key={notification.id}
+            {...notification}
+            onClose={() => removeNotification(notification.id)}
+          />
+        ))}
       </div>
 
       <style jsx>{`
@@ -385,6 +408,43 @@ const App = () => {
           opacity: 0.6;
           cursor: not-allowed;
           transform: none;
+        }
+
+        .submitted-status {
+          text-align: center;
+          padding: 40px 20px;
+        }
+
+        .submitted-badge {
+          background: rgba(0, 184, 151, 0.1);
+          border: 2px solid #00B897;
+          border-radius: 20px;
+          padding: 30px;
+          max-width: 400px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .trophy-icon {
+          font-size: 32px;
+          margin-bottom: 8px;
+        }
+
+        .submitted-badge h3 {
+          color: #00B897;
+          font-size: 24px;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .submitted-badge p {
+          color: #9999A5;
+          font-size: 14px;
+          line-height: 1.5;
+          margin: 0;
         }
 
         .entry-fee {

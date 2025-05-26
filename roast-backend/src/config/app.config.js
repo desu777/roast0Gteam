@@ -100,7 +100,7 @@ const config = {
   game: {
     roundTimerDuration: parseInt(process.env.ROUND_TIMER_DURATION) || 120,
     judgingDuration: parseInt(process.env.JUDGING_DURATION) || 15,
-    nextRoundDelay: parseInt(process.env.NEXT_ROUND_DELAY) || 30,
+    nextRoundDelay: parseInt(process.env.NEXT_ROUND_DELAY) || 20,
     maxPlayersPerRound: parseInt(process.env.MAX_PLAYERS_PER_ROUND) || 20,
     maxRoastLength: parseInt(process.env.MAX_ROAST_LENGTH) || 280
   },
