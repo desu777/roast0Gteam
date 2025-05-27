@@ -13,6 +13,8 @@ import '@rainbow-me/rainbowkit/styles.css'
 // Create a client for React Query
 const queryClient = new QueryClient()
 
+// React.StrictMode powoduje podwójne renderowanie w trybie deweloperskim
+// Możesz go wyłączyć jeśli masz problemy z rate limiting podczas developmentu
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <WagmiProvider config={wagmiConfig}>

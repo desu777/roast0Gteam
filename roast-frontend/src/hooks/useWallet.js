@@ -85,8 +85,13 @@ export const useWallet = () => {
       }
 
     } catch (err) {
-      console.error('❌ Authentication error:', err);
-      setError(err.message || 'Failed to authenticate wallet');
+      // Ignoruj błąd jeśli użytkownik anulował podpis
+      if (err.message?.includes('User rejected') || err.message?.includes('User denied')) {
+        console.log('User cancelled signature request');
+      } else {
+        console.error('❌ Authentication error:', err);
+        setError(err.message || 'Failed to authenticate wallet');
+      }
       setIsAuthenticated(false);
       setAuthToken(null);
       return false;
@@ -142,12 +147,15 @@ export const useWallet = () => {
     if (isConnected && address && isCorrectChain && !isAuthenticated && !authAttemptRef.current) {
       // Dodaj małe opóźnienie aby upewnić się że połączenie jest stabilne
       const timer = setTimeout(() => {
-        authenticate();
+        // Dodatkowe sprawdzenie czy nadal jesteśmy połączeni i nie próbujemy już autentykacji
+        if (isConnected && !isAuthenticated && !authAttemptRef.current) {
+          authenticate();
+        }
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, isCorrectChain, isAuthenticated, authenticate]);
+  }, [isConnected, address, isCorrectChain, isAuthenticated]); // Usunięto authenticate z zależności
 
   // Reset stanu gdy wallet się rozłączy
   useEffect(() => {
@@ -160,6 +168,11 @@ export const useWallet = () => {
       authAttemptRef.current = false;
     }
   }, [isConnected]);
+
+  // Reset authAttemptRef gdy zmieni się adres
+  useEffect(() => {
+    authAttemptRef.current = false;
+  }, [address]);
 
   // Formatuj saldo
   const formatBalance = (balance) => {

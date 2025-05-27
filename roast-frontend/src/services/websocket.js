@@ -194,10 +194,13 @@ class WebSocketService {
   // Rozłącz
   disconnect() {
     if (this.socket) {
+      // Usuń wszystkie event listenery socket.io
+      this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
       this.listeners.clear();
+      this.reconnectAttempts = 0;
     }
   }
 

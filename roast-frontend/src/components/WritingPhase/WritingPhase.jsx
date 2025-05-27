@@ -34,9 +34,6 @@ const WritingPhase = ({
         <div className="writing-section">
           <div className="writing-prompt">
             <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
-            <p className="judge-hint">
-              💡 <strong>Judge's Style:</strong> {currentJudge.decisionStyle}
-            </p>
           </div>
 
           {!userSubmitted ? (
@@ -176,14 +173,6 @@ Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks 
           font-weight: 700;
           margin-bottom: 16px;
           color: #E6E6E6;
-        }
-
-        .judge-hint {
-          color: #9999A5;
-          font-size: 16px;
-          line-height: 1.5;
-          max-width: 600px;
-          margin: 0 auto;
         }
 
         .roast-input-container {

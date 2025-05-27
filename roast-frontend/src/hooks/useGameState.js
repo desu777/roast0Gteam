@@ -22,6 +22,7 @@ export const useGameState = () => {
   const [prizePool, setPrizePool] = useState(0);
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [currentRound, setCurrentRound] = useState(null);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
   
   // UI State
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -43,7 +44,7 @@ export const useGameState = () => {
 
   // Funkcja do dodawania powiadomień
   const addNotification = useCallback((notification) => {
-    const id = Date.now();
+    const id = Date.now() + Math.random(); // Dodajemy losowość aby uniknąć duplikatów
     setNotifications(prev => [...prev, { ...notification, id }]);
   }, []);
 
@@ -143,6 +144,15 @@ export const useGameState = () => {
 
         // Jeśli runda zakończona, pokaż wyniki
         if (round.phase === 'completed' && round.result) {
+          // Upewnij się, że mamy sędziego dla wyników
+          if (!currentJudge && round.judgeCharacter) {
+            const judgeCharacter = round.judgeCharacter || round.judge_character;
+            const judge = TEAM_MEMBERS.find(member => member.id === judgeCharacter);
+            if (judge) {
+              setCurrentJudge(judge);
+            }
+          }
+          
           setWinner(round.result.winner);
           setAiReasoning(round.result.ai_reasoning);
           setShowParticles(true);
@@ -256,6 +266,14 @@ export const useGameState = () => {
     // Round events
     wsService.on('round-created', (data) => {
       console.log('New round created:', data);
+      // Resetuj stan dla nowej rundy
+      setUserSubmitted(false);
+      setRoastText('');
+      setWinner(null);
+      setAiReasoning('');
+      setCurrentPhase(GAME_PHASES.WAITING);
+      setNextRoundCountdown(0);
+      // Załaduj nową rundę
       loadCurrentRound();
       playSound('start');
     });
@@ -285,7 +303,22 @@ export const useGameState = () => {
 
     wsService.on('round-completed', (data) => {
       console.log('Round completed:', data);
+      
+      // Zapobiegaj wielokrotnym wywołaniom
+      if (currentPhase === GAME_PHASES.RESULTS) {
+        console.log('Already in results phase, skipping duplicate event');
+        return;
+      }
+      
       setCurrentPhase(GAME_PHASES.RESULTS);
+      
+      // Zachowaj obecnego sędziego lub znajdź go na podstawie danych
+      if (!currentJudge && data.character) {
+        const judge = TEAM_MEMBERS.find(member => member.id === data.character);
+        if (judge) {
+          setCurrentJudge(judge);
+        }
+      }
       
       // Utwórz obiekt winner z danych otrzymanych z backendu
       const winnerData = {
@@ -299,10 +332,11 @@ export const useGameState = () => {
       setShowParticles(true);
       playSound('winner');
       
-      setTimeout(() => setShowParticles(false), 5000);
+      // Wydłużamy czas wyświetlania cząsteczek
+      setTimeout(() => setShowParticles(false), 8000); // Zwiększone z 5000 na 8000
       
-      // Ustaw countdown do następnej rundy
-      setNextRoundCountdown(20);
+      // Ustaw countdown do następnej rundy - zwiększamy czas
+      setNextRoundCountdown(30); // Zwiększone z 20 na 30 sekund
     });
 
     wsService.on('roast-submitted', (data) => {
@@ -357,7 +391,12 @@ export const useGameState = () => {
   useEffect(() => {
     if (isAuthenticated && address) {
       console.log('🔌 Connecting WebSocket with address:', address);
-      wsService.connect(address);
+      // Najpierw rozłącz jeśli już połączony
+      wsService.disconnect();
+      // Poczekaj chwilę przed ponownym połączeniem
+      setTimeout(() => {
+        wsService.connect(address);
+      }, 100);
       
       // Dołączanie do rundy będzie obsługiwane w event handlerze 'authenticated'
     } else {
@@ -372,6 +411,9 @@ export const useGameState = () => {
       const timer = setTimeout(() => {
         setNextRoundCountdown(prev => {
           if (prev <= 1) {
+            // Resetuj stan użytkownika dla nowej rundy
+            setUserSubmitted(false);
+            setRoastText('');
             // Załaduj nową rundę
             loadCurrentRound();
             return 0;
@@ -385,19 +427,26 @@ export const useGameState = () => {
 
   // Załaduj dane przy starcie
   useEffect(() => {
-    loadCurrentRound();
-    loadGameStats();
-  }, [loadCurrentRound, loadGameStats]);
+    // Zapobiegaj podwójnemu ładowaniu w React.StrictMode
+    if (!hasInitialLoad) {
+      setHasInitialLoad(true);
+      loadCurrentRound();
+      loadGameStats();
+    }
+  }, []); // Usuwamy zależności aby wykonać tylko raz
 
   // Odśwież dane co 30 sekund
   useEffect(() => {
+    // Rozpocznij interval dopiero po pierwszym załadowaniu
+    if (!hasInitialLoad) return;
+    
     const interval = setInterval(() => {
       loadCurrentRound();
       loadGameStats();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [loadCurrentRound, loadGameStats]);
+  }, [hasInitialLoad, loadCurrentRound, loadGameStats]);
 
   // Format time helper
   const formatTime = (seconds) => {

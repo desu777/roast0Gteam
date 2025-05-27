@@ -92,10 +92,13 @@ app.use((req, res, next) => {
 // Rate limiting
 const limiter = rateLimit({
   windowMs: config.rateLimiting.windowMs,
-  max: config.rateLimiting.maxRequests,
+  max: config.server.env === 'development' ? 200 : config.rateLimiting.maxRequests,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    return req.path === '/health' || req.path === '/api';
+  }
 });
 
 // Apply rate limiting to all routes

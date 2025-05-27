@@ -110,43 +110,40 @@ const App = () => {
                       <div className="participants-count">👥 {participants.length} roasters joined</div>
                     </div>
                     
-                    <div className="roast-section">
-                      <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
-                      <div className="judge-style">
-                        <strong>🎯 Judge's Style:</strong> {currentJudge.decisionStyle}
-                      </div>
-                      
-                      <div className="roast-input">
-                        <textarea
-                          value={roastText}
-                          onChange={(e) => setRoastText(e.target.value)}
-                          placeholder={`Write your best roast for ${currentJudge.name} to judge...`}
-                          maxLength={280}
-                          disabled={userSubmitted || isSubmitting}
-                        />
-                        <div className="char-count">{roastText.length}/280</div>
-                      </div>
-                      
-                      <button
-                        className="submit-button"
-                        onClick={joinRound}
-                        disabled={!roastText.trim() || userSubmitted || isSubmitting}
-                      >
-                        {isSubmitting ? '⏳ Submitting...' : userSubmitted ? '✅ Roast Submitted' : '🔥 Submit your roast!'}
-                      </button>
-                      
-                      {userSubmitted && (
-                        <div className="submitted-status">
-                          <div className="submitted-badge">
-                            <div className="trophy-icon">🏆</div>
-                            <h3>Roast Submitted!</h3>
-                            <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
-                          </div>
+                    {!userSubmitted ? (
+                      <div className="roast-section">
+                        <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
+                        
+                        <div className="roast-input">
+                          <textarea
+                            value={roastText}
+                            onChange={(e) => setRoastText(e.target.value)}
+                            placeholder={`Write your best roast for ${currentJudge.name} to judge...`}
+                            maxLength={280}
+                            disabled={userSubmitted || isSubmitting}
+                          />
+                          <div className="char-count">{roastText.length}/280</div>
                         </div>
-                      )}
-                      
-                      {!userSubmitted && <div className="entry-fee">💰 0.025 0G entry</div>}
-                    </div>
+                        
+                        <button
+                          className="submit-button"
+                          onClick={joinRound}
+                          disabled={!roastText.trim() || userSubmitted || isSubmitting}
+                        >
+                          {isSubmitting ? '⏳ Submitting...' : '🔥 Submit your roast!'}
+                        </button>
+                        
+                        <div className="entry-fee">💰 0.025 0G entry</div>
+                      </div>
+                    ) : (
+                      <div className="submitted-status">
+                        <div className="submitted-badge">
+                          <div className="trophy-icon">🏆</div>
+                          <h3>Roast Submitted!</h3>
+                          <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 

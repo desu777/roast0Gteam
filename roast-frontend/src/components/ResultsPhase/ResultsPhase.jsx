@@ -38,8 +38,10 @@ const ResultsPhase = ({
 
           <div className="ai-verdict">
             <div className="verdict-header">
-              <currentJudge.icon size={24} style={{ color: currentJudge.color }} />
-              <span>{currentJudge.name}'s Verdict:</span>
+              {currentJudge && currentJudge.icon && (
+                <currentJudge.icon size={24} style={{ color: currentJudge.color }} />
+              )}
+              <span>{currentJudge?.name || 'Judge'}'s Verdict:</span>
             </div>
             <p className="verdict-text">"{aiReasoning}"</p>
           </div>
@@ -68,17 +70,17 @@ const ResultsPhase = ({
           border: 2px solid #FFD700;
           position: relative;
           overflow: hidden;
-          animation: fadeInScale 0.5s ease-out;
+          animation: fadeInScale 0.8s ease-out 0.2s both;
         }
 
         @keyframes fadeInScale {
           0% {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.9) translateY(20px);
           }
           100% {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateY(0);
           }
         }
 
