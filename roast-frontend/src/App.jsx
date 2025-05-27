@@ -11,6 +11,8 @@ import JudgingPhase from './components/JudgingPhase/JudgingPhase';
 import ResultsPhase from './components/ResultsPhase/ResultsPhase';
 import JudgeModal from './components/JudgeModal/JudgeModal';
 import TransactionNotification from './components/TransactionNotification/TransactionNotification';
+import Footer from './components/Footer/Footer';
+import FireEffect from './components/FireEffect/FireEffect';
 
 const App = () => {
   const containerRef = useRef(null);
@@ -41,6 +43,7 @@ const App = () => {
     setShowJudgeDetails,
     isSubmitting,
     showParticles,
+    showFireEffect,
     
     // Actions
     joinRound,
@@ -59,6 +62,9 @@ const App = () => {
           show={showParticles} 
           color={currentJudge?.color || '#FFD700'} 
         />
+
+        {/* Fire Effect */}
+        <FireEffect show={showFireEffect} />
 
         {/* Header */}
         <Header 
@@ -204,6 +210,9 @@ const App = () => {
             onClose={() => removeNotification(notification.id)}
           />
         ))}
+
+        {/* Footer */}
+        <Footer />
       </div>
 
       <style jsx>{`
@@ -214,12 +223,15 @@ const App = () => {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           position: relative;
           overflow-x: hidden;
+          display: flex;
+          flex-direction: column;
         }
 
         .arena-main {
           padding: 30px 20px;
           max-width: 1000px;
           margin: 0 auto;
+          flex: 1;
         }
 
         .error-message {

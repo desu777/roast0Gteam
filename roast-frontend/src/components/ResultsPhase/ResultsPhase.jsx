@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, RefreshCw } from 'lucide-react';
+import { Trophy, RefreshCw, ExternalLink } from 'lucide-react';
 
 const ResultsPhase = ({ 
   currentJudge,
@@ -21,7 +21,10 @@ const ResultsPhase = ({
           {winner && (
             <div className="winner-info">
               <div className="winner-address">
-                {winner.address}
+                {winner.address ? 
+                  `${winner.address.slice(0, 6)}...${winner.address.slice(-4)}` : 
+                  'Anonymous'
+                }
                 {winner.isUser && <span className="winner-you">That's YOU! 🎉</span>}
               </div>
               <div className="prize-amount">
@@ -31,6 +34,20 @@ const ResultsPhase = ({
                 <div className="winning-roast">
                   <div className="roast-label">Winning Roast:</div>
                   <p className="roast-text">"{winner.roastText}"</p>
+                </div>
+              )}
+              {/* Dodaj sekcję transakcji */}
+              {winner.payoutTxHash && (
+                <div className="payout-info">
+                  <div className="payout-label">Prize Payout:</div>
+                  <a 
+                    href={`https://chainscan-galileo.0g.ai/tx/${winner.payoutTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="payout-link"
+                  >
+                    View Transaction <ExternalLink size={14} />
+                  </a>
                 </div>
               )}
             </div>
@@ -185,6 +202,39 @@ const ResultsPhase = ({
           line-height: 1.5;
           font-style: italic;
           margin: 0;
+        }
+
+        .payout-info {
+          margin-top: 16px;
+          padding: 12px;
+          background: rgba(0, 210, 233, 0.05);
+          border: 1px solid rgba(0, 210, 233, 0.2);
+          border-radius: 8px;
+        }
+
+        .payout-label {
+          font-size: 12px;
+          color: #00D2E9;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 4px;
+          font-weight: 700;
+        }
+
+        .payout-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: #00D2E9;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.2s ease;
+        }
+
+        .payout-link:hover {
+          color: #00B8D4;
+          transform: translateX(2px);
         }
 
         .ai-verdict {

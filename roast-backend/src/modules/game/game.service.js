@@ -740,6 +740,12 @@ class GameService {
       const startedAt = new Date(round.started_at);
       const elapsed = Math.floor((now - startedAt) / 1000);
       timeLeft = Math.max(0, round.timer_duration - elapsed);
+      
+      // Jeśli czas minął, przejdź do fazy oceniania
+      if (timeLeft === 0 && !this.activeTimers.has(round.id)) {
+        // Zapobiegaj wielokrotnemu wywoływaniu
+        this.transitionToJudging(round.id);
+      }
     }
 
     return {

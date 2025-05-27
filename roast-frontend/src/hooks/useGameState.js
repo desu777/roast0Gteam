@@ -29,6 +29,7 @@ export const useGameState = () => {
   const [showJudgeDetails, setShowJudgeDetails] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
+  const [showFireEffect, setShowFireEffect] = useState(false);
   const [roundNumber, setRoundNumber] = useState(1);
   const [userSubmitted, setUserSubmitted] = useState(false);
   const [nextRoundCountdown, setNextRoundCountdown] = useState(0);
@@ -345,6 +346,10 @@ export const useGameState = () => {
       setUserSubmitted(true);
       playSound('submit');
       
+      // Pokaż efekt ognia
+      setShowFireEffect(true);
+      setTimeout(() => setShowFireEffect(false), 2000);
+      
       // Dodaj powiadomienie o wysłaniu roastu
       addNotification({
         type: 'success',
@@ -481,6 +486,7 @@ export const useGameState = () => {
     setShowJudgeDetails,
     isSubmitting,
     showParticles,
+    showFireEffect,
     
     // Actions
     connectWallet: () => {}, // Będzie obsługiwane przez useWallet

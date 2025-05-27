@@ -96,7 +96,11 @@ Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks 
               {participants.slice(0, 6).map((participant, index) => (
                 <div key={index} className={`participant-card ${participant.isUser ? 'user-participant' : ''}`}>
                   <div className="participant-address">
-                    {participant.address}
+                    {/* Skrócona wersja adresu */}
+                    {participant.address ? 
+                      `${participant.address.slice(0, 6)}...${participant.address.slice(-4)}` : 
+                      'Anonymous'
+                    }
                     {participant.isUser && <span className="you-badge">YOU</span>}
                   </div>
                 </div>
