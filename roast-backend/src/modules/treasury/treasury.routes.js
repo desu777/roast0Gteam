@@ -65,6 +65,18 @@ const createTreasuryRoutes = (treasuryController) => {
     treasuryController.getPaymentHistory.bind(treasuryController)
   );
 
+  /**
+   * @route GET /api/treasury/recent-winners
+   * @desc Get recent winners with their roasts
+   * @access Public
+   */
+  router.get('/recent-winners',
+    [
+      query('limit').optional().isInt({ min: 1, max: 20 }).withMessage('Limit must be between 1 and 20')
+    ],
+    treasuryController.getRecentWinners.bind(treasuryController)
+  );
+
   // Admin routes (require admin authentication)
   // TODO: Add admin authentication middleware
   

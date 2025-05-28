@@ -322,6 +322,53 @@ class TreasuryController {
       });
     }
   }
+
+  /**
+   * Get recent winners with their roasts
+   * GET /api/treasury/recent-winners
+   */
+  async getRecentWinners(req, res) {
+    try {
+      const { limit = 5 } = req.query;
+      
+      const winners = database.db.prepare(`
+        SELECT 
+          p.winner_address,
+          p.round_id,
+          p.amount,
+          p.tx_hash,
+          p.created_at,
+          s.roast_text,
+          r.judge_character
+        FROM payouts p
+        JOIN results res ON res.round_id = p.round_id
+        JOIN submissions s ON s.id = res.winner_submission_id
+        JOIN rounds r ON r.id = p.round_id
+        ORDER BY p.created_at DESC
+        LIMIT ?
+      `).all(parseInt(limit));
+      
+      res.json({
+        success: true,
+        winners: winners.map(w => ({
+          address: w.winner_address,
+          roundId: w.round_id,
+          amount: w.amount,
+          txHash: w.tx_hash,
+          roastText: w.roast_text,
+          judgeCharacter: w.judge_character,
+          timestamp: w.created_at
+        }))
+      });
+      
+    } catch (error) {
+      logger.error('Failed to get recent winners:', error);
+      res.status(500).json({
+        error: true,
+        message: 'Failed to retrieve recent winners'
+      });
+    }
+  }
 }
 
 module.exports = TreasuryController; 

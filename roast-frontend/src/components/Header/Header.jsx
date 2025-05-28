@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Flame, Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader 
+  Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader 
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 
@@ -33,7 +33,7 @@ const Header = ({
           <div className="logo-section">
             <div className="logo-container">
               <div className="logo-glow"></div>
-              <Flame size={40} className="logo-icon" />
+              <img src="/gg.png" alt="0G Logo" className="logo-icon" />
             </div>
             <div className="title-group">
               <h1>0G Roast Arena</h1>
@@ -168,8 +168,8 @@ const Header = ({
 
         .logo-container {
           position: relative;
-          width: 60px;
-          height: 60px;
+          width: 80px;
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -187,8 +187,11 @@ const Header = ({
         }
 
         .logo-icon {
-          color: #000;
+          width: 75px;
+          height: 75px;
+          object-fit: contain;
           z-index: 2;
+          border-radius: 50%;
         }
 
         @keyframes logoGlow {
@@ -479,6 +482,16 @@ const Header = ({
             flex-direction: column;
             gap: 15px;
             text-align: center;
+          }
+
+          .logo-container {
+            width: 60px;
+            height: 60px;
+          }
+
+          .logo-icon {
+            width: 40px;
+            height: 40px;
           }
 
           .wallet-card {

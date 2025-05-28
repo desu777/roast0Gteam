@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { GAME_PHASES } from './constants/gameConstants';
 
@@ -13,10 +13,23 @@ import JudgeModal from './components/JudgeModal/JudgeModal';
 import TransactionNotification from './components/TransactionNotification/TransactionNotification';
 import Footer from './components/Footer/Footer';
 import FireEffect from './components/FireEffect/FireEffect';
+import RecentWinners from './components/RecentWinners/RecentWinners';
 
 const App = () => {
   const containerRef = useRef(null);
-  
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Hook do sprawdzania szerokości ekranu
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const {
     // Game State
     currentPhase,
@@ -91,6 +104,9 @@ const App = () => {
             setShowJudgeDetails={setShowJudgeDetails}
           />
 
+          {/* Recent Winners Panel - tylko na desktop */}
+          {!isMobile && <RecentWinners />}
+
           {/* Phase-specific content */}
           {currentPhase === GAME_PHASES.WAITING && (
             <div className="waiting-phase">
@@ -140,6 +156,9 @@ const App = () => {
                         </button>
                         
                         <div className="entry-fee">💰 0.025 0G entry</div>
+
+                        {/* Recent Winners na mobile - po submit button */}
+                        {isMobile && <RecentWinners />}
                       </div>
                     ) : (
                       <div className="submitted-status">
@@ -148,6 +167,9 @@ const App = () => {
                           <h3>Roast Submitted!</h3>
                           <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
                         </div>
+
+                        {/* Recent Winners na mobile - po submitted status */}
+                        {isMobile && <RecentWinners />}
                       </div>
                     )}
                   </div>
@@ -158,41 +180,56 @@ const App = () => {
                     <p>Connect your wallet to join the round!</p>
                   </div>
                 )}
+
+                {/* Recent Winners na mobile - gdy nie połączony */}
+                {!isConnected && isMobile && <RecentWinners />}
               </div>
             </div>
           )}
 
           {currentPhase === GAME_PHASES.WRITING && (
-            <WritingPhase 
-              currentJudge={currentJudge}
-              timeLeft={timeLeft}
-              formatTime={formatTime}
-              participants={participants}
-              roastText={roastText}
-              setRoastText={setRoastText}
-              userSubmitted={userSubmitted}
-              isSubmitting={isSubmitting}
-              isConnected={isConnected}
-              joinRound={joinRound}
-            />
+            <>
+              <WritingPhase 
+                currentJudge={currentJudge}
+                timeLeft={timeLeft}
+                formatTime={formatTime}
+                participants={participants}
+                roastText={roastText}
+                setRoastText={setRoastText}
+                userSubmitted={userSubmitted}
+                isSubmitting={isSubmitting}
+                isConnected={isConnected}
+                joinRound={joinRound}
+              />
+              {/* Recent Winners na mobile - po WritingPhase */}
+              {isMobile && <RecentWinners />}
+            </>
           )}
 
           {currentPhase === GAME_PHASES.JUDGING && (
-            <JudgingPhase 
-              currentJudge={currentJudge}
-              participants={participants}
-            />
+            <>
+              <JudgingPhase 
+                currentJudge={currentJudge}
+                participants={participants}
+              />
+              {/* Recent Winners na mobile - po JudgingPhase */}
+              {isMobile && <RecentWinners />}
+            </>
           )}
 
           {currentPhase === GAME_PHASES.RESULTS && (
-            <ResultsPhase 
-              currentJudge={currentJudge}
-              winner={winner}
-              prizePool={prizePool}
-              aiReasoning={aiReasoning}
-              roundNumber={roundNumber}
-              nextRoundCountdown={nextRoundCountdown}
-            />
+            <>
+              <ResultsPhase 
+                currentJudge={currentJudge}
+                winner={winner}
+                prizePool={prizePool}
+                aiReasoning={aiReasoning}
+                roundNumber={roundNumber}
+                nextRoundCountdown={nextRoundCountdown}
+              />
+              {/* Recent Winners na mobile - po ResultsPhase */}
+              {isMobile && <RecentWinners />}
+            </>
           )}
         </main>
 
@@ -215,6 +252,51 @@ const App = () => {
         <Footer />
       </div>
 
+      <style jsx global>{`
+        /* Global scrollbar styles */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: rgba(30, 30, 40, 0.8);
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: rgba(60, 75, 95, 0.6);
+          border-radius: 4px;
+          border: 1px solid rgba(40, 50, 65, 0.8);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(80, 95, 115, 0.8);
+        }
+
+        ::-webkit-scrollbar-corner {
+          background: rgba(30, 30, 40, 0.8);
+        }
+
+        /* Firefox scrollbar */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(60, 75, 95, 0.6) rgba(30, 30, 40, 0.8);
+        }
+
+        body {
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+            sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          background: linear-gradient(135deg, #0A0A0F 0%, #1A1A2E 50%, #16213E 100%);
+          color: #E6E6E6;
+          min-height: 100vh;
+        }
+      `}</style>
+
       <style jsx>{`
         .arena-container {
           min-height: 100vh;
@@ -232,6 +314,7 @@ const App = () => {
           max-width: 1000px;
           margin: 0 auto;
           flex: 1;
+          position: relative;
         }
 
         .error-message {
@@ -384,6 +467,26 @@ const App = () => {
         .roast-input textarea:disabled {
           opacity: 0.6;
           cursor: not-allowed;
+        }
+
+        /* Custom scrollbar dla textarea */
+        .roast-input textarea::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .roast-input textarea::-webkit-scrollbar-track {
+          background: rgba(30, 30, 40, 0.8);
+          border-radius: 4px;
+        }
+
+        .roast-input textarea::-webkit-scrollbar-thumb {
+          background: rgba(60, 75, 95, 0.6);
+          border-radius: 4px;
+          border: 1px solid rgba(40, 50, 65, 0.8);
+        }
+
+        .roast-input textarea::-webkit-scrollbar-thumb:hover {
+          background: rgba(80, 95, 115, 0.8);
         }
 
         .char-count {

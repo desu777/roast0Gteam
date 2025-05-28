@@ -76,6 +76,9 @@ export const treasuryApi = {
   
   // Wypłać nagrodę
   withdraw: (data) => api.post('/treasury/withdraw', data),
+  
+  // Pobierz ostatnich zwycięzców
+  getRecentWinners: (limit = 10) => api.get(`/treasury/recent-winners?limit=${limit}`),
 };
 
 // AI API

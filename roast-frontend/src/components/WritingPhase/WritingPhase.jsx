@@ -204,6 +204,26 @@ Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks 
           box-shadow: 0 0 0 3px rgba(0, 210, 233, 0.2);
         }
 
+        /* Custom scrollbar dla textarea */
+        .roast-textarea::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .roast-textarea::-webkit-scrollbar-track {
+          background: rgba(30, 30, 40, 0.8);
+          border-radius: 4px;
+        }
+
+        .roast-textarea::-webkit-scrollbar-thumb {
+          background: rgba(60, 75, 95, 0.6);
+          border-radius: 4px;
+          border: 1px solid rgba(40, 50, 65, 0.8);
+        }
+
+        .roast-textarea::-webkit-scrollbar-thumb:hover {
+          background: rgba(80, 95, 115, 0.8);
+        }
+
         .input-footer {
           display: flex;
           justify-content: space-between;
