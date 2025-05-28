@@ -4,6 +4,40 @@ import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { playersApi, treasuryApi } from '../services/api';
 import { zgGalileoTestnet } from '../config/wagmi';
 
+// Funkcje do zarządzania sessionStorage
+const AUTH_STORAGE_KEY = '0g-roast-auth';
+
+const saveAuthToStorage = (address, token) => {
+  sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+    address,
+    token,
+    timestamp: Date.now()
+  }));
+};
+
+const getAuthFromStorage = () => {
+  try {
+    const stored = sessionStorage.getItem(AUTH_STORAGE_KEY);
+    if (!stored) return null;
+    
+    const auth = JSON.parse(stored);
+    // Sprawdź czy token nie jest za stary (np. 24h)
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    if (Date.now() - auth.timestamp > maxAge) {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+    
+    return auth;
+  } catch {
+    return null;
+  }
+};
+
+const clearAuthStorage = () => {
+  sessionStorage.removeItem(AUTH_STORAGE_KEY);
+};
+
 export const useWallet = () => {
   const { address, isConnected, chainId } = useAccount();
   const { data: balance } = useBalance({ 
@@ -32,6 +66,17 @@ export const useWallet = () => {
     return `0G Roast Arena authentication\nAddress: ${address}\nTimestamp: ${timestamp}`;
   };
 
+  // Załaduj profil użytkownika
+  const loadUserProfile = useCallback(async (userAddress) => {
+    try {
+      const response = await playersApi.getProfile(userAddress);
+      setUserProfile(response.data);
+    } catch (err) {
+      console.error('Failed to load user profile:', err);
+      // Nie ustawiamy błędu, bo profil może nie istnieć dla nowego użytkownika
+    }
+  }, []);
+
   // Uwierzytelnienie użytkownika
   const authenticate = useCallback(async () => {
     // Sprawdź czy już próbujemy autentykacji
@@ -50,6 +95,16 @@ export const useWallet = () => {
     setError(null);
 
     try {
+      // Najpierw sprawdź sessionStorage
+      const storedAuth = getAuthFromStorage();
+      if (storedAuth && storedAuth.address === address) {
+        setIsAuthenticated(true);
+        setAuthToken(storedAuth.token);
+        await loadUserProfile(address);
+        console.log('✅ Restored authentication from storage');
+        return true;
+      }
+
       // Utwórz timestamp (zgodnie z wymaganiami backendu - max 5 minut)
       const timestamp = Math.floor(Date.now() / 1000);
       const message = createAuthMessage(address, timestamp);
@@ -70,6 +125,9 @@ export const useWallet = () => {
       if (response.data.success) {
         setIsAuthenticated(true);
         setAuthToken(signature);
+        
+        // Zapisz do sessionStorage
+        saveAuthToStorage(address, signature);
         
         // Pobierz profil użytkownika z odpowiedzi lub załaduj osobno
         if (response.data.player) {
@@ -100,18 +158,7 @@ export const useWallet = () => {
       setIsAuthenticating(false);
       authAttemptRef.current = false;
     }
-  }, [address, isConnected, isCorrectChain, isAuthenticated, signMessageAsync]);
-
-  // Załaduj profil użytkownika
-  const loadUserProfile = useCallback(async (userAddress) => {
-    try {
-      const response = await playersApi.getProfile(userAddress);
-      setUserProfile(response.data);
-    } catch (err) {
-      console.error('Failed to load user profile:', err);
-      // Nie ustawiamy błędu, bo profil może nie istnieć dla nowego użytkownika
-    }
-  }, []);
+  }, [address, isConnected, isCorrectChain, isAuthenticated, signMessageAsync, loadUserProfile]);
 
   // Pobierz saldo 0G
   const getZGBalance = useCallback(async () => {
@@ -140,6 +187,7 @@ export const useWallet = () => {
     setAuthToken(null);
     setUserProfile(null);
     setError(null);
+    clearAuthStorage(); // Wyczyść storage
   }, [disconnect]);
 
   // Auto-authenticate gdy wallet się połączy
@@ -156,6 +204,19 @@ export const useWallet = () => {
       return () => clearTimeout(timer);
     }
   }, [isConnected, address, isCorrectChain, isAuthenticated]); // Usunięto authenticate z zależności
+
+  // Przywróć autentykację z sessionStorage przy starcie
+  useEffect(() => {
+    if (isConnected && address && isCorrectChain && !isAuthenticated) {
+      const storedAuth = getAuthFromStorage();
+      if (storedAuth && storedAuth.address === address) {
+        console.log('🔄 Restoring authentication from sessionStorage...');
+        setIsAuthenticated(true);
+        setAuthToken(storedAuth.token);
+        loadUserProfile(address);
+      }
+    }
+  }, [isConnected, address, isCorrectChain, isAuthenticated, loadUserProfile]);
 
   // Reset stanu gdy wallet się rozłączy
   useEffect(() => {

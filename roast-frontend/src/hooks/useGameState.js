@@ -37,6 +37,10 @@ export const useGameState = () => {
   const [error, setError] = useState(null);
   const [notifications, setNotifications] = useState([]);
 
+  // Dodaj nowy stan do śledzenia blokady wyników
+  const [resultsLocked, setResultsLocked] = useState(false);
+  const [resultsLockTimer, setResultsLockTimer] = useState(null);
+
   // Sound effects
   const playSound = (type) => {
     if (!soundEnabled) return;
@@ -56,6 +60,12 @@ export const useGameState = () => {
 
   // Załaduj aktualną rundę z backendu
   const loadCurrentRound = useCallback(async () => {
+    // Jeśli wyniki są zablokowane, nie aktualizuj
+    if (resultsLocked) {
+      console.log('🔒 Results are locked, skipping round update');
+      return;
+    }
+    
     try {
       console.log('🔍 Loading current round from API...');
       const response = await gameApi.getCurrentRound();
@@ -184,7 +194,7 @@ export const useGameState = () => {
         setError('Failed to load game data');
       }
     }
-  }, [address]);
+  }, [address, resultsLocked]);
 
   // Załaduj statystyki gry
   const loadGameStats = useCallback(async () => {
@@ -306,10 +316,18 @@ export const useGameState = () => {
       console.log('Round completed:', data);
       
       // Zapobiegaj wielokrotnym wywołaniom
-      if (currentPhase === GAME_PHASES.RESULTS) {
-        console.log('Already in results phase, skipping duplicate event');
+      if (currentPhase === GAME_PHASES.RESULTS || resultsLocked) {
+        console.log('Already in results phase or results locked, skipping duplicate event');
         return;
       }
+      
+      // Ustaw blokadę na 20 sekund
+      setResultsLocked(true);
+      const lockTimer = setTimeout(() => {
+        console.log('🔓 Results lock expired, allowing updates');
+        setResultsLocked(false);
+      }, 20000);
+      setResultsLockTimer(lockTimer);
       
       setCurrentPhase(GAME_PHASES.RESULTS);
       
@@ -429,6 +447,16 @@ export const useGameState = () => {
       return () => clearTimeout(timer);
     }
   }, [nextRoundCountdown, loadCurrentRound]);
+
+  // Cleanup timer przy unmount
+  useEffect(() => {
+    return () => {
+      if (resultsLockTimer) {
+        console.log('🧹 Cleaning up results lock timer');
+        clearTimeout(resultsLockTimer);
+      }
+    };
+  }, [resultsLockTimer]);
 
   // Załaduj dane przy starcie
   useEffect(() => {
