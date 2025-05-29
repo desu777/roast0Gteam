@@ -5,23 +5,13 @@ import { treasuryApi } from '../../services/api';
 const RecentWinners = () => {
   const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     loadRecentWinners();
     const interval = setInterval(loadRecentWinners, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Aktualizuj czas co minutę dla "time ago"
@@ -35,7 +25,7 @@ const RecentWinners = () => {
 
   const loadRecentWinners = async () => {
     try {
-      const response = await treasuryApi.getRecentWinners(10);
+      const response = await treasuryApi.getRecentWinners(20); // Załaduj więcej rekordów
       setWinners(response.data.winners);
     } catch (error) {
       console.error('Failed to load recent winners:', error);
@@ -81,17 +71,12 @@ const RecentWinners = () => {
     return names[character] || character;
   };
 
-  // Inline styles dla mobile jako backup
-  const mobileStyles = isMobile ? {
-    background: 'rgba(18, 18, 24, 0.95)',
-    border: '1px solid rgba(60, 75, 95, 0.3)',
-    backdropFilter: 'blur(10px)',
-    color: '#E6E6E6'
-  } : {};
+  const displayedWinners = showAll ? winners : winners.slice(0, 10);
+  const hasMore = winners.length > 10;
 
   if (loading) {
     return (
-      <div className="recent-winners" style={mobileStyles}>
+      <div className="recent-winners">
         <div className="winners-header">
           <Trophy size={20} />
           <h3>Recent Winners</h3>
@@ -104,7 +89,7 @@ const RecentWinners = () => {
 
   if (winners.length === 0) {
     return (
-      <div className="recent-winners" style={mobileStyles}>
+      <div className="recent-winners">
         <div className="winners-header">
           <Trophy size={20} />
           <h3>Recent Winners</h3>
@@ -117,14 +102,14 @@ const RecentWinners = () => {
 
   return (
     <>
-      <div className="recent-winners" style={mobileStyles}>
+      <div className="recent-winners">
         <div className="winners-header">
           <Trophy size={20} />
           <h3>Recent Winners</h3>
         </div>
         
         <div className="winners-list">
-          {winners.map((winner, index) => (
+          {displayedWinners.map((winner, index) => (
             <div key={`${winner.roundId}-${index}`} className="winner-card">
               <div className="winner-info">
                 <div className="winner-address">
@@ -155,6 +140,24 @@ const RecentWinners = () => {
             </div>
           ))}
         </div>
+
+        {hasMore && !showAll && (
+          <button 
+            className="show-more-btn"
+            onClick={() => setShowAll(true)}
+          >
+            Show more ({winners.length - 10} more)
+          </button>
+        )}
+
+        {showAll && hasMore && (
+          <button 
+            className="show-less-btn"
+            onClick={() => setShowAll(false)}
+          >
+            Show less
+          </button>
+        )}
       </div>
 
       <style jsx>{styles}</style>
@@ -164,10 +167,10 @@ const RecentWinners = () => {
 
 const styles = `
   .recent-winners {
-    position: absolute;
-    left: -470px;
-    top: 2rem;
-    width: 450px;
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
     max-height: 600px;
     background: rgba(18, 18, 24, 0.95);
     border: 1px solid rgba(60, 75, 95, 0.3);
@@ -202,11 +205,12 @@ const styles = `
   .winners-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
   .winner-card {
-    background: rgba(10, 10, 10, 0.8);
+    background: rgba(30, 30, 40, 0.8);
     border: 1px solid rgba(60, 75, 95, 0.3);
     border-radius: 12px;
     padding: 16px;
@@ -215,7 +219,7 @@ const styles = `
 
   .winner-card:hover {
     border-color: rgba(255, 215, 0, 0.3);
-    background: rgba(15, 15, 15, 0.9);
+    transform: translateY(-1px);
   }
 
   .winner-info {
@@ -227,178 +231,102 @@ const styles = `
 
   .winner-address {
     font-family: 'Courier New', monospace;
-    color: #00D2E9;
-    font-size: 14px;
-    font-weight: 500;
-  }
-
-  .winner-amount {
-    color: #FFD700;
+    color: #E6E6E6;
     font-weight: 600;
     font-size: 14px;
   }
 
+  .winner-amount {
+    color: #FFD700;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
   .winner-roast {
-    color: #9999A5;
-    font-size: 14px;
-    font-style: italic;
+    color: #E6E6E6;
+    font-size: 13px;
+    line-height: 1.4;
     margin-bottom: 12px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    white-space: pre-wrap;
+    font-style: italic;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   .winner-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .winner-judge-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
 
   .winner-judge {
-    color: #666;
+    color: #9999A5;
     font-weight: 500;
   }
 
   .winner-time {
-    color: #888;
-    font-size: 11px;
-    font-style: italic;
+    color: #666;
+    font-size: 10px;
   }
 
   .winner-tx {
     color: #00D2E9;
-    transition: all 0.2s ease;
+    text-decoration: none;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
-    padding: 2px;
-    border-radius: 4px;
   }
 
   .winner-tx:hover {
-    color: #FFD700;
     background: rgba(0, 210, 233, 0.1);
   }
 
-  /* Desktop - wyśrodkowany po lewej stronie */
-  @media (min-width: 1401px) {
-    .recent-winners {
-      left: 50%;
-      transform: translateX(-50%);
-      margin-left: -650px; /* Bliżej środka */
-    }
+  .show-more-btn, .show-less-btn {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    color: #FFD700;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 12px;
   }
 
-  /* Średnie ekrany - bliżej środka */
-  @media (min-width: 1200px) and (max-width: 1400px) {
-    .recent-winners {
-      left: -380px;
-      width: 400px;
-    }
+  .show-more-btn:hover, .show-less-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-1px);
   }
 
-  /* Tablet - ukryj panel */
-  @media (max-width: 1199px) and (min-width: 769px) {
-    .recent-winners {
-      display: none;
-    }
-  }
-
-  /* Mobile - pokaż na dole */
-  @media (max-width: 768px) {
-    .recent-winners {
-      position: static;
-      left: auto;
-      top: auto;
-      transform: none;
-      margin: 20px auto 0;
-      width: 100%;
-      max-width: 400px;
-      max-height: 300px;
-      background: rgba(18, 18, 24, 0.95) !important;
-      border: 1px solid rgba(60, 75, 95, 0.3) !important;
-      backdrop-filter: blur(10px);
-    }
-    
-    .winners-header {
-      color: #FFD700 !important;
-    }
-    
-    .winners-header h3 {
-      font-size: 16px;
-      color: #FFD700 !important;
-    }
-    
-    .winner-card {
-      padding: 10px;
-      background: rgba(10, 10, 10, 0.8) !important;
-      border: 1px solid rgba(60, 75, 95, 0.3) !important;
-    }
-    
-    .winner-address {
-      color: #00D2E9 !important;
-    }
-    
-    .winner-amount {
-      color: #FFD700 !important;
-    }
-    
-    .winner-roast {
-      font-size: 12px;
-      color: #9999A5 !important;
-    }
-    
-    .winner-judge {
-      color: #666 !important;
-    }
-    
-    .winner-time {
-      color: #888 !important;
-    }
-    
-    .winner-tx {
-      color: #00D2E9 !important;
-    }
-    
-    .loading-message, .no-winners {
-      color: #9999A5 !important;
-    }
-  }
-
-  @media (max-height: 700px) {
-    .recent-winners {
-      max-height: 400px;
-    }
-  }
-
-  /* Custom scrollbar */
+  /* Scrollbar styling */
   .recent-winners::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   .recent-winners::-webkit-scrollbar-track {
-    background: rgba(30, 30, 40, 0.8);
-    border-radius: 4px;
+    background: rgba(30, 30, 40, 0.5);
+    border-radius: 3px;
   }
 
   .recent-winners::-webkit-scrollbar-thumb {
-    background: rgba(60, 75, 95, 0.6);
-    border-radius: 4px;
-    border: 1px solid rgba(40, 50, 65, 0.8);
+    background: rgba(255, 215, 0, 0.3);
+    border-radius: 3px;
   }
 
   .recent-winners::-webkit-scrollbar-thumb:hover {
-    background: rgba(80, 95, 115, 0.8);
-  }
-
-  .recent-winners::-webkit-scrollbar-corner {
-    background: rgba(30, 30, 40, 0.8);
+    background: rgba(255, 215, 0, 0.5);
   }
 `;
 

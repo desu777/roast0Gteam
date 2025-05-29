@@ -33,50 +33,78 @@ const WritingPhase = ({
 
         <div className="writing-section">
           <div className="writing-prompt">
-            <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
+            <h3>
+              <span className="fire-emoji">🔥</span>
+              Roast the 0G Team for {currentJudge.name}!
+              <span className="fire-emoji">🔥</span>
+            </h3>
           </div>
 
           {!userSubmitted ? (
             <div className="roast-input-container">
-              <textarea
-                value={roastText}
-                onChange={(e) => setRoastText(e.target.value)}
-                placeholder={`Write your best roast for ${currentJudge.name} to judge...
+              <div className="roast-input-wrapper">
+                <div className="flame-border">
+                  <div className="flame flame-1"></div>
+                  <div className="flame flame-2"></div>
+                  <div className="flame flame-3"></div>
+                  <div className="flame flame-4"></div>
+                </div>
+                
+                <textarea
+                  value={roastText}
+                  onChange={(e) => setRoastText(e.target.value)}
+                  placeholder={`Unleash your hottest roast for ${currentJudge.name}...
 
-Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks are asynchronous..."`}
-                maxLength={280}
-                className="roast-textarea"
-              />
-              <div className="input-footer">
-                <span className="char-count">{roastText.length}/280</span>
-                <div className="entry-fee">
-                  <Coins size={16} />
-                  <span>0.025 0G entry</span>
+🔥 "${currentJudge.name}'s code is so optimized, even their coffee breaks are asynchronous..."`}
+                  maxLength={280}
+                  className="roast-textarea"
+                />
+                
+                <div className="textarea-footer">
+                  <span className="char-count">
+                    <span className={roastText.length > 200 ? 'warning' : ''}>
+                      {roastText.length}
+                    </span>/280
+                  </span>
+                  <div className="flame-indicator">
+                    {roastText.length > 0 && roastText.length <= 50 && '🔥'}
+                    {roastText.length > 50 && roastText.length <= 150 && '🔥🔥'}
+                    {roastText.length > 150 && '🔥🔥🔥'}
+                  </div>
                 </div>
               </div>
               
               <button
-                className="submit-roast-btn"
+                className={`submit-roast-btn ${roastText.trim() ? 'ready' : ''}`}
                 onClick={joinRound}
                 disabled={!roastText.trim() || isSubmitting || !isConnected}
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="spinner" />
-                    Submitting...
-                  </>
-                ) : !isConnected ? (
-                  <>
-                    <Zap size={20} />
-                    Connect to Submit
-                  </>
-                ) : (
-                  <>
-                    <Send size={20} />
-                    Submit Roast
-                  </>
-                )}
+                <div className="btn-flame-bg"></div>
+                <div className="btn-content">
+                  {isSubmitting ? (
+                    <>
+                      <div className="spinner" />
+                      <span>Igniting...</span>
+                    </>
+                  ) : !isConnected ? (
+                    <>
+                      <Zap size={20} />
+                      <span>Connect to Roast</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="fire-icon">🔥</span>
+                      <span>Drop the Roast!</span>
+                      <span className="fire-icon">🔥</span>
+                    </>
+                  )}
+                </div>
               </button>
+              
+              <div className="entry-fee-badge">
+                <Coins size={14} />
+                <span>0.025 0G entry</span>
+              </div>
             </div>
           ) : (
             <div className="submitted-status">
@@ -179,17 +207,116 @@ Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks 
           color: #E6E6E6;
         }
 
+        /* Nowe style z efektami ognia */
+        
+        .fire-emoji {
+          display: inline-block;
+          animation: fireWiggle 1s ease-in-out infinite;
+          margin: 0 8px;
+        }
+
+        @keyframes fireWiggle {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-5deg) scale(1.1); }
+          75% { transform: rotate(5deg) scale(1.1); }
+        }
+
         .roast-input-container {
           margin-bottom: 24px;
         }
 
+        .roast-input-wrapper {
+          position: relative;
+          margin-bottom: 24px;
+        }
+
+        .flame-border {
+          position: absolute;
+          inset: -3px;
+          border-radius: 20px;
+          background: linear-gradient(
+            45deg,
+            #FFD700,
+            #FF6B6B,
+            #FF5CAA,
+            #FFD700
+          );
+          background-size: 300% 300%;
+          animation: flameGradient 3s ease infinite;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        }
+
+        .roast-textarea:focus ~ .flame-border {
+          opacity: 1;
+        }
+
+        @keyframes flameGradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        .flame {
+          position: absolute;
+          width: 20px;
+          height: 30px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .roast-textarea:focus ~ .flame-border .flame {
+          opacity: 0.8;
+        }
+
+        .flame::before {
+          content: '🔥';
+          position: absolute;
+          font-size: 20px;
+          animation: flameDance 1s ease-in-out infinite;
+        }
+
+        .flame-1 {
+          top: -15px;
+          left: 20%;
+          animation-delay: 0s;
+        }
+
+        .flame-2 {
+          top: -15px;
+          right: 20%;
+          animation-delay: 0.3s;
+        }
+
+        .flame-3 {
+          bottom: -15px;
+          left: 30%;
+          animation-delay: 0.6s;
+        }
+
+        .flame-4 {
+          bottom: -15px;
+          right: 30%;
+          animation-delay: 0.9s;
+        }
+
+        @keyframes flameDance {
+          0%, 100% { 
+            transform: translateY(0) scale(1);
+          }
+          50% { 
+            transform: translateY(-5px) scale(1.2);
+          }
+        }
+
         .roast-textarea {
           width: 100%;
-          min-height: 150px;
-          background: rgba(10, 10, 10, 0.9);
-          border: 2px solid rgba(60, 75, 95, 0.3);
+          min-height: 180px;
+          background: rgba(10, 10, 10, 0.95);
+          border: 2px solid transparent;
           border-radius: 16px;
-          padding: 20px;
+          padding: 24px;
           font-size: 16px;
           color: #E6E6E6;
           font-family: inherit;
@@ -197,92 +324,171 @@ Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks 
           outline: none;
           transition: all 0.3s ease;
           line-height: 1.6;
+          position: relative;
+          z-index: 1;
+          background-image: 
+            linear-gradient(rgba(10, 10, 10, 0.95), rgba(10, 10, 10, 0.95)),
+            linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 92, 170, 0.1));
         }
 
         .roast-textarea:focus {
-          border-color: #00D2E9;
-          box-shadow: 0 0 0 3px rgba(0, 210, 233, 0.2);
+          border-color: rgba(255, 215, 0, 0.5);
+          box-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.2),
+            inset 0 0 20px rgba(255, 215, 0, 0.05);
+          transform: translateY(-2px);
         }
 
-        /* Custom scrollbar dla textarea */
-        .roast-textarea::-webkit-scrollbar {
-          width: 8px;
+        .roast-textarea::placeholder {
+          color: rgba(153, 153, 165, 0.7);
+          font-style: italic;
         }
 
-        .roast-textarea::-webkit-scrollbar-track {
-          background: rgba(30, 30, 40, 0.8);
-          border-radius: 4px;
-        }
-
-        .roast-textarea::-webkit-scrollbar-thumb {
-          background: rgba(60, 75, 95, 0.6);
-          border-radius: 4px;
-          border: 1px solid rgba(40, 50, 65, 0.8);
-        }
-
-        .roast-textarea::-webkit-scrollbar-thumb:hover {
-          background: rgba(80, 95, 115, 0.8);
-        }
-
-        .input-footer {
+        .textarea-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-top: 12px;
+          padding: 0 8px;
         }
 
         .char-count {
           color: #9999A5;
           font-size: 14px;
+          font-weight: 500;
         }
 
-        .entry-fee {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        .char-count span.warning {
           color: #FFD700;
           font-weight: 600;
         }
 
+        .flame-indicator {
+          font-size: 16px;
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 0.8; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+
         .submit-roast-btn {
           width: 100%;
-          background: linear-gradient(135deg, #FF5CAA, #E74C3C);
-          color: white;
-          border: none;
+          background: linear-gradient(135deg, #1A0A0A, #2A0A0A);
+          border: 2px solid rgba(255, 215, 0, 0.3);
           border-radius: 16px;
-          padding: 18px;
+          padding: 0;
           font-size: 18px;
           font-weight: 700;
           cursor: pointer;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          margin-bottom: 12px;
+        }
+
+        .submit-roast-btn.ready {
+          border-color: rgba(255, 215, 0, 0.6);
+          animation: readyPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes readyPulse {
+          0%, 100% { 
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+          }
+          50% { 
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+          }
+        }
+
+        .btn-flame-bg {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg,
+            transparent,
+            rgba(255, 215, 0, 0.2),
+            rgba(255, 92, 170, 0.2),
+            transparent
+          );
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .submit-roast-btn:hover:not(:disabled) .btn-flame-bg {
+          opacity: 1;
+          animation: flameFlow 2s linear infinite;
+        }
+
+        @keyframes flameFlow {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        .btn-content {
+          position: relative;
+          z-index: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 12px;
+          padding: 20px;
+          color: #FFD700;
+          background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 215, 0, 0.1));
+          border-radius: 14px;
           transition: all 0.3s ease;
+        }
+
+        .submit-roast-btn:hover:not(:disabled) .btn-content {
+          background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 215, 0, 0.2));
+          transform: scale(1.02);
+        }
+
+        .fire-icon {
+          font-size: 20px;
+          animation: fireWiggle 0.8s ease-in-out infinite;
         }
 
         .submit-roast-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(255, 92, 170, 0.4);
+          box-shadow: 
+            0 10px 30px rgba(255, 215, 0, 0.3),
+            0 0 60px rgba(255, 92, 170, 0.2);
         }
 
         .submit-roast-btn:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
         }
 
         .spinner {
           width: 20px;
           height: 20px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
+          border: 3px solid rgba(255, 215, 0, 0.3);
           border-radius: 50%;
-          border-top-color: white;
+          border-top-color: #FFD700;
           animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .entry-fee-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          border-radius: 20px;
+          color: #FFD700;
+          font-weight: 600;
+          font-size: 14px;
+          margin: 0 auto;
+          width: fit-content;
         }
 
         .submitted-status {
@@ -291,101 +497,110 @@ Example: "${currentJudge.name}'s code is so optimized, even their coffee breaks 
         }
 
         .submitted-badge {
-          background: rgba(0, 184, 151, 0.1);
-          border: 2px solid #00B897;
-          border-radius: 20px;
+          background: rgba(0, 210, 233, 0.1);
+          border: 2px solid rgba(0, 210, 233, 0.3);
+          border-radius: 16px;
           padding: 30px;
-          max-width: 400px;
-          margin: 0 auto;
+          color: #00D2E9;
         }
 
         .submitted-badge h3 {
-          color: #00B897;
+          margin: 16px 0 12px 0;
           font-size: 24px;
-          margin-bottom: 12px;
+          font-weight: 700;
         }
 
         .submitted-badge p {
-          color: #9999A5;
+          color: #E6E6E6;
+          margin: 0;
           line-height: 1.5;
         }
 
         .live-participants {
-          background: rgba(18, 18, 24, 0.9);
-          border-radius: 16px;
-          padding: 24px;
-          border: 1px solid rgba(60, 75, 95, 0.3);
+          margin-top: 30px;
         }
 
         .live-participants h4 {
-          color: #E6E6E6;
           margin-bottom: 16px;
-          font-size: 18px;
+          color: #E6E6E6;
+          font-weight: 600;
         }
 
         .participants-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
           gap: 12px;
         }
 
         .participant-card {
-          background: rgba(10, 10, 10, 0.8);
+          background: rgba(18, 18, 24, 0.8);
           border: 1px solid rgba(60, 75, 95, 0.3);
           border-radius: 12px;
           padding: 12px;
-          position: relative;
+          text-align: center;
+          transition: all 0.2s ease;
         }
 
-        .participant-card.user-participant {
-          border-color: #00D2E9;
-          background: rgba(0, 210, 233, 0.05);
+        .participant-card:hover {
+          border-color: rgba(255, 215, 0, 0.3);
+          transform: translateY(-2px);
+        }
+
+        .user-participant {
+          border-color: rgba(0, 210, 233, 0.5);
+          background: rgba(0, 210, 233, 0.1);
         }
 
         .participant-address {
-          font-family: 'Courier New', monospace;
-          color: #9999A5;
           font-size: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+          color: #E6E6E6;
+          font-weight: 500;
         }
 
         .you-badge {
-          background: linear-gradient(135deg, #00D2E9, #FF5CAA);
-          color: white;
-          padding: 2px 8px;
-          border-radius: 8px;
+          background: #00D2E9;
+          color: #0A0A0A;
+          padding: 2px 6px;
+          border-radius: 4px;
           font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
+          font-weight: 600;
+          margin-left: 8px;
         }
 
         .more-participants {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(60, 75, 95, 0.3);
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px dashed rgba(255, 215, 0, 0.3);
           border-radius: 12px;
           padding: 12px;
-          color: #9999A5;
+          text-align: center;
+          color: #FFD700;
           font-weight: 600;
         }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
           .round-status {
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             text-align: center;
           }
 
-          .participants-grid {
-            grid-template-columns: 1fr;
+          .roast-textarea {
+            min-height: 150px;
+            padding: 20px;
+            font-size: 15px;
           }
 
-          .timer-text {
-            font-size: 24px;
+          .submit-roast-btn {
+            font-size: 16px;
+          }
+
+          .btn-content {
+            padding: 16px;
+          }
+
+          .participants-grid {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
           }
         }
       `}</style>

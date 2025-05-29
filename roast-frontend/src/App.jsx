@@ -134,151 +134,143 @@ const App = () => {
 
         {/* Main Content */}
         <main className="arena-main">
-          {/* Current Judge Display - Always visible */}
-          <JudgeBanner 
-            currentJudge={currentJudge}
-            setShowJudgeDetails={setShowJudgeDetails}
-          />
+          {/* Desktop: 3-column layout, Mobile: stacked layout */}
+          <div className="arena-layout">
+            
+            {/* Left Column - Recent Winners (Desktop) / Bottom (Mobile) */}
+            <div className="left-column">
+              <RecentWinners />
+            </div>
 
-          {/* Recent Winners Panel - tylko na desktop */}
-          {!isMobile && <RecentWinners />}
+            {/* Center Column - Main Game Content */}
+            <div className="center-column">
+              {/* Current Judge Display - Always visible */}
+              <JudgeBanner 
+                currentJudge={currentJudge}
+                setShowJudgeDetails={setShowJudgeDetails}
+              />
 
-          {/* Voting Panel for Next Judge - pokazuj podczas WAITING i WRITING */}
-          {(currentPhase === GAME_PHASES.WAITING || currentPhase === GAME_PHASES.WRITING) && (
-            <VotingPanel 
-              isConnected={isConnected}
-              timeLeft={timeLeft}
-              currentPhase={currentPhase}
-              onVote={handleVote}
-              onVotingComplete={handleVotingComplete}
-              userAddress={userAddress}
-            />
-          )}
-
-          {/* Phase-specific content */}
-          {currentPhase === GAME_PHASES.WAITING && (
-            <div className="waiting-phase">
-              <div className="waiting-content">
-                <h2>🎯 Waiting for Players</h2>
-                <p>A new round is starting soon! Get ready to roast the 0G team!</p>
-                <div className="waiting-stats">
-                  <div className="stat">
-                    <span className="stat-label">Prize Pool:</span>
-                    <span className="stat-value">{prizePool.toFixed(3)} 0G</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">Entry Fee:</span>
-                    <span className="stat-value">0.025 0G</span>
-                  </div>
-                </div>
-                
-                {/* Formularz do roasta - tak jak w fazie WRITING */}
-                {isConnected && currentJudge && (
-                  <div className="roast-form">
-                    <div className="timer-section">
-                      <div className="timer">⏱️ Waiting for 2nd player</div>
-                      <div className="participants-count">👥 {participants.length} roasters joined</div>
+              {/* Phase-specific content */}
+              {currentPhase === GAME_PHASES.WAITING && (
+                <div className="waiting-phase">
+                  <div className="waiting-content">
+                    <h2>🎯 Waiting for Players</h2>
+                    <p>A new round is starting soon! Get ready to roast the 0G team!</p>
+                    <div className="waiting-stats">
+                      <div className="stat">
+                        <span className="stat-label">Prize Pool:</span>
+                        <span className="stat-value">{prizePool.toFixed(3)} 0G</span>
+                      </div>
+                      <div className="stat">
+                        <span className="stat-label">Entry Fee:</span>
+                        <span className="stat-value">0.025 0G</span>
+                      </div>
                     </div>
                     
-                    {!userSubmitted ? (
-                      <div className="roast-section">
-                        <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
-                        
-                        <div className="roast-input">
-                          <textarea
-                            value={roastText}
-                            onChange={(e) => setRoastText(e.target.value)}
-                            placeholder={`Write your best roast for ${currentJudge.name} to judge...`}
-                            maxLength={280}
-                            disabled={userSubmitted || isSubmitting}
-                          />
-                          <div className="char-count">{roastText.length}/280</div>
+                    {/* Formularz do roasta - tak jak w fazie WRITING */}
+                    {isConnected && currentJudge && (
+                      <div className="roast-form">
+                        <div className="timer-section">
+                          <div className="timer">⏱️ Waiting for 2nd player</div>
+                          <div className="participants-count">👥 {participants.length} roasters joined</div>
                         </div>
                         
-                        <button
-                          className="submit-button"
-                          onClick={joinRound}
-                          disabled={!roastText.trim() || userSubmitted || isSubmitting}
-                        >
-                          {isSubmitting ? '⏳ Submitting...' : '🔥 Submit your roast!'}
-                        </button>
-                        
-                        <div className="entry-fee">💰 0.025 0G entry</div>
-
-                        {/* Recent Winners na mobile - po submit button */}
-                        {isMobile && <RecentWinners />}
+                        {!userSubmitted ? (
+                          <div className="roast-section">
+                            <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
+                            
+                            <div className="roast-input">
+                              <textarea
+                                value={roastText}
+                                onChange={(e) => setRoastText(e.target.value)}
+                                placeholder={`Write your best roast for ${currentJudge.name} to judge...`}
+                                maxLength={280}
+                                disabled={userSubmitted || isSubmitting}
+                              />
+                              <div className="char-count">{roastText.length}/280</div>
+                            </div>
+                            
+                            <button
+                              className="submit-button"
+                              onClick={joinRound}
+                              disabled={!roastText.trim() || userSubmitted || isSubmitting}
+                            >
+                              {isSubmitting ? '⏳ Submitting...' : '🔥 Submit your roast!'}
+                            </button>
+                            
+                            <div className="entry-fee">💰 0.025 0G entry</div>
+                          </div>
+                        ) : (
+                          <div className="submitted-status">
+                            <div className="submitted-badge">
+                              <div className="trophy-icon">🏆</div>
+                              <h3>Roast Submitted!</h3>
+                              <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="submitted-status">
-                        <div className="submitted-badge">
-                          <div className="trophy-icon">🏆</div>
-                          <h3>Roast Submitted!</h3>
-                          <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
-                        </div>
-
-                        {/* Recent Winners na mobile - po submitted status */}
-                        {isMobile && <RecentWinners />}
+                    )}
+                    
+                    {!isConnected && (
+                      <div className="connect-prompt">
+                        <p>Connect your wallet to join the round!</p>
                       </div>
                     )}
                   </div>
-                )}
-                
-                {!isConnected && (
-                  <div className="connect-prompt">
-                    <p>Connect your wallet to join the round!</p>
-                  </div>
-                )}
+                </div>
+              )}
 
-                {/* Recent Winners na mobile - gdy nie połączony */}
-                {!isConnected && isMobile && <RecentWinners />}
-              </div>
+              {currentPhase === GAME_PHASES.WRITING && (
+                <WritingPhase 
+                  currentJudge={currentJudge}
+                  timeLeft={timeLeft}
+                  formatTime={formatTime}
+                  participants={participants}
+                  roastText={roastText}
+                  setRoastText={setRoastText}
+                  userSubmitted={userSubmitted}
+                  isSubmitting={isSubmitting}
+                  isConnected={isConnected}
+                  joinRound={joinRound}
+                />
+              )}
+
+              {currentPhase === GAME_PHASES.JUDGING && (
+                <JudgingPhase 
+                  currentJudge={currentJudge}
+                  participants={participants}
+                />
+              )}
+
+              {currentPhase === GAME_PHASES.RESULTS && (
+                <ResultsPhase 
+                  currentJudge={currentJudge}
+                  winner={winner}
+                  prizePool={prizePool}
+                  aiReasoning={aiReasoning}
+                  roundNumber={roundNumber}
+                  nextRoundCountdown={nextRoundCountdown}
+                />
+              )}
             </div>
-          )}
 
-          {currentPhase === GAME_PHASES.WRITING && (
-            <>
-              <WritingPhase 
-                currentJudge={currentJudge}
-                timeLeft={timeLeft}
-                formatTime={formatTime}
-                participants={participants}
-                roastText={roastText}
-                setRoastText={setRoastText}
-                userSubmitted={userSubmitted}
-                isSubmitting={isSubmitting}
-                isConnected={isConnected}
-                joinRound={joinRound}
-              />
-              {/* Recent Winners na mobile - po WritingPhase */}
-              {isMobile && <RecentWinners />}
-            </>
-          )}
+            {/* Right Column - Voting Panel */}
+            <div className="right-column">
+              {/* Voting Panel for Next Judge - pokazuj podczas WAITING i WRITING */}
+              {(currentPhase === GAME_PHASES.WAITING || currentPhase === GAME_PHASES.WRITING) && (
+                <VotingPanel 
+                  isConnected={isConnected}
+                  timeLeft={timeLeft}
+                  currentPhase={currentPhase}
+                  onVote={handleVote}
+                  onVotingComplete={handleVotingComplete}
+                  userAddress={userAddress}
+                />
+              )}
+            </div>
 
-          {currentPhase === GAME_PHASES.JUDGING && (
-            <>
-              <JudgingPhase 
-                currentJudge={currentJudge}
-                participants={participants}
-              />
-              {/* Recent Winners na mobile - po JudgingPhase */}
-              {isMobile && <RecentWinners />}
-            </>
-          )}
-
-          {currentPhase === GAME_PHASES.RESULTS && (
-            <>
-              <ResultsPhase 
-                currentJudge={currentJudge}
-                winner={winner}
-                prizePool={prizePool}
-                aiReasoning={aiReasoning}
-                roundNumber={roundNumber}
-                nextRoundCountdown={nextRoundCountdown}
-              />
-              {/* Recent Winners na mobile - po ResultsPhase */}
-              {isMobile && <RecentWinners />}
-            </>
-          )}
+          </div>
         </main>
 
         {/* Judge Details Modal */}
@@ -359,10 +351,32 @@ const App = () => {
 
         .arena-main {
           padding: 30px 20px;
-          max-width: 1000px;
+          max-width: 1400px;
           margin: 0 auto;
           flex: 1;
           position: relative;
+        }
+
+        .arena-layout {
+          display: grid;
+          grid-template-columns: 380px 1fr 380px;
+          grid-template-areas: 
+            "left center right";
+          gap: 50px;
+          align-items: start;
+        }
+
+        .left-column {
+          grid-area: left;
+        }
+
+        .center-column {
+          grid-area: center;
+          min-width: 0; /* Prevents overflow */
+        }
+
+        .right-column {
+          grid-area: right;
         }
 
         .error-message {
@@ -618,6 +632,21 @@ const App = () => {
         @media (max-width: 768px) {
           .arena-main {
             padding: 20px 15px;
+            max-width: 100%;
+          }
+
+          .arena-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-areas: 
+              "center"
+              "right" 
+              "left";
+            gap: 20px;
+          }
+
+          .left-column, .right-column {
+            width: 100%;
           }
 
           .error-message {
