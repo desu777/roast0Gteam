@@ -506,6 +506,7 @@ export const useGameState = () => {
     nextRoundCountdown,
     currentRound,
     error,
+    userAddress: address, // Wallet address for voting
     
     // UI State
     soundEnabled,

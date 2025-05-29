@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { GAME_PHASES } from './constants/gameConstants';
+import { gameApi } from './services/api';
 
 // Components
 import ParticleEffect from './components/ParticleEffect/ParticleEffect';
@@ -14,6 +15,7 @@ import TransactionNotification from './components/TransactionNotification/Transa
 import Footer from './components/Footer/Footer';
 import FireEffect from './components/FireEffect/FireEffect';
 import RecentWinners from './components/RecentWinners/RecentWinners';
+import VotingPanel from './components/VotingPanel/VotingPanel';
 
 const App = () => {
   const containerRef = useRef(null);
@@ -48,6 +50,7 @@ const App = () => {
     nextRoundCountdown,
     error,
     notifications,
+    userAddress,
     
     // UI State
     soundEnabled,
@@ -66,6 +69,39 @@ const App = () => {
     addNotification,
     removeNotification
   } = useGameState();
+
+  // Voting handlers
+  const handleVote = (characterId) => {
+    console.log('Vote cast for:', characterId);
+    playSound?.('vote');
+  };
+
+  const handleVotingComplete = async (winnerCharacterId, totalVotes = 0) => {
+    try {
+      console.log('Voting completed:', { winnerCharacterId, totalVotes });
+      
+      const response = await gameApi.submitVotingResult(winnerCharacterId, totalVotes);
+      
+      if (response.data.success) {
+        addNotification({
+          type: 'success',
+          title: 'Voting Result Submitted',
+          message: `${response.data.data.nextJudge} will judge the next round!`,
+          duration: 5000
+        });
+        
+        playSound?.('success');
+      }
+    } catch (error) {
+      console.error('Failed to submit voting result:', error);
+      addNotification({
+        type: 'error',
+        title: 'Voting Failed',
+        message: 'Failed to submit voting result. Using random selection.',
+        duration: 5000
+      });
+    }
+  };
 
   return (
     <>
@@ -106,6 +142,18 @@ const App = () => {
 
           {/* Recent Winners Panel - tylko na desktop */}
           {!isMobile && <RecentWinners />}
+
+          {/* Voting Panel for Next Judge - pokazuj podczas WAITING i WRITING */}
+          {(currentPhase === GAME_PHASES.WAITING || currentPhase === GAME_PHASES.WRITING) && (
+            <VotingPanel 
+              isConnected={isConnected}
+              timeLeft={timeLeft}
+              currentPhase={currentPhase}
+              onVote={handleVote}
+              onVotingComplete={handleVotingComplete}
+              userAddress={userAddress}
+            />
+          )}
 
           {/* Phase-specific content */}
           {currentPhase === GAME_PHASES.WAITING && (

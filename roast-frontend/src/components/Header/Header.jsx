@@ -174,7 +174,9 @@ const Header = ({
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          background: linear-gradient(135deg, #FFD700, #FF5CAA);
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          animation: rainbowBackground 3s linear infinite;
         }
 
         .logo-glow {
@@ -197,6 +199,11 @@ const Header = ({
         @keyframes logoGlow {
           0% { transform: scale(1); opacity: 0.8; }
           100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        @keyframes rainbowBackground {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
         }
 
         .title-group h1 {

@@ -62,6 +62,11 @@ function createGameRoutes(gameController) {
     gameController.joinRound(req, res);
   });
 
+  // POST /api/game/vote-next-judge - Set voting result for next judge
+  router.post('/vote-next-judge', (req, res) => {
+    gameController.setNextJudgeVoting(req, res);
+  });
+
   // GET /api/game/health - Game service health check
   router.get('/health', (req, res) => {
     gameController.healthCheck(req, res);

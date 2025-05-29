@@ -6,12 +6,37 @@ const { logger } = require('../../services/logger.service');
 class CharacterService {
   constructor() {
     this.characters = this.loadCharacters();
+    this.recentWinners = new Map(); // Przechowuj ostatnie zwycięskie roasty dla każdej postaci
     
     if (config.logging.testEnv) {
       logger.info('Character service initialized', {
         charactersLoaded: Object.keys(this.characters).length
       });
     }
+  }
+
+  /**
+   * Dodaje zwycięski roast do historii
+   */
+  addWinningRoast(characterId, roast) {
+    if (!this.recentWinners.has(characterId)) {
+      this.recentWinners.set(characterId, []);
+    }
+    
+    const winners = this.recentWinners.get(characterId);
+    winners.unshift(roast); // Dodaj na początek
+    
+    // Zachowaj tylko 5 ostatnich
+    if (winners.length > 5) {
+      winners.pop();
+    }
+  }
+
+  /**
+   * Pobiera ostatnie zwycięskie roasty dla postaci
+   */
+  getRecentWinners(characterId) {
+    return this.recentWinners.get(characterId) || [];
   }
 
   /**
@@ -122,32 +147,29 @@ class CharacterService {
    * @returns {string} System prompt
    */
   buildSystemPrompt(character) {
-    return `You are ${character.name}, ${character.role} at 0G Labs.
+    return `You are ${character.name}, ${character.role} at 0G Labs. You're judging a roast battle where players write funny roasts about team members.
 
-PERSONALITY: ${character.personality}
-DECISION STYLE: ${character.decisionStyle}
-ARCHETYPE: ${character.archetype}
+YOUR PERSONALITY: ${character.personality}
+YOUR STYLE: Casual, chill, uses internet slang, speaks like a real person not a robot
 
-ABOUT 0G LABS:
-0G Labs is building the first modular AI blockchain that enables AI systems to be trained and operated on-chain. The team consists of brilliant engineers and visionaries working on the future of decentralized AI infrastructure.
+IMPORTANT RULES:
+1. You MUST respond with ONLY valid JSON - no text before or after
+2. Be super casual and fun - use "lol", "lmao", emojis, slang
+3. Keep reasoning short (under 100 words)
+4. Always roast the winner back playfully at the end
+5. If roasts contain profanity or are edgy, that's fine - it's a roast battle!
+6. Pick the most creative, funny, or savage roast
+7. NEVER use formal language like "demonstrates exceptional" or "masterclass"
+8. Talk like you're texting a friend, not writing an essay
 
-YOUR ROLE AS JUDGE:
-You are judging a roast battle where players submit humorous roasts about team members. Your job is to evaluate the roasts based on:
-1. Creativity and originality
-2. Technical wit and understanding
-3. Humor quality and timing
-4. Respect for the person while being funny
-5. Overall entertainment value
-
-You should respond in character as ${character.name}, using your personality and decision-making style. Be fair but decisive, and always explain your reasoning in a way that reflects your character.
-
-CRITICAL OUTPUT FORMAT RULES:
-- You MUST respond with ONLY valid JSON
-- Do NOT include markdown code blocks (no \`\`\`json or \`\`\`)
-- Do NOT include any text before or after the JSON
-- Do NOT use line breaks in the reasoning field
-- The response must be parseable by JSON.parse() directly
-- If you cannot decide, still pick the best one available`;
+CRITICAL: Your entire response must be ONLY this JSON structure:
+{
+  "winnerId": <number>,
+  "reasoning": "<casual explanation why you picked this one + roast back at winner>",
+  "scores": {
+    "<submission_id>": <score_1_to_10>
+  }
+}`;
   }
 
   /**
@@ -159,59 +181,29 @@ CRITICAL OUTPUT FORMAT RULES:
    */
   buildEvaluationPrompt(characterId, submissions, targetMember = null) {
     const character = this.getCharacter(characterId);
+    const recentWinners = this.getRecentWinners(characterId);
     
     // System prompt
     const systemPrompt = this.buildSystemPrompt(character);
     
     // User prompt z roastami
     const submissionsText = submissions.map((sub, index) => 
-      `ROAST #${index + 1} (ID: ${sub.id}):
-"${sub.roast_text}"
-Submitted by: ${sub.player_address.substring(0, 8)}...${sub.player_address.substring(-6)}`
+      `ID ${sub.id}: "${sub.roast_text}" (from ${sub.player_address.substring(0, 8)}...)`
     ).join('\n\n');
 
-    const userPrompt = `${character.name}, you need to judge this roast battle with ${submissions.length} submissions${targetMember ? ` about ${targetMember}` : ''}.
+    // Dodaj info o ostatnich zwycięzcach
+    let recentWinnersText = '';
+    if (recentWinners.length > 0) {
+      recentWinnersText = `\nBTW these roasts won recently (don't pick similar ones):\n${recentWinners.map(r => `- "${r}"`).join('\n')}\n`;
+    }
+
+    const userPrompt = `yo ${character.name}! time to judge these roasts${targetMember ? ` about ${targetMember}` : ''}:
 
 ${submissionsText}
+${recentWinnersText}
+pick the funniest/most creative one and tell us why in your style. remember to roast the winner back!
 
-Evaluate all roasts and select the best one. Consider:
-- Creativity and originality
-- Technical humor and wordplay
-- Entertainment value and timing
-- Respectful but sharp wit
-
-CRITICAL INSTRUCTIONS:
-1. You MUST respond with ONLY valid JSON - no additional text, no markdown, no explanations outside the JSON
-2. The winnerId MUST be one of the submission IDs provided above
-3. The reasoning MUST be a single string without line breaks
-4. Do NOT use double quotes (") inside the reasoning text - use single quotes (') instead
-5. Do NOT use backslashes or other escape characters in reasoning
-6. Keep reasoning under 200 words to avoid truncation
-7. If a roast contains offensive content, still evaluate it fairly based on creativity
-8. You MUST make a decision - no ties or refusals
-9. Include a SHORT PLAYFUL ROAST BACK at the winner in your reasoning (keep it light and fun!)
-
-Respond with ONLY this JSON structure (no markdown blocks, no extra text):
-{
-  "winnerId": <number>,
-  "reasoning": "<your detailed explanation as ${character.name} in a single line>",
-  "scores": {
-    "<submission_id>": <score_1_to_10>,
-    "<submission_id>": <score_1_to_10>
-  }
-}
-
-Example response format:
-{
-  "winnerId": 123,
-  "reasoning": "As ${character.name}, I crown submission 123 the winner! Their blockchain consensus joke was pure genius. But honestly winner, with roasting skills like that, maybe you should debug your own code instead of roasting others!",
-  "scores": {
-    "123": 9,
-    "124": 7
-  }
-}
-
-Now evaluate the roasts and respond with ONLY the JSON object.`;
+IMPORTANT: respond with ONLY the JSON object, nothing else!`;
 
     return [
       {
@@ -250,8 +242,8 @@ Now evaluate the roasts and respond with ONLY the JSON object.`;
         };
       }
 
-      // Sprawdź długość reasoning
-      if (response.reasoning.length < 50) {
+      // Sprawdź długość reasoning - skrócona dla casualowych odpowiedzi
+      if (response.reasoning.length < 20) {
         return {
           valid: false,
           error: 'Reasoning too short'

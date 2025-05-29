@@ -51,6 +51,10 @@ export const gameApi = {
   
   // Pobierz statystyki gry
   getStats: () => api.get('/game/stats'),
+  
+  // Wyślij wynik głosowania na następnego sędziego
+  submitVotingResult: (characterId, totalVotes) => 
+    api.post('/game/vote-next-judge', { characterId, totalVotes }),
 };
 
 // Players API

@@ -28,8 +28,17 @@ class GameService {
     this.wsEmitter = wsEmitter;
     this.aiService = aiService;
     this.treasuryService = treasuryService;
-    this.activeTimers = new Map(); // roundId -> timer info
+    this.activeTimers = new Map(); // roundId -> { timer, startTime, duration }
     this.autoStartTimer = null;
+    this.nextJudgeVotingResult = null; // Store voting result for next round
+    
+    if (config.logging.testEnv) {
+      logger.info('Game service initialized', {
+        wsEmitter: !!wsEmitter,
+        aiService: !!aiService,
+        treasuryService: !!treasuryService
+      });
+    }
     
     // Resume any active rounds on startup
     this.resumeActiveRounds();
@@ -39,7 +48,7 @@ class GameService {
   // ROUND LIFECYCLE MANAGEMENT
   // ================================
 
-  async createNewRound() {
+  async createNewRound(preferredCharacter = null) {
     try {
       // Check if there's already an active round
       const currentRound = database.getCurrentRound();
@@ -50,33 +59,54 @@ class GameService {
         return { success: false, error: 'Active round already exists', round: currentRound };
       }
 
-      // Select random character
-      const characters = Object.keys(CHARACTERS);
-      const randomCharacter = characters[Math.floor(Math.random() * characters.length)];
+      // Select character - use voting result or random fallback
+      let selectedCharacter;
+      if (preferredCharacter && this.aiService.characterExists(preferredCharacter)) {
+        selectedCharacter = preferredCharacter;
+        if (config.logging.testEnv) {
+          logger.info('Using community-voted judge', { selectedCharacter });
+        }
+      } else {
+        // Fallback to random selection
+        const characters = Object.keys(CHARACTERS);
+        selectedCharacter = characters[Math.floor(Math.random() * characters.length)];
+        if (config.logging.testEnv) {
+          logger.info('Using random judge (no valid vote)', { 
+            selectedCharacter, 
+            attemptedCharacter: preferredCharacter 
+          });
+        }
+      }
 
       // Create new round
-      const roundId = database.createRound(randomCharacter);
+      const roundId = database.createRound(selectedCharacter);
       const newRound = database.getRoundById(roundId);
 
-      gameLogger.roundCreated(roundId, randomCharacter);
+      gameLogger.roundCreated(roundId, selectedCharacter);
 
       // Emit WebSocket event
       this.emitToAll(WS_EVENTS.ROUND_CREATED, {
         roundId: roundId,
-        judgeCharacter: randomCharacter,
+        judgeCharacter: selectedCharacter,
         phase: GAME_PHASES.WAITING,
         prizePool: 0,
-        playerCount: 0
+        playerCount: 0,
+        votingResult: !!preferredCharacter // Indicate if this was from voting
       });
 
       if (config.logging.testEnv) {
-        logger.info('New round created', { roundId, character: randomCharacter });
+        logger.info('New round created', { 
+          roundId, 
+          character: selectedCharacter,
+          fromVoting: !!preferredCharacter
+        });
       }
 
       return { 
         success: true, 
         round: formatRoundResponse(newRound),
-        message: MESSAGES.ROUND_STARTING 
+        message: MESSAGES.ROUND_STARTING,
+        judgeSource: preferredCharacter ? 'voting' : 'random'
       };
 
     } catch (error) {
@@ -610,20 +640,23 @@ class GameService {
       clearTimeout(this.autoStartTimer);
     }
 
-    // Natychmiast wybierz nowego sędziego dla następnej rundy
-    const characters = Object.keys(CHARACTERS);
-    const nextCharacter = characters[Math.floor(Math.random() * characters.length)];
-    
-    if (config.logging.testEnv) {
-      logger.info('Next round character selected', { 
-        character: nextCharacter,
-        delay: config.game.nextRoundDelay 
-      });
-    }
-
-    // Schedule new round creation
+    // Schedule new round creation with voting result
     this.autoStartTimer = setTimeout(() => {
-      this.createNewRound().catch(error => {
+      // Use voting result if available, otherwise fallback to random
+      const preferredCharacter = this.nextJudgeVotingResult;
+      
+      if (config.logging.testEnv) {
+        logger.info('Creating next round', { 
+          preferredCharacter,
+          source: preferredCharacter ? 'voting' : 'random',
+          delay: config.game.nextRoundDelay 
+        });
+      }
+
+      // Clear the voting result after using it
+      this.nextJudgeVotingResult = null;
+
+      this.createNewRound(preferredCharacter).catch(error => {
         gameLogger.error('autoCreateRound', error);
       });
     }, config.game.nextRoundDelay * 1000);
@@ -631,6 +664,42 @@ class GameService {
     if (config.logging.testEnv) {
       logger.info('Next round scheduled', { delay: config.game.nextRoundDelay });
     }
+  }
+
+  /**
+   * Set the voting result for next judge selection
+   * @param {string} characterId - Selected character ID from community voting
+   */
+  setNextJudgeVotingResult(characterId) {
+    if (characterId && this.aiService && this.aiService.characterExists(characterId)) {
+      this.nextJudgeVotingResult = characterId;
+      
+      if (config.logging.testEnv) {
+        logger.info('Next judge voting result set', { characterId });
+      }
+      
+      // Emit to all clients that voting result was accepted
+      this.emitToAll('voting-result-accepted', {
+        nextJudge: characterId,
+        source: 'community-vote'
+      });
+      
+      return { success: true, nextJudge: characterId };
+    } else {
+      if (config.logging.testEnv) {
+        logger.warn('Invalid character for voting result', { characterId });
+      }
+      
+      return { success: false, error: 'Invalid character ID' };
+    }
+  }
+
+  /**
+   * Get current voting result for next judge
+   * @returns {string|null} Character ID or null
+   */
+  getNextJudgeVotingResult() {
+    return this.nextJudgeVotingResult;
   }
 
   // ================================

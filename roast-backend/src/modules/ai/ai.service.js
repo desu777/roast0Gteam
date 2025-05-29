@@ -98,6 +98,12 @@ class AIService {
       // Parsuj i waliduj odpowiedź
       const evaluationResult = await this.parseAIResponse(aiResponse, submissions);
 
+      // Dodaj zwycięski roast do historii
+      const winnerSubmission = submissions.find(sub => sub.id === evaluationResult.winnerId);
+      if (winnerSubmission) {
+        this.characterService.addWinningRoast(characterId, winnerSubmission.roast_text);
+      }
+
       const duration = Date.now() - startTime;
 
       // Loguj sukces
@@ -184,57 +190,53 @@ class AIService {
       if (config.logging.testEnv) {
         logger.debug('AI response received', {
           contentLength: content.length,
-          contentPreview: content.substring(0, 100) + '...',
-          fullContent: content.length < 500 ? content : 'Content too long to log'
+          contentPreview: content.substring(0, 100) + '...'
         });
       }
 
-      // Parsuj JSON - ulepszona wersja
+      // Ulepszone parsowanie JSON
       let evaluationResult;
       try {
-        // Najpierw spróbuj usunąć bloki markdown
-        let cleanContent = content;
-        
-        // Usuń ```json na początku i ``` na końcu
-        if (cleanContent.includes('```json')) {
-          cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-        } else if (cleanContent.includes('```')) {
-          cleanContent = cleanContent.replace(/```\s*/g, '');
-        }
-        
-        // Znajdź JSON w treści
-        const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          evaluationResult = JSON.parse(jsonMatch[0]);
-        } else {
-          evaluationResult = JSON.parse(cleanContent);
-        }
+        // Najpierw spróbuj bezpośrednio
+        evaluationResult = JSON.parse(content);
       } catch (parseError) {
-        // Jeśli dalej nie działa, spróbuj różnych metod
-        if (config.logging.testEnv) {
-          logger.debug('Initial parse failed, trying alternative methods...', {
-            error: parseError.message,
-            contentPreview: content.substring(0, 200)
-          });
-        }
+        // Jeśli się nie udało, wyczyść content
+        let cleanContent = content.trim();
         
-        // Metoda 2: Usuń wszystko przed pierwszym { i po ostatnim }
-        const startIdx = content.indexOf('{');
-        const endIdx = content.lastIndexOf('}');
+        // Usuń wszystkie znaki przed pierwszym { i po ostatnim }
+        const startIdx = cleanContent.indexOf('{');
+        const endIdx = cleanContent.lastIndexOf('}');
         
-        if (startIdx !== -1 && endIdx !== -1) {
-          const jsonContent = content.substring(startIdx, endIdx + 1);
+        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+          cleanContent = cleanContent.substring(startIdx, endIdx + 1);
           
-          // Próbuj naprawić uszkodzony JSON
+          // Usuń potencjalne problematyczne znaki
+          cleanContent = cleanContent
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Usuń znaki kontrolne
+            .replace(/\\/g, '\\\\') // Escape backslashes
+            .replace(/\n/g, '\\n') // Escape newlines w stringach
+            .replace(/\r/g, '\\r') // Escape carriage returns
+            .replace(/\t/g, '\\t'); // Escape tabs
+          
           try {
-            evaluationResult = JSON.parse(jsonContent);
-          } catch (e) {
-            // Spróbuj naprawić niezamknięty string
-            const fixedJson = jsonContent.replace(/:\s*"([^"]*?)$/m, ': "$1"');
-            evaluationResult = JSON.parse(fixedJson);
+            evaluationResult = JSON.parse(cleanContent);
+          } catch (secondError) {
+            // Ostatnia próba - regex do wyciągnięcia pól
+            const winnerIdMatch = cleanContent.match(/"winnerId"\s*:\s*(\d+)/);
+            const reasoningMatch = cleanContent.match(/"reasoning"\s*:\s*"([^"]+)"/);
+            
+            if (winnerIdMatch && reasoningMatch) {
+              evaluationResult = {
+                winnerId: parseInt(winnerIdMatch[1]),
+                reasoning: reasoningMatch[1],
+                scores: {}
+              };
+            } else {
+              throw new Error(`Failed to parse AI response: ${secondError.message}`);
+            }
           }
         } else {
-          throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+          throw new Error(`Invalid JSON structure in AI response`);
         }
       }
 

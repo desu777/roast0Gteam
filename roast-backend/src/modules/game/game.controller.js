@@ -440,6 +440,60 @@ class GameController {
     }
   }
 
+  /**
+   * POST /api/game/vote-next-judge - Set voting result for next judge
+   */
+  async setNextJudgeVoting(req, res) {
+    try {
+      const { characterId, totalVotes } = req.body;
+
+      if (!characterId) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          error: ERROR_CODES.VALIDATION_ERROR,
+          message: 'Character ID is required'
+        });
+      }
+
+      const result = this.gameService.setNextJudgeVotingResult(characterId);
+      
+      if (!result.success) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          success: false,
+          error: ERROR_CODES.VALIDATION_ERROR,
+          message: result.error
+        });
+      }
+
+      if (config.logging.testEnv) {
+        logger.info('Next judge voting result submitted', { 
+          characterId,
+          totalVotes: totalVotes || 'unknown'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          nextJudge: result.nextJudge,
+          totalVotes: totalVotes || 0
+        },
+        message: 'Voting result accepted'
+      });
+
+    } catch (error) {
+      logger.error('Error setting next judge voting result', { 
+        error: error.message,
+        body: req.body 
+      });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: ERROR_CODES.INTERNAL_ERROR,
+        message: 'Failed to set voting result'
+      });
+    }
+  }
+
   // ================================
   // HEALTH CHECK
   // ================================
