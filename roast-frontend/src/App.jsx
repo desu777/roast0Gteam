@@ -17,6 +17,7 @@ import { globalStyles, appStyles } from './styles/appStyles';
 const App = () => {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [sparksEnabled, setSparksEnabled] = useState(true);
 
   // Hook do sprawdzania szerokości ekranu
   useEffect(() => {
@@ -145,7 +146,7 @@ const App = () => {
           showFireEffect={showFireEffect}
           currentJudge={currentJudge}
           currentPhase={currentPhase}
-          enableSparks={true}
+          enableSparks={sparksEnabled}
           sparksIntensity={getSparksIntensity()}
         />
 
@@ -153,6 +154,8 @@ const App = () => {
         <Header 
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
+          sparksEnabled={sparksEnabled}
+          setSparksEnabled={setSparksEnabled}
           roundNumber={roundNumber}
           currentPlayerCount={participants.length}
           prizePool={prizePool}
@@ -170,35 +173,35 @@ const App = () => {
         <GameLayout 
           // Game State
           currentPhase={currentPhase}
-          currentJudge={currentJudge}
-          timeLeft={timeLeft}
-          formatTime={formatTime}
-          participants={participants}
-          roastText={roastText}
-          setRoastText={setRoastText}
-          userSubmitted={userSubmitted}
-          isSubmitting={isSubmitting}
-          isConnected={isConnected}
-          joinRound={joinRound}
+                  currentJudge={currentJudge}
+                  timeLeft={timeLeft}
+                  formatTime={formatTime}
+                  participants={participants}
+                  roastText={roastText}
+                  setRoastText={setRoastText}
+                  userSubmitted={userSubmitted}
+                  isSubmitting={isSubmitting}
+                  isConnected={isConnected}
+                  joinRound={joinRound}
           prizePool={prizePool}
-          winner={winner}
-          aiReasoning={aiReasoning}
-          roundNumber={roundNumber}
-          nextRoundCountdown={nextRoundCountdown}
+                  winner={winner}
+                  aiReasoning={aiReasoning}
+                  roundNumber={roundNumber}
+                  nextRoundCountdown={nextRoundCountdown}
           userAddress={userAddress}
           
           // Voting State
-          votingStats={votingStats}
-          userVote={userVote}
-          votingLocked={votingLocked}
-          isVoting={isVoting}
-          votingError={votingError}
-          
+                  votingStats={votingStats}
+                  userVote={userVote}
+                  votingLocked={votingLocked}
+                  isVoting={isVoting}
+                  votingError={votingError}
+                  
           // Actions
           setShowJudgeDetails={setShowJudgeDetails}
           castVote={castVote}
           handleVotingComplete={handleVotingComplete}
-        />
+                />
 
         {/* Judge Details Modal */}
         <JudgeModal 

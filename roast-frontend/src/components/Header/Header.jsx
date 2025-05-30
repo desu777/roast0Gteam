@@ -1,12 +1,14 @@
 import React from 'react';
 import { 
-  Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader 
+  Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader, Sparkles, SparklesIcon 
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 
 const Header = ({ 
   soundEnabled, 
-  setSoundEnabled, 
+  setSoundEnabled,
+  sparksEnabled,
+  setSparksEnabled,
   roundNumber, 
   currentPlayerCount,
   prizePool 
@@ -42,12 +44,27 @@ const Header = ({
           </div>
           
           <div className="header-controls">
-            <button 
-              className="sound-toggle"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-            >
-              {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-            </button>
+            <div className="controls-group">
+              <button 
+                className="control-toggle"
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
+              >
+                {soundEnabled ? (
+                  <Volume2 size={20} className="active" />
+                ) : (
+                  <VolumeX size={20} className="inactive" />
+                )}
+              </button>
+              
+              <button 
+                className="control-toggle"
+                onClick={() => setSparksEnabled(!sparksEnabled)}
+                title={sparksEnabled ? 'Disable sparks effect' : 'Enable sparks effect'}
+              >
+                <Sparkles size={20} className={sparksEnabled ? 'active' : 'inactive'} />
+              </button>
+            </div>
             
             {!isConnected ? (
               <button 
@@ -160,6 +177,54 @@ const Header = ({
           margin-bottom: 20px;
         }
 
+        .header-controls {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .controls-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .control-toggle {
+          width: 44px;
+          height: 44px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          color: #E6E6E6;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .control-toggle:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .control-toggle .active {
+          color: #FFD700;
+          filter: drop-shadow(0 0 8px #FFD700);
+          animation: goldenGlow 2s ease-in-out infinite alternate;
+        }
+
+        .control-toggle .inactive {
+          color: #666;
+          opacity: 0.7;
+        }
+
+        @keyframes goldenGlow {
+          0% { filter: drop-shadow(0 0 8px #FFD700); }
+          100% { filter: drop-shadow(0 0 12px #FFD700) drop-shadow(0 0 20px rgba(255, 215, 0, 0.3)); }
+        }
+
         .logo-section {
           display: flex;
           align-items: center;
@@ -207,20 +272,15 @@ const Header = ({
         }
 
         .title-group h1 {
+          margin: 0 0 8px 0;
           font-size: 32px;
           font-weight: 800;
-          margin: 0;
           background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700);
           background-size: 200% 100%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
+          background-clip: text;
           animation: rainbowText 3s linear infinite;
-        }
-
-        .title-group p {
-          margin: 5px 0 0 0;
-          color: #9999A5;
-          font-style: italic;
         }
 
         @keyframes rainbowText {
@@ -228,80 +288,96 @@ const Header = ({
           100% { background-position: 200% 50%; }
         }
 
-        .header-controls {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-        }
-
-        .sound-toggle {
-          background: rgba(18, 18, 24, 0.8);
-          border: 1px solid rgba(60, 75, 95, 0.3);
-          border-radius: 12px;
-          padding: 12px;
-          color: #9999A5;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .sound-toggle:hover {
-          color: #00D2E9;
-          border-color: #00D2E9;
+        .title-group p {
+          margin: 0;
+          color: #B0B0B0;
+          font-size: 16px;
+          font-weight: 500;
         }
 
         .connect-wallet-btn {
-          background: linear-gradient(135deg, #00D2E9, #FF5CAA);
-          color: white;
+          position: relative;
+          padding: 14px 28px;
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
           border: none;
-          border-radius: 16px;
-          padding: 12px 24px;
-          font-size: 16px;
-          font-weight: 600;
+          border-radius: 12px;
+          color: white;
+          font-weight: 700;
+          font-size: 15px;
           cursor: pointer;
+          transition: all 0.3s ease;
           display: flex;
           align-items: center;
-          gap: 8px;
-          transition: all 0.3s ease;
+          gap: 10px;
+          overflow: hidden;
+          box-shadow: 0 4px 15px rgba(0, 210, 233, 0.3);
+        }
+
+        .connect-wallet-btn:not(:disabled) {
+          animation: connectButtonFlow 3s linear infinite;
+        }
+
+        .connect-wallet-btn::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          transition: left 0.5s;
+        }
+
+        .connect-wallet-btn:hover:not(:disabled)::before {
+          left: 100%;
         }
 
         .connect-wallet-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0, 210, 233, 0.4);
+          transform: translateY(-3px);
+          box-shadow: 0 8px 25px rgba(0, 210, 233, 0.5);
         }
 
         .connect-wallet-btn:disabled {
-          opacity: 0.7;
+          opacity: 0.6;
           cursor: not-allowed;
+          transform: none;
+          animation: none;
+          background: linear-gradient(135deg, #666, #444);
+          box-shadow: none;
+        }
+
+        @keyframes connectButtonFlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
         }
 
         .wallet-container {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 8px;
+          position: relative;
         }
 
         .chain-warning {
+          position: absolute;
+          top: -10px;
+          right: -10px;
+          background: rgba(255, 92, 92, 0.2);
+          border: 1px solid rgba(255, 92, 92, 0.5);
+          border-radius: 6px;
+          padding: 4px 8px;
+          font-size: 12px;
+          color: #FF5C5C;
           display: flex;
           align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: rgba(255, 92, 92, 0.1);
-          border: 1px solid rgba(255, 92, 92, 0.3);
-          border-radius: 8px;
-          color: #FF5C5C;
-          font-size: 12px;
-          animation: pulse 2s infinite;
+          gap: 4px;
+          z-index: 10;
         }
 
         .wallet-card {
-          background: rgba(18, 18, 24, 0.9);
-          border: 1px solid rgba(60, 75, 95, 0.3);
-          border-radius: 16px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
           padding: 16px;
           min-width: 280px;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .wallet-header {
@@ -315,16 +391,12 @@ const Header = ({
           display: flex;
           align-items: center;
           gap: 8px;
+          font-size: 14px;
         }
 
         .status-icon {
           width: 16px;
           height: 16px;
-        }
-
-        .status-icon.spinning {
-          animation: spin 1s linear infinite;
-          color: #FFD700;
         }
 
         .status-icon.authenticated {
@@ -335,45 +407,38 @@ const Header = ({
           color: #FFD700;
         }
 
+        .status-icon.spinning {
+          animation: spin 1s linear infinite;
+        }
+
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
 
-        .status-text {
-          font-size: 12px;
-          font-weight: 600;
-          color: #9999A5;
-        }
-
         .disconnect-btn {
-          background: rgba(255, 92, 92, 0.1);
-          border: 1px solid rgba(255, 92, 92, 0.3);
-          color: #FF5C5C;
+          background: none;
+          border: none;
+          color: #888;
+          font-size: 18px;
           cursor: pointer;
-          font-size: 16px;
-          font-weight: bold;
-          padding: 4px 8px;
-          border-radius: 8px;
-          transition: all 0.2s ease;
+          padding: 0 4px;
+          transition: color 0.3s ease;
         }
 
         .disconnect-btn:hover {
-          background: rgba(255, 92, 92, 0.2);
-          transform: scale(1.1);
+          color: #FF5C5C;
         }
 
         .wallet-body {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+          space-y: 8px;
         }
 
         .wallet-address {
+          font-family: 'Courier New', monospace;
           font-size: 16px;
-          font-weight: 700;
-          color: #E6E6E6;
-          font-family: monospace;
+          color: #00D2E9;
+          margin-bottom: 8px;
         }
 
         .wallet-info {
@@ -383,28 +448,19 @@ const Header = ({
           gap: 16px;
         }
 
-        .balance-info {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: #00D2E9;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
+        .balance-info,
         .network-info {
           display: flex;
           align-items: center;
           gap: 6px;
-          font-size: 12px;
-          color: #9999A5;
+          font-size: 14px;
+          color: #B0B0B0;
         }
 
         .network-dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          animation: pulse 2s infinite;
         }
 
         .network-dot.correct {
@@ -418,42 +474,36 @@ const Header = ({
         .wallet-footer {
           margin-top: 12px;
           padding-top: 12px;
-          border-top: 1px solid rgba(60, 75, 95, 0.3);
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .switch-network-btn {
           width: 100%;
-          background: rgba(255, 92, 92, 0.1);
-          border: 1px solid rgba(255, 92, 92, 0.3);
-          color: #FF5C5C;
           padding: 8px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          border-radius: 6px;
+          color: #FFD700;
+          font-size: 12px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
         }
 
         .switch-network-btn:hover {
-          background: rgba(255, 92, 92, 0.2);
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
+          background: rgba(255, 215, 0, 0.2);
         }
 
         .error-banner {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px 16px;
           background: rgba(255, 92, 92, 0.1);
           border: 1px solid rgba(255, 92, 92, 0.3);
           border-radius: 8px;
+          padding: 12px 16px;
+          margin-bottom: 20px;
           color: #FF5C5C;
+          display: flex;
+          align-items: center;
+          gap: 8px;
           font-size: 14px;
-          margin-bottom: 15px;
         }
 
         .stats-bar {
@@ -467,19 +517,16 @@ const Header = ({
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 12px 16px;
-          background: rgba(18, 18, 24, 0.8);
-          border-radius: 12px;
-          border: 1px solid rgba(60, 75, 95, 0.3);
+          padding: 8px 16px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          color: #E6E6E6;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 500;
         }
 
-        .stat-card svg {
-          color: #00D2E9;
-        }
-
-        /* Responsive Design */
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
           .arena-header {
             padding: 15px;
@@ -487,8 +534,14 @@ const Header = ({
 
           .header-content {
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
             text-align: center;
+          }
+
+          .header-controls {
+            order: -1;
+            width: 100%;
+            justify-content: space-between;
           }
 
           .logo-container {
@@ -497,13 +550,20 @@ const Header = ({
           }
 
           .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 55px;
+            height: 55px;
+          }
+
+          .title-group h1 {
+            font-size: 24px;
+          }
+
+          .title-group p {
+            font-size: 14px;
           }
 
           .wallet-card {
-            min-width: unset;
-            width: 100%;
+            min-width: 240px;
           }
 
           .stats-bar {
@@ -511,12 +571,24 @@ const Header = ({
           }
 
           .stat-card {
-            padding: 8px 12px;
-            font-size: 12px;
+            font-size: 13px;
+            padding: 6px 12px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .controls-group {
+            gap: 6px;
           }
 
-          .title-group h1 {
-            font-size: 24px;
+          .control-toggle {
+            width: 40px;
+            height: 40px;
+          }
+
+          .connect-wallet-btn {
+            padding: 10px 16px;
+            font-size: 13px;
           }
         }
       `}</style>
