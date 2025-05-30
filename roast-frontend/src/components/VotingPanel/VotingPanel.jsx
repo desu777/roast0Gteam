@@ -189,12 +189,6 @@ const VotingPanel = ({
           </div>
         )}
 
-        {isConnected && userVote && !votingLocked && (
-          <div className="voting-thanks">
-            Thanks for voting! <Sparkles size={16} className="inline-icon party-icon" />
-          </div>
-        )}
-
         {votingLocked && totalVotes === 0 && (
           <div className="no-votes">
             No votes cast - random judge will be selected
@@ -216,6 +210,9 @@ const VotingPanel = ({
           border-radius: 16px;
           padding: 20px;
           margin-bottom: 24px;
+          min-height: 600px;
+          display: flex;
+          flex-direction: column;
         }
 
         .voting-header {
@@ -223,6 +220,7 @@ const VotingPanel = ({
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
+          flex-shrink: 0;
         }
 
         .voting-header h3 {
@@ -310,12 +308,15 @@ const VotingPanel = ({
           font-size: 14px;
           margin-bottom: 16px;
           text-align: center;
+          flex-shrink: 0;
         }
 
         .voting-list {
           display: flex;
           flex-direction: column;
           gap: 12px;
+          flex: 1;
+          min-height: 0;
         }
 
         .voting-item {
@@ -487,15 +488,8 @@ const VotingPanel = ({
           border-radius: 8px;
           color: #FFD700;
           font-size: 14px;
-          margin-top: 16px;
-        }
-
-        .voting-thanks {
-          text-align: center;
-          padding: 12px;
-          color: #00B897;
-          font-weight: 600;
-          margin-top: 16px;
+          margin-top: auto;
+          flex-shrink: 0;
         }
 
         .no-votes {
@@ -503,7 +497,8 @@ const VotingPanel = ({
           padding: 12px;
           color: #9999A5;
           font-style: italic;
-          margin-top: 16px;
+          margin-top: auto;
+          flex-shrink: 0;
         }
 
         .live-voting-status {
@@ -515,7 +510,8 @@ const VotingPanel = ({
           color: #00B897;
           font-size: 12px;
           font-weight: 600;
-          margin-top: 12px;
+          margin-top: auto;
+          flex-shrink: 0;
         }
 
         .inline-icon {
@@ -524,18 +520,8 @@ const VotingPanel = ({
           margin-left: 4px;
         }
 
-        .party-icon {
-          color: #FF5CAA;
-          animation: partyBounce 0.6s ease-in-out infinite alternate;
-        }
-
         .spinning {
           animation: spin 1s linear infinite;
-        }
-
-        @keyframes partyBounce {
-          0% { transform: scale(1) rotate(0deg); }
-          100% { transform: scale(1.1) rotate(10deg); }
         }
 
         @keyframes spin {
@@ -544,9 +530,18 @@ const VotingPanel = ({
         }
 
         /* Responsive */
+        @media (max-width: 1200px) {
+          .voting-panel {
+            min-height: auto;
+            max-height: 600px;
+            overflow-y: auto;
+          }
+        }
+
         @media (max-width: 768px) {
           .voting-panel {
             padding: 16px;
+            min-height: auto;
           }
 
           .voting-header {
