@@ -45,18 +45,6 @@ const JudgeModal = ({ judge, onClose }) => {
               <p className="catchphrase">"{judge.catchphrase}"</p>
             </div>
           </div>
-
-          <div className="modal-footer">
-            <a 
-              href={judge.twitterUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="twitter-link"
-            >
-              <ExternalLink size={16} />
-              Follow on X
-            </a>
-          </div>
         </div>
       </div>
 
@@ -81,7 +69,7 @@ const JudgeModal = ({ judge, onClose }) => {
           padding: 32px;
           max-width: 600px;
           width: 90%;
-          border: 2px solid #00D2E9;
+          border: 2px solid ${judge?.color || '#00D2E9'};
           position: relative;
           max-height: 80vh;
           overflow-y: auto;
@@ -152,7 +140,7 @@ const JudgeModal = ({ judge, onClose }) => {
         }
 
         .detail-section h4 {
-          color: #00D2E9;
+          color: ${judge?.color || '#00D2E9'};
           margin-bottom: 8px;
           font-weight: 600;
           font-size: 16px;
@@ -168,28 +156,6 @@ const JudgeModal = ({ judge, onClose }) => {
           color: #FFD700 !important;
           font-style: italic;
           font-weight: 600;
-        }
-
-        .modal-footer {
-          text-align: center;
-        }
-
-        .twitter-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: linear-gradient(135deg, #1DA1F2, #0d8bd9);
-          color: white;
-          text-decoration: none;
-          border-radius: 12px;
-          padding: 12px 24px;
-          font-weight: 600;
-          transition: all 0.3s ease;
-        }
-
-        .twitter-link:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(29, 161, 242, 0.4);
         }
 
         /* Responsive Design */

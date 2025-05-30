@@ -1,5 +1,5 @@
-import React from 'react';
-import { Clock, Users, Coins, Send, Zap, Trophy, Flame, Swords } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Users, Coins, Send, Zap, Trophy, Flame, Swords, ChevronDown, ChevronUp } from 'lucide-react';
 import BurningRoastEffect from '../BurningRoastEffect/BurningRoastEffect';
 
 const WritingPhase = ({ 
@@ -18,6 +18,15 @@ const WritingPhase = ({
   // Check if submissions should be disabled (less than 10 seconds left)
   const isSubmissionDisabled = timeLeft !== null && timeLeft < 10;
   
+  // State for showing all participants
+  const [showAllParticipants, setShowAllParticipants] = useState(false);
+  
+  // Calculate how many participants to show
+  const maxVisible = 4;
+  const visibleParticipants = showAllParticipants 
+    ? participants 
+    : participants.slice(0, maxVisible);
+
   return (
     <>
       <div className="writing-phase">
@@ -141,7 +150,7 @@ const WritingPhase = ({
           <div className="live-participants">
             <h4><Swords size={18} className="inline-icon" /> Roasters in Battle ({participants.length})</h4>
             <div className="participants-grid">
-              {participants.slice(0, 6).map((participant, index) => (
+              {visibleParticipants.map((participant, index) => (
                 <div key={index} className={`participant-card ${participant.isUser ? 'user-participant' : ''}`}>
                   <div className="participant-address">
                     {/* Skrócona wersja adresu */}
@@ -153,12 +162,26 @@ const WritingPhase = ({
                   </div>
                 </div>
               ))}
-              {participants.length > 6 && (
-                <div className="more-participants">
-                  +{participants.length - 6} more
-                </div>
-              )}
             </div>
+            
+            {participants.length > maxVisible && (
+              <button 
+                className="show-more-btn"
+                onClick={() => setShowAllParticipants(!showAllParticipants)}
+              >
+                {showAllParticipants ? (
+                  <>
+                    <ChevronUp size={16} />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={16} />
+                    Show More ({participants.length - maxVisible} more)
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -231,14 +254,25 @@ const WritingPhase = ({
         }
 
         .writing-prompt h3 {
-          font-size: 24px;
+          font-size: 32px;
           font-weight: 700;
           margin-bottom: 16px;
-          color: #E6E6E6;
+          background: linear-gradient(90deg, #FFD700, #FF6B6B, #FF5CAA);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: fireGlow 2s ease-in-out infinite alternate;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 12px;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          line-height: 1.2;
+        }
+
+        @keyframes fireGlow {
+          0% { filter: brightness(1); }
+          100% { filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 107, 107, 0.5)); }
         }
 
         .fire-icon {
@@ -612,14 +646,33 @@ const WritingPhase = ({
           margin-left: 8px;
         }
 
-        .more-participants {
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px dashed rgba(255, 215, 0, 0.3);
+        .show-more-btn {
+          width: 100%;
+          background: linear-gradient(135deg, rgba(18, 18, 24, 0.9), rgba(28, 28, 35, 0.9));
+          border: 1px solid rgba(255, 215, 0, 0.3);
           border-radius: 12px;
-          padding: 12px;
-          text-align: center;
-          color: #FFD700;
+          padding: 12px 16px;
+          font-size: 14px;
           font-weight: 600;
+          cursor: pointer;
+          color: #FFD700;
+          transition: all 0.3s ease;
+          margin-top: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .show-more-btn:hover {
+          background: linear-gradient(135deg, rgba(28, 28, 35, 0.9), rgba(38, 38, 45, 0.9));
+          border-color: rgba(255, 215, 0, 0.5);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+
+        .show-more-btn:active {
+          transform: translateY(0);
         }
 
         /* Responsive */

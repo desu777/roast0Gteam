@@ -24,6 +24,14 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
               <h2>{currentJudge.name}</h2>
               <p className="judge-role-main">{currentJudge.role}</p>
               <p className="judge-archetype-main">{currentJudge.archetype}</p>
+              <a 
+                href={currentJudge.twitterUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="judge-twitter-handle"
+              >
+                @{currentJudge.twitterUrl?.split('/').pop()}
+              </a>
             </div>
             <button
               className="judge-details-btn-main"
@@ -112,7 +120,7 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
         }
 
         .judge-role-main {
-          color: #00D2E9;
+          color: ${currentJudge?.color || '#00D2E9'};
           font-weight: 600;
           margin-bottom: 4px;
         }
@@ -123,11 +131,13 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
         }
 
         .judge-details-btn-main {
-          background: rgba(0, 210, 233, 0.1);
-          border: 1px solid #00D2E9;
+          background: rgba(${currentJudge?.color ? 
+            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
+            '0, 210, 233'}, 0.1);
+          border: 1px solid ${currentJudge?.color || '#00D2E9'};
           border-radius: 12px;
           padding: 12px 16px;
-          color: #00D2E9;
+          color: ${currentJudge?.color || '#00D2E9'};
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -139,8 +149,13 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
         }
 
         .judge-details-btn-main:hover {
-          background: rgba(0, 210, 233, 0.2);
+          background: rgba(${currentJudge?.color ? 
+            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
+            '0, 210, 233'}, 0.2);
           transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(${currentJudge?.color ? 
+            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
+            '0, 210, 233'}, 0.3);
         }
 
         .judge-catchphrase-main {
@@ -153,6 +168,23 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           background: rgba(255, 215, 0, 0.05);
           border-radius: 12px;
           border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .judge-twitter-handle {
+          color: ${currentJudge?.color || '#00D2E9'};
+          font-weight: 600;
+          font-size: 14px;
+          text-decoration: none;
+          margin-top: 4px;
+          display: inline-block;
+          transition: all 0.3s ease;
+          opacity: 0.8;
+        }
+
+        .judge-twitter-handle:hover {
+          opacity: 1;
+          text-decoration: underline;
+          transform: translateX(2px);
         }
 
         /* Responsive Design */

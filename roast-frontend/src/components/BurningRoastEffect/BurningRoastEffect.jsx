@@ -2,29 +2,25 @@ import React from 'react';
 import { TEAM_MEMBERS } from '../../data/teamMembers';
 
 const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
-  // Znajdź NFT użytkownika
-  const userParticipant = participants.find(p => p.isUser);
+  // Dostępne NFT z folderu public
+  const availableNFTs = ['ada', 'elisha', 'jc', 'michael', 'ren', 'yon'];
   
-  // Jeśli nie ma użytkownika w participants, użyj aktualnego sędziego jako fallback
-  const displayNFTs = userParticipant ? [userParticipant] : [];
+  // Użyj rzeczywistych uczestników, ale maksymalnie 6
+  const displayParticipants = participants.slice(0, 6);
   
-  // Dodaj NFT innych uczestników (maksymalnie 6 total)
-  const otherParticipants = participants.filter(p => !p.isUser).slice(0, 5);
-  const allNFTs = [...displayNFTs, ...otherParticipants];
+  // Zawsze wyświetl wszystkie 6 NFT
+  const displayNFTs = [];
   
-  // Jeśli nadal nie ma wystarczająco NFT, dodaj losowe z zespołu
-  while (allNFTs.length < 6) {
-    const randomMember = TEAM_MEMBERS[Math.floor(Math.random() * TEAM_MEMBERS.length)];
-    allNFTs.push({ id: randomMember.id, address: randomMember.name });
+  for (let i = 0; i < 6; i++) {
+    const nftId = availableNFTs[i];
+    const participant = displayParticipants[i];
+    
+    displayNFTs.push({
+      id: nftId,
+      address: participant?.address || `NFT ${i + 1}`,
+      isUser: participant?.isUser || false
+    });
   }
-
-  // Mapuj adresy na NFT ID
-  const getNFTId = (participant) => {
-    if (participant.id) return participant.id;
-    // Jeśli to prawdziwy participant, znajdź odpowiedni NFT
-    const memberIndex = participants.indexOf(participant) % TEAM_MEMBERS.length;
-    return TEAM_MEMBERS[memberIndex].id;
-  };
 
   return (
     <>
@@ -34,12 +30,12 @@ const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
             <div className="fireplace__flame_big"></div>
           </div>
           
-          {/* NFT "Logs" - zamiast kłód */}
-          {allNFTs.slice(0, 7).map((participant, index) => (
+          {/* NFT "Logs" - tylko dostępne NFT */}
+          {displayNFTs.map((nft, index) => (
             <section key={index} className={`fireplace__nft fireplace__nft--${index + 1}`}>
               <img 
-                src={`/${getNFTId(participant)}.jpg`} 
-                alt={participant.address || participant.name}
+                src={`/${nft.id}.jpg`} 
+                alt={nft.address}
                 className="nft-image"
               />
             </section>
@@ -69,7 +65,7 @@ const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 20px 10px 40px 10px;
+          padding: 0px 10px 20px 10px;
           text-align: center;
           width: 100%;
           max-width: 100%;
