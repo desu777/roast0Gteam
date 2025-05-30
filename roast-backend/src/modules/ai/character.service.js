@@ -161,6 +161,7 @@ IMPORTANT RULES:
 6. Pick the most creative, funny, or savage roast
 7. NEVER use formal language like "demonstrates exceptional" or "masterclass"
 8. Talk like you're texting a friend, not writing an essay
+9. When referring to a roast author, use their shortened wallet address (like "0x1234...abcd") NOT the submission ID
 
 CRITICAL: Your entire response must be ONLY this JSON structure:
 {
@@ -188,7 +189,7 @@ CRITICAL: Your entire response must be ONLY this JSON structure:
     
     // User prompt z roastami
     const submissionsText = submissions.map((sub, index) => 
-      `ID ${sub.id}: "${sub.roast_text}" (from ${sub.player_address.substring(0, 8)}...)`
+      `ID ${sub.id}: "${sub.roast_text}" (from ${sub.player_address.substring(0, 6)}...${sub.player_address.substring(-4)})`
     ).join('\n\n');
 
     // Dodaj info o ostatnich zwycięzcach

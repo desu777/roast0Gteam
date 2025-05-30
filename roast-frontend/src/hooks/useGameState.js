@@ -110,9 +110,20 @@ export const useGameState = () => {
   // ================================
   // ENHANCED LOAD VOTING STATS (BEZ DEPENDENCY PROBLEMU)
   // ================================
-  const loadVotingStats = useCallback(() => {
-    // Pobierz aktualną rundę na bieżąco, nie używaj dependency
-    const currentRound = gameCore.currentRound;
+  const loadVotingStats = useCallback((forceRound = null) => {
+    // Użyj przekazanej rundy lub pobierz aktualną rundę na bieżąco
+    const currentRound = forceRound || gameCore.currentRound;
+    
+    if (!currentRound?.id) {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Cannot load voting stats - no current round:', currentRound);
+      }
+      return;
+    }
+    
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('🗳️ Loading voting stats for round:', currentRound.id, 'auth:', gameCore.isAuthenticated);
+    }
     
     return votingSystem.loadVotingStats(
       currentRound,
@@ -121,7 +132,6 @@ export const useGameState = () => {
     );
   }, [
     votingSystem.loadVotingStats,
-    // NIE dodawaj gameCore.currentRound do dependency!
     gameCore.isAuthenticated,
     gameCore.userAddress
   ]);
@@ -191,11 +201,14 @@ export const useGameState = () => {
     const interval = setInterval(() => {
       gameCore.loadCurrentRound(); // Will be debounced
       gameCore.loadGameStats(); // Will be debounced
-      loadVotingStats(); // Will be debounced
+      // Przekaż aktualną rundę bezpośrednio
+      if (gameCore.currentRound?.id) {
+        loadVotingStats(gameCore.currentRound); // Pass current round directly
+      }
     }, 60000); // Zwiększone z 30000 na 60000
 
     return () => clearInterval(interval);
-  }, [gameCore.hasInitialLoad, gameCore.loadCurrentRound, gameCore.loadGameStats, loadVotingStats]);
+  }, [gameCore.hasInitialLoad, gameCore.loadCurrentRound, gameCore.loadGameStats, loadVotingStats, gameCore.currentRound?.id]);
 
   // ================================
   // LOAD VOTING STATS ON ROUND CHANGE (DEBOUNCED)
@@ -208,9 +221,9 @@ export const useGameState = () => {
       }
       // Zwiększony delay żeby uniknąć race conditions z backend
       setTimeout(() => {
-        // Double-check że currentRound wciąż istnieje
+        // Double-check że currentRound wciąż istnieje i przekaż go bezpośrednio
         if (gameCore.currentRound?.id) {
-          loadVotingStats();
+          loadVotingStats(gameCore.currentRound); // Pass current round directly
         }
       }, 1000); // Zwiększone z 2000 na 1000 ale z lepszym warunkiem
     }

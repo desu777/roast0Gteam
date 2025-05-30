@@ -282,14 +282,48 @@ export const useVotingSystem = () => {
     
     // Update voting stats with real-time data
     if (data.votingStats) {
+      // Jeśli mamy gotowe voting stats - użyj ich
       setVotingStats(data.votingStats);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Using direct votingStats from WebSocket');
+      }
+    } else if (data.roundId && (data.totalVotes !== undefined || data.votesByCharacter || data.winner)) {
+      // Jeśli nie ma gotowych stats, ale mamy składniki - utwórz voting stats object
+      const newStats = {
+        roundId: data.roundId,
+        totalVotes: data.totalVotes || 0,
+        votesByCharacter: data.votesByCharacter || {},
+        winner: data.winner || null,
+        isLocked: data.isLocked || votingLocked || false
+      };
+      
+      // Jeśli nie mamy votesByCharacter ale mamy winner, spróbuj zrekonstruować
+      if (!data.votesByCharacter && data.winner && data.totalVotes > 0) {
+        // Inicjalizuj wszystkie charaktery z 0 głosami
+        const votesByCharacter = {};
+        TEAM_MEMBERS.forEach(member => {
+          votesByCharacter[member.id] = 0;
+        });
+        
+        // Ustaw głosy dla zwycięzcy (może być niedokładne, ale lepsze niż 0)
+        if (data.winner.characterId) {
+          votesByCharacter[data.winner.characterId] = data.winner.votes || data.totalVotes;
+        }
+        
+        newStats.votesByCharacter = votesByCharacter;
+      }
+      
+      setVotingStats(newStats);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Reconstructed voting stats from WebSocket data:', newStats);
+      }
     }
     
     // Show voting animation for other users' votes (optional)
     if (data.lastVote && data.lastVote.voterAddress !== address) {
       // Możemy dodać dodatkowe efekty dla głosów innych użytkowników
     }
-  }, []);
+  }, [votingLocked]);
 
   const handleVoteCastSuccess = useCallback((data, addNotification, loadVotingStatsCallback) => {
     if (import.meta.env.VITE_TEST_ENV === 'true') {
@@ -306,6 +340,14 @@ export const useVotingSystem = () => {
     setIsVoting(false);
     setVotingError(null);
     
+    // Update voting stats if available in response
+    if (data.votingStats) {
+      setVotingStats(data.votingStats);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Updated voting stats from vote cast response:', data.votingStats);
+      }
+    }
+    
     const characterName = characterId 
       ? TEAM_MEMBERS.find(m => m.id === characterId)?.name || 'Unknown'
       : 'Unknown';
@@ -320,8 +362,8 @@ export const useVotingSystem = () => {
       });
     }
     
-    // Refresh voting stats with debouncing
-    if (loadVotingStatsCallback) {
+    // Refresh voting stats with debouncing tylko jeśli nie mamy aktualnych stats
+    if (loadVotingStatsCallback && !data.votingStats) {
       setTimeout(() => {
         loadVotingStatsCallback();
       }, 1500);
