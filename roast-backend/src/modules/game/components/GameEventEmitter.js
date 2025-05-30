@@ -156,13 +156,13 @@ class GameEventEmitter {
       payoutTxHash
     });
 
-    // Emit to all users (summary)
+    // Emit to all users (summary) - NOW WITH FULL aiReasoning
     this.emitToAll(WS_EVENTS.ROUND_COMPLETED, {
       roundId,
       winnerAddress,
       prizeAmount,
       payoutTxHash,
-      aiReasoning: aiReasoning.substring(0, 100) + '...' // Truncated for global broadcast
+      aiReasoning // Full AI response, no truncation
     });
     
     if (config.logging.testEnv) {

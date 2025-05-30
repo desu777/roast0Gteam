@@ -339,7 +339,8 @@ class TreasuryController {
           p.tx_hash,
           p.created_at,
           s.roast_text,
-          r.judge_character
+          r.judge_character,
+          res.ai_reasoning
         FROM payouts p
         JOIN results res ON res.round_id = p.round_id
         JOIN submissions s ON s.id = res.winner_submission_id
@@ -357,6 +358,7 @@ class TreasuryController {
           txHash: w.tx_hash,
           roastText: w.roast_text,
           judgeCharacter: w.judge_character,
+          aiReasoning: w.ai_reasoning,
           timestamp: w.created_at
         }))
       });

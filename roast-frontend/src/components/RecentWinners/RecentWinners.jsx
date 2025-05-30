@@ -5,22 +5,12 @@ import { treasuryApi } from '../../services/api';
 const RecentWinners = () => {
   const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     loadRecentWinners();
     const interval = setInterval(loadRecentWinners, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  // Aktualizuj czas co minutę dla "time ago"
-  useEffect(() => {
-    const timeInterval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Co minutę
-    
-    return () => clearInterval(timeInterval);
   }, []);
 
   const loadRecentWinners = async () => {
@@ -43,8 +33,10 @@ const RecentWinners = () => {
   };
 
   const formatTimeAgo = (timestamp) => {
-    const winTime = new Date(timestamp);
-    const diffInMinutes = Math.floor((currentTime - winTime) / (1000 * 60));
+    // Traktuj timestamp z serwera jako UTC
+    const winTime = new Date(timestamp + 'Z'); // Dodanie 'Z' wymusza interpretację jako UTC
+    const now = new Date(); // Aktualny czas lokalny użytkownika
+    const diffInMinutes = Math.floor((now - winTime) / (1000 * 60));
     
     if (diffInMinutes < 1) {
       return 'just now';
@@ -119,6 +111,13 @@ const RecentWinners = () => {
               </div>
               
               <div className="winner-roast">"{winner.roastText}"</div>
+              
+              {winner.aiReasoning && (
+                <div className="ai-reasoning">
+                  <div className="ai-reasoning-label">AI Judge Reasoning:</div>
+                  <div className="ai-reasoning-text">{winner.aiReasoning}</div>
+                </div>
+              )}
               
               <div className="winner-footer">
                 <div className="winner-judge-info">
@@ -248,10 +247,30 @@ const styles = `
     line-height: 1.4;
     margin-bottom: 12px;
     font-style: italic;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+  }
+
+  .ai-reasoning {
+    background: rgba(20, 25, 35, 0.6);
+    border-left: 3px solid rgba(255, 215, 0, 0.5);
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+  }
+
+  .ai-reasoning-label {
+    color: #FFD700;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .ai-reasoning-text {
+    color: #B8B8C2;
+    font-size: 12px;
+    line-height: 1.5;
+    font-style: normal;
   }
 
   .winner-footer {
