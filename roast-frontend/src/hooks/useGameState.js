@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GAME_PHASES, AI_REASONINGS } from '../constants/gameConstants';
 import { TEAM_MEMBERS } from '../data/teamMembers';
-import { gameApi } from '../services/api';
+import { gameApi, votingApi } from '../services/api';
 import wsService from '../services/websocket';
 import { useWallet } from './useWallet';
 import { useSendTransaction } from 'wagmi';
@@ -40,6 +40,15 @@ export const useGameState = () => {
   // Dodaj nowy stan do śledzenia blokady wyników
   const [resultsLocked, setResultsLocked] = useState(false);
   const [resultsLockTimer, setResultsLockTimer] = useState(null);
+
+  // ================================
+  // VOTING STATE - LIVE SYSTEM
+  // ================================
+  const [votingStats, setVotingStats] = useState({});
+  const [userVote, setUserVote] = useState(null);
+  const [votingLocked, setVotingLocked] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
+  const [votingError, setVotingError] = useState(null);
 
   // Sound effects
   const playSound = (type) => {
@@ -284,6 +293,8 @@ export const useGameState = () => {
       setAiReasoning('');
       setCurrentPhase(GAME_PHASES.WAITING);
       setNextRoundCountdown(0);
+      // Reset voting state for new round
+      resetVotingState();
       // Załaduj nową rundę
       loadCurrentRound();
       playSound('start');
@@ -388,10 +399,93 @@ export const useGameState = () => {
       }
     });
 
+    // ================================
+    // VOTING WEBSOCKET EVENTS
+    // ================================
+
+    wsService.on('voting-update', (data) => {
+      console.log('🗳️ Voting update received:', data);
+      
+      // Update voting stats with real-time data
+      if (data.votingStats) {
+        setVotingStats(data.votingStats);
+      }
+      
+      // Show voting animation for other users' votes
+      if (data.lastVote && data.lastVote.voterAddress !== address) {
+        const voterName = TEAM_MEMBERS.find(m => m.id === data.lastVote.characterId)?.name;
+        playSound('vote');
+        
+        // Optional: Show notification for other votes (can be disabled if too noisy)
+        // addNotification({
+        //   type: 'info',
+        //   message: `Someone voted for ${voterName}! 🗳️`,
+        //   duration: 2000
+        // });
+      }
+    });
+
+    wsService.on('vote-cast-success', (data) => {
+      console.log('🗳️ Vote cast confirmed:', data);
+      
+      // Confirm user's vote
+      setUserVote(data.characterId);
+      setIsVoting(false);
+      setVotingError(null);
+      
+      const characterName = TEAM_MEMBERS.find(m => m.id === data.characterId)?.name;
+      addNotification({
+        type: 'success',
+        message: `Vote confirmed for ${characterName}! 🗳️`,
+        duration: 3000
+      });
+      
+      // Refresh voting stats
+      loadVotingStats();
+    });
+
+    wsService.on('voting-locked', (data) => {
+      console.log('🗳️ Voting locked:', data);
+      setVotingLocked(true);
+      
+      addNotification({
+        type: 'warning',
+        message: 'Voting has been locked! ⏰',
+        duration: 3000
+      });
+    });
+
+    wsService.on('voting-reset', (data) => {
+      console.log('🗳️ Voting reset for new round:', data);
+      resetVotingState();
+      
+      // Load voting stats for new round
+      if (data.newRoundId && data.votingStats) {
+        setVotingStats(data.votingStats);
+      }
+    });
+
+    wsService.on('submission-locked', (data) => {
+      console.log('🔒 Submissions locked for round:', data.roundId);
+      
+      addNotification({
+        type: 'warning',
+        message: 'Submissions are now locked! ⏰',
+        duration: 2000
+      });
+    });
+
     wsService.on('error', (error) => {
       console.error('WebSocket error:', error);
       setError(error.message);
       setIsSubmitting(false);
+      
+      // Handle voting-specific errors
+      if (isVoting) {
+        setVotingError(error.message);
+        setIsVoting(false);
+        setUserVote(null); // Reset optimistic update
+      }
     });
 
     // Cleanup
@@ -406,6 +500,11 @@ export const useGameState = () => {
       wsService.off('round-completed');
       wsService.off('roast-submitted');
       wsService.off('prize-distributed');
+      wsService.off('voting-update');
+      wsService.off('vote-cast-success');
+      wsService.off('voting-locked');
+      wsService.off('voting-reset');
+      wsService.off('submission-locked');
       wsService.off('error');
     };
   }, [currentRound?.id, loadCurrentRound, address, addNotification]);
@@ -465,6 +564,12 @@ export const useGameState = () => {
       setHasInitialLoad(true);
       loadCurrentRound();
       loadGameStats();
+      // Load voting stats after round is loaded
+      setTimeout(() => {
+        if (currentRound?.id) {
+          loadVotingStats();
+        }
+      }, 500);
     }
   }, []); // Usuwamy zależności aby wykonać tylko raz
 
@@ -476,10 +581,19 @@ export const useGameState = () => {
     const interval = setInterval(() => {
       loadCurrentRound();
       loadGameStats();
+      loadVotingStats();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [hasInitialLoad, loadCurrentRound, loadGameStats]);
+  }, [hasInitialLoad, loadCurrentRound, loadGameStats, loadVotingStats]);
+
+  // Load voting stats when round changes
+  useEffect(() => {
+    if (currentRound?.id && isAuthenticated) {
+      console.log('🗳️ Loading voting stats for new round:', currentRound.id);
+      loadVotingStats();
+    }
+  }, [currentRound?.id, isAuthenticated, loadVotingStats]);
 
   // Format time helper
   const formatTime = (seconds) => {
@@ -487,6 +601,120 @@ export const useGameState = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // ================================
+  // VOTING METHODS - LIVE SYSTEM
+  // ================================
+
+  // Load voting statistics for current round
+  const loadVotingStats = useCallback(async () => {
+    if (!currentRound?.id) {
+      console.log('🗳️ No current round for voting stats');
+      return;
+    }
+
+    try {
+      console.log('🗳️ Loading voting stats for round:', currentRound.id);
+      const response = await votingApi.getVotingStats(currentRound.id);
+      const stats = response.data.data || response.data;
+      
+      console.log('✅ Voting stats loaded:', stats);
+      setVotingStats(stats);
+      
+      // Check if voting is locked
+      if (stats.isLocked) {
+        setVotingLocked(true);
+      }
+      
+      // Load user's vote if authenticated
+      if (isAuthenticated && address) {
+        try {
+          const userVoteResponse = await votingApi.getUserVote(currentRound.id, address);
+          const userData = userVoteResponse.data.data || userVoteResponse.data;
+          
+          if (userData?.characterId) {
+            setUserVote(userData.characterId);
+            console.log('🗳️ User vote loaded:', userData.characterId);
+          }
+        } catch (userVoteError) {
+          // User hasn't voted yet - this is normal
+          if (userVoteError.response?.status !== 404) {
+            console.error('Failed to load user vote:', userVoteError);
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('💥 Failed to load voting stats:', error);
+      // Don't set error for voting stats failure - it's not critical
+    }
+  }, [currentRound?.id, isAuthenticated, address]);
+
+  // Cast vote for next judge
+  const castVote = useCallback(async (characterId) => {
+    if (!isAuthenticated || !currentRound?.id || !address || isVoting || userVote || votingLocked) {
+      console.log('🗳️ Cannot cast vote:', {
+        authenticated: isAuthenticated,
+        roundId: currentRound?.id,
+        address: !!address,
+        isVoting,
+        userVote,
+        votingLocked
+      });
+      return;
+    }
+
+    setIsVoting(true);
+    setVotingError(null);
+    
+    try {
+      console.log('🗳️ Casting vote for character:', characterId);
+      
+      // Primary: Use WebSocket for real-time updates
+      wsService.castVote(currentRound.id, characterId);
+      
+      // Backup: Also call API directly (will be handled by backend)
+      // This ensures vote is recorded even if WebSocket fails
+      try {
+        await votingApi.castVote(currentRound.id, characterId, address);
+      } catch (apiError) {
+        console.warn('API vote call failed (WebSocket should handle):', apiError);
+      }
+      
+      // Optimistic update - will be confirmed by WebSocket event
+      setUserVote(characterId);
+      
+      playSound('vote');
+      
+      addNotification({
+        type: 'success',
+        message: `Vote cast for ${TEAM_MEMBERS.find(m => m.id === characterId)?.name}! 🗳️`,
+        duration: 3000
+      });
+      
+    } catch (error) {
+      console.error('💥 Failed to cast vote:', error);
+      setVotingError(error.message || 'Failed to cast vote');
+      setIsVoting(false);
+      setUserVote(null); // Reset optimistic update
+      
+      addNotification({
+        type: 'error',
+        message: 'Failed to cast vote. Please try again.',
+        duration: 4000
+      });
+    }
+  }, [isAuthenticated, currentRound?.id, address, isVoting, userVote, votingLocked, addNotification]);
+
+  // Reset voting state for new round
+  const resetVotingState = useCallback(() => {
+    console.log('🗳️ Resetting voting state for new round');
+    setVotingStats({});
+    setUserVote(null);
+    setVotingLocked(false);
+    setIsVoting(false);
+    setVotingError(null);
+  }, []);
 
   return {
     // Game State
@@ -531,6 +759,21 @@ export const useGameState = () => {
     // Notifications
     notifications,
     addNotification,
-    removeNotification
+    removeNotification,
+
+    // Voting State
+    votingStats,
+    setVotingStats,
+    userVote,
+    setUserVote,
+    votingLocked,
+    setVotingLocked,
+    isVoting,
+    setIsVoting,
+    votingError,
+    setVotingError,
+    loadVotingStats,
+    castVote,
+    resetVotingState
   };
 }; 

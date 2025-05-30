@@ -275,7 +275,7 @@ class VotingService {
 
   emitVotingUpdate(roundId, votingStats, voterAddress, characterId) {
     if (this.wsEmitter) {
-      this.emitToRoom(roundId, 'vote-update', {
+      this.emitToRoom(roundId, 'voting-update', {
         ...votingStats,
         lastVote: {
           voterAddress: voterAddress.slice(0, 6) + '...' + voterAddress.slice(-4),
@@ -284,7 +284,7 @@ class VotingService {
         }
       });
 
-      this.emitToAll('vote-update', {
+      this.emitToAll('voting-update', {
         roundId,
         totalVotes: votingStats.totalVotes,
         winner: votingStats.winner

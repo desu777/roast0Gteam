@@ -55,6 +55,13 @@ const App = () => {
     notifications,
     userAddress,
     
+    // Voting State - LIVE SYSTEM
+    votingStats,
+    userVote,
+    votingLocked,
+    isVoting,
+    votingError,
+    
     // UI State
     soundEnabled,
     setSoundEnabled,
@@ -70,16 +77,26 @@ const App = () => {
     playSound,
     clearError,
     addNotification,
-    removeNotification
+    removeNotification,
+    
+    // Voting Actions - LIVE SYSTEM
+    castVote,
+    loadVotingStats,
+    resetVotingState
   } = useGameState();
 
-  // Voting handlers
+  // Legacy voting handlers (kept for backward compatibility)
   const handleVote = (characterId) => {
-    console.log('Vote cast for:', characterId);
-    playSound?.('vote');
+    console.log('🗳️ Legacy vote handler - redirecting to castVote:', characterId);
+    castVote(characterId);
   };
 
+  // Legacy voting complete handler (will be replaced by WebSocket events)
   const handleVotingComplete = async (winnerCharacterId, totalVotes = 0) => {
+    console.log('🗳️ Legacy voting complete handler:', { winnerCharacterId, totalVotes });
+    
+    // Note: This will now be handled by backend WebSocket events
+    // Keeping for backward compatibility during transition
     try {
       console.log('Voting completed:', { winnerCharacterId, totalVotes });
       
@@ -268,15 +285,27 @@ const App = () => {
 
             {/* Right Column - Voting Panel */}
             <div className="right-column">
-              {/* Voting Panel for Next Judge - pokazuj podczas WAITING i WRITING */}
+              {/* Voting Panel for Next Judge - Live System */}
               {(currentPhase === GAME_PHASES.WAITING || currentPhase === GAME_PHASES.WRITING) && (
                 <VotingPanel 
+                  // Live voting data from useGameState
+                  votingStats={votingStats}
+                  userVote={userVote}
+                  votingLocked={votingLocked}
+                  isVoting={isVoting}
+                  votingError={votingError}
+                  
+                  // Game state
                   isConnected={isConnected}
                   timeLeft={timeLeft}
                   currentPhase={currentPhase}
-                  onVote={handleVote}
-                  onVotingComplete={handleVotingComplete}
                   userAddress={userAddress}
+                  
+                  // Actions - Live System
+                  onVote={castVote} // Direct castVote from useGameState
+                  
+                  // Legacy props (for backward compatibility during transition)
+                  onVotingComplete={handleVotingComplete}
                 />
               )}
             </div>

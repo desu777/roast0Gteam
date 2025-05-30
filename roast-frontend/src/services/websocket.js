@@ -111,22 +111,13 @@ class WebSocketService {
       this.emit('roast-submitted', data);
     });
 
-    // WebSocket error
-    this.socket.on('error', (error) => {
-      if (isVoting) {
-        setVotingError(error.message);
-        setIsVoting(false);
-        setAnimatingVote(null);
-      }
+    // Voting events - Live System
+    this.socket.on('voting-update', (data) => {
+      this.emit('voting-update', data);
     });
 
-    // Vote casting events
     this.socket.on('vote-cast-success', (data) => {
       this.emit('vote-cast-success', data);
-    });
-
-    this.socket.on('vote-update', (data) => {
-      this.emit('vote-update', data);
     });
 
     this.socket.on('voting-locked', (data) => {
@@ -239,17 +230,39 @@ class WebSocketService {
   disconnect() {
     if (this.socket) {
       // Usuń wszystkie event listenery socket.io
+      this.socket.off('connect');
+      this.socket.off('disconnect');
+      this.socket.off('authenticated');
+      this.socket.off('error');
+      
+      // Game events
+      this.socket.off('round-created');
+      this.socket.off('round-updated');
+      this.socket.off('player-joined');
+      this.socket.off('player-left');
+      this.socket.off('timer-update');
+      this.socket.off('judging-started');
+      this.socket.off('round-completed');
+      this.socket.off('prize-distributed');
+      this.socket.off('roast-submitted');
+      
+      // Voting events cleanup
+      this.socket.off('voting-update');
       this.socket.off('vote-cast-success');
-      this.socket.off('vote-update');
       this.socket.off('voting-locked');
       this.socket.off('voting-reset');
       this.socket.off('submission-locked');
+      
+      // Complete cleanup
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
       this.listeners.clear();
       this.reconnectAttempts = 0;
+      this.userAddress = null;
+      
+      console.log('🔌 WebSocket disconnected and cleaned up');
     }
   }
 

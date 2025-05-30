@@ -1,96 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, Lock, Trophy, Vote, Crown, Sparkles } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Heart, Lock, Trophy, Vote, Crown, Sparkles, Loader } from 'lucide-react';
 import { TEAM_MEMBERS } from '../../data/teamMembers';
 
-const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComplete, userAddress }) => {
-  const [votes, setVotes] = useState({});
-  const [userVotes, setUserVotes] = useState(new Set()); // Track who voted
-  const [hasVoted, setHasVoted] = useState(false);
-  const [totalVotes, setTotalVotes] = useState(0);
-  const [votingLocked, setVotingLocked] = useState(false);
-  const [votingWinner, setVotingWinner] = useState(null);
+const VotingPanel = ({ 
+  // Live voting data from useGameState
+  votingStats,
+  userVote,
+  votingLocked,
+  isVoting,
+  votingError,
+  
+  // Game state
+  isConnected, 
+  timeLeft, 
+  currentPhase, 
+  userAddress,
+  
+  // Actions
+  onVote, // castVote from useGameState
+  
+  // Backward compatibility (legacy props)
+  onVotingComplete // Will be handled by WebSocket
+}) => {
 
-  // Reset głosów na początku nowej rundy
-  useEffect(() => {
-    if (currentPhase === 'waiting') {
-      setVotes({});
-      setUserVotes(new Set());
-      setHasVoted(false);
-      setTotalVotes(0);
-      setVotingWinner(null);
-      setVotingLocked(false);
-    }
-  }, [currentPhase]);
+  // Get voting data from backend stats
+  const totalVotes = votingStats?.totalVotes || 0;
+  const votesByCharacter = votingStats?.votesByCharacter || {};
+  const votingWinner = votingStats?.winner?.characterId || null;
 
-  // Blokuj głosowanie 10 sekund przed końcem rundy
-  useEffect(() => {
-    if (currentPhase === 'writing' && timeLeft <= 10) {
-      setVotingLocked(true);
-      
-      // Wyznacz zwycięzcę głosowania
-      if (totalVotes > 0 && !votingWinner) {
-        const winner = getVotingWinner();
-        setVotingWinner(winner);
-        
-        // Przekaż wynik do parent component
-        if (onVotingComplete) {
-          onVotingComplete(winner, totalVotes);
-        }
-      }
-    }
-  }, [timeLeft, currentPhase, totalVotes, votingWinner, onVotingComplete]);
-
-  const handleVote = (characterId) => {
-    if (!isConnected || hasVoted || votingLocked) return;
-    
-    // Użyj prawdziwego wallet address lub fallback
-    const userId = userAddress || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    if (userVotes.has(userId)) return; // Double vote protection
-    
-    setHasVoted(characterId);
-    setUserVotes(prev => new Set([...prev, userId]));
-    
-    // Zaktualizuj głosy
-    setVotes(prev => ({
-      ...prev,
-      [characterId]: (prev[characterId] || 0) + 1
-    }));
-    setTotalVotes(prev => prev + 1);
-    
-    // Callback dla parent component
-    if (onVote) {
-      onVote(characterId);
-    }
-  };
-
+  // Calculate vote percentage
   const getVotePercentage = (characterVotes) => {
     if (totalVotes === 0) return 0;
     return Math.round((characterVotes / totalVotes) * 100);
   };
 
-  const getVotingWinner = () => {
-    if (totalVotes === 0) return null;
+  // Handle vote casting
+  const handleVote = (characterId) => {
+    if (!isConnected || userVote || votingLocked || isVoting) {
+      console.log('🗳️ Vote blocked:', {
+        connected: isConnected,
+        userVote: !!userVote,
+        votingLocked,
+        isVoting
+      });
+      return;
+    }
     
-    let maxVotes = 0;
-    let winner = null;
-    
-    Object.entries(votes).forEach(([characterId, voteCount]) => {
-      if (voteCount > maxVotes) {
-        maxVotes = voteCount;
-        winner = characterId;
-      }
-    });
-    
-    return winner;
+    console.log('🗳️ Casting vote for:', characterId);
+    onVote(characterId);
   };
 
-  const getTopCandidates = () => {
-    return Object.entries(votes)
-      .map(([id, count]) => ({ id, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 3);
-  };
+  // Reset voting error after some time
+  useEffect(() => {
+    if (votingError) {
+      const timer = setTimeout(() => {
+        // votingError will be cleared by parent component
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [votingError]);
 
   return (
     <>
@@ -118,14 +86,22 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           </div>
         </div>
 
+        {/* Voting Error Display */}
+        {votingError && (
+          <div className="voting-error">
+            <span>⚠️ {votingError}</span>
+          </div>
+        )}
+
         <div className="voting-list">
           {TEAM_MEMBERS.map(member => {
-            const memberVotes = votes[member.id] || 0;
+            const memberVotes = votesByCharacter[member.id] || 0;
             const percentage = getVotePercentage(memberVotes);
             const isWinner = votingWinner === member.id;
+            const isUserVote = userVote === member.id;
             
             return (
-              <div key={member.id} className={`voting-item ${isWinner ? 'winner' : ''}`}>
+              <div key={member.id} className={`voting-item ${isWinner ? 'winner' : ''} ${isUserVote ? 'user-voted' : ''}`}>
                 <div className="voting-info">
                   <div 
                     className="voting-avatar" 
@@ -159,17 +135,29 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
                   </div>
                 </div>
                 
-                {isConnected && !hasVoted && !votingLocked && (
+                {/* Vote Button - Live System */}
+                {isConnected && !userVote && !votingLocked && (
                   <button
-                    className="vote-button"
+                    className={`vote-button ${isVoting ? 'loading' : ''}`}
                     onClick={() => handleVote(member.id)}
+                    disabled={isVoting}
                   >
-                    <Heart size={16} />
-                    Vote
+                    {isVoting ? (
+                      <>
+                        <Loader size={16} className="spinning" />
+                        Voting...
+                      </>
+                    ) : (
+                      <>
+                        <Heart size={16} />
+                        Vote
+                      </>
+                    )}
                   </button>
                 )}
                 
-                {hasVoted === member.id && (
+                {/* User Vote Badge */}
+                {isUserVote && (
                   <div className="voted-badge">
                     ✓ Your vote
                   </div>
@@ -179,13 +167,14 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           })}
         </div>
 
+        {/* Connection and Authentication Prompts */}
         {!isConnected && (
           <div className="voting-prompt">
             Connect wallet to vote for next judge
           </div>
         )}
 
-        {hasVoted && !votingLocked && (
+        {isConnected && userVote && !votingLocked && (
           <div className="voting-thanks">
             Thanks for voting! <Sparkles size={16} className="inline-icon party-icon" />
           </div>
@@ -194,6 +183,13 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
         {votingLocked && totalVotes === 0 && (
           <div className="no-votes">
             No votes cast - random judge will be selected
+          </div>
+        )}
+
+        {/* Live Voting Status */}
+        {isConnected && !userVote && !votingLocked && totalVotes > 0 && (
+          <div className="live-voting-status">
+            🔴 Live voting in progress • {totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast
           </div>
         )}
       </div>
@@ -263,6 +259,17 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           font-weight: 600;
         }
 
+        .voting-error {
+          padding: 12px;
+          background: rgba(255, 92, 92, 0.1);
+          border: 1px solid rgba(255, 92, 92, 0.3);
+          border-radius: 8px;
+          color: #FF5C5C;
+          font-size: 14px;
+          margin-bottom: 16px;
+          text-align: center;
+        }
+
         .voting-list {
           display: flex;
           flex-direction: column;
@@ -288,6 +295,11 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
         .voting-item.winner {
           border-color: rgba(255, 215, 0, 0.5);
           background: rgba(255, 215, 0, 0.05);
+        }
+
+        .voting-item.user-voted {
+          border-color: rgba(0, 184, 151, 0.5);
+          background: rgba(0, 184, 151, 0.05);
         }
 
         .voting-info {
@@ -388,11 +400,23 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           align-items: center;
           gap: 6px;
           transition: all 0.2s ease;
+          min-width: 80px;
+          justify-content: center;
         }
 
-        .vote-button:hover {
+        .vote-button:hover:not(:disabled) {
           background: rgba(255, 92, 170, 0.2);
           transform: translateY(-1px);
+        }
+
+        .vote-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .vote-button.loading {
+          background: rgba(255, 92, 170, 0.15);
         }
 
         .voted-badge {
@@ -428,6 +452,18 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           margin-top: 16px;
         }
 
+        .live-voting-status {
+          text-align: center;
+          padding: 8px 12px;
+          background: rgba(0, 184, 151, 0.1);
+          border: 1px solid rgba(0, 184, 151, 0.3);
+          border-radius: 8px;
+          color: #00B897;
+          font-size: 12px;
+          font-weight: 600;
+          margin-top: 12px;
+        }
+
         .inline-icon {
           display: inline-block;
           vertical-align: text-top;
@@ -439,9 +475,18 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           animation: partyBounce 0.6s ease-in-out infinite alternate;
         }
 
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+
         @keyframes partyBounce {
           0% { transform: scale(1) rotate(0deg); }
           100% { transform: scale(1.1) rotate(10deg); }
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         /* Responsive */
