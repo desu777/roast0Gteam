@@ -81,8 +81,8 @@ export const useGameCore = () => {
 
   // Sync with backend timer update
   const syncWithBackendTimer = useCallback((backendTimeLeft) => {
-    // Only sync if we're in active phase
-    if (currentPhase !== GAME_PHASES.WRITING) {
+    // Sync in both writing and judging phases
+    if (currentPhase !== GAME_PHASES.WRITING && currentPhase !== GAME_PHASES.JUDGING) {
       return;
     }
     
@@ -119,11 +119,11 @@ export const useGameCore = () => {
 
   // Effect to manage timer based on phase changes
   useEffect(() => {
-    if (currentPhase === GAME_PHASES.WRITING && timeLeft > 0) {
-      // Start local timer for writing phase
+    if ((currentPhase === GAME_PHASES.WRITING || currentPhase === GAME_PHASES.JUDGING) && timeLeft > 0) {
+      // Start local timer for writing AND judging phases
       startLocalTimer(timeLeft);
     } else {
-      // Stop timer for other phases
+      // Stop timer for other phases (waiting, results)
       stopLocalTimer();
     }
     
@@ -136,8 +136,8 @@ export const useGameCore = () => {
   const setTimeLeftWithTimer = useCallback((newTimeLeft) => {
     setTimeLeft(newTimeLeft);
     
-    // Start local timer if we're in writing phase and timer > 0
-    if (currentPhase === GAME_PHASES.WRITING && newTimeLeft > 0) {
+    // Start local timer if we're in writing or judging phase and timer > 0
+    if ((currentPhase === GAME_PHASES.WRITING || currentPhase === GAME_PHASES.JUDGING) && newTimeLeft > 0) {
       startLocalTimer(newTimeLeft);
     }
   }, [currentPhase, startLocalTimer]);
@@ -228,11 +228,11 @@ export const useGameCore = () => {
         setPrizePool(parseFloat(round.prizePool || round.prize_pool || 0));
         
         // Ustaw czas pozostały - priorytet dla timeLeft z API
-        if (round.phase === 'active' && (round.timeLeft !== undefined || round.time_left !== undefined)) {
+        if ((round.phase === 'active' || round.phase === 'judging') && (round.timeLeft !== undefined || round.time_left !== undefined)) {
           const apiTimeLeft = round.timeLeft !== undefined ? round.timeLeft : round.time_left;
           setTimeLeftWithTimer(apiTimeLeft);
           if (import.meta.env.VITE_TEST_ENV === 'true') {
-            console.log(`⏱️ Timer set from API: ${apiTimeLeft}s`);
+            console.log(`⏱️ Timer set from API: ${apiTimeLeft}s (phase: ${round.phase})`);
           }
         } else {
           setTimeLeftWithTimer(120); // Default timer duration

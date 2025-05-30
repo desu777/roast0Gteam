@@ -134,8 +134,12 @@ class GameOrchestrator {
       this.timerManager.clearTimer(roundId);
       this.timerManager.clearLockTimer(roundId);
 
-      // Update round phase to judging
-      database.updateRoundPhase(roundId, GAME_PHASES.JUDGING);
+      // Update round phase to judging with judging start timestamp
+      database.db.prepare(`
+        UPDATE rounds 
+        SET phase = ?, judging_started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(GAME_PHASES.JUDGING, roundId);
 
       const round = database.getRoundById(roundId);
       const submissionCount = this.submissionManager.getSubmissionCount(roundId);
@@ -295,14 +299,27 @@ class GameOrchestrator {
     const submissions = this.submissionManager.getRoundSubmissions(round.id, true);
     const playerCount = submissions.length;
 
-    // Calculate time left if active
+    // Calculate time left based on phase
     let timeLeft = null;
     if (round.phase === GAME_PHASES.ACTIVE) {
       timeLeft = this.timerManager.getTimeLeft(round.id);
       
-      // If time expired but timer still active, transition to judging
-      if (timeLeft === 0 && this.timerManager.isTimerActive(round.id)) {
-        this.transitionToJudging(round.id);
+      // Timer backend sam zarządza przejściem do judging - nie przejmuj kontroli tutaj
+      // Removed: automatic transition to judging from API call
+    } else if (round.phase === GAME_PHASES.JUDGING) {
+      // Calculate judging time left based on when judging started
+      const now = new Date();
+      const judgingStartedAt = new Date(round.judging_started_at || round.updated_at);
+      const elapsed = Math.floor((now - judgingStartedAt) / 1000);
+      timeLeft = Math.max(0, config.game.judgingDuration - elapsed);
+      
+      if (config.logging.testEnv) {
+        logger.debug('Judging time calculated', { 
+          roundId: round.id, 
+          elapsed, 
+          timeLeft,
+          judgingDuration: config.game.judgingDuration
+        });
       }
     }
 

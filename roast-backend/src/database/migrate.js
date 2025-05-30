@@ -237,6 +237,48 @@ const migrations = [
       DROP TABLE IF EXISTS voting_stats;
       DROP TABLE IF EXISTS judge_votes;
     `
+  },
+  {
+    version: 6,
+    name: 'add_judging_started_at',
+    up: `
+      -- Add judging start timestamp to rounds table
+      ALTER TABLE rounds ADD COLUMN judging_started_at DATETIME;
+      
+      -- Update existing rounds in judging phase to use updated_at as fallback
+      UPDATE rounds 
+      SET judging_started_at = updated_at 
+      WHERE phase = 'judging' AND judging_started_at IS NULL;
+    `,
+    down: `
+      -- SQLite doesn't support DROP COLUMN, so we recreate the table
+      CREATE TABLE IF NOT EXISTS rounds_backup AS SELECT 
+        id, judge_character, phase, prize_pool, max_players, timer_duration,
+        started_at, completed_at, created_at, updated_at
+      FROM rounds;
+      
+      DROP TABLE rounds;
+      
+      CREATE TABLE rounds (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        judge_character TEXT NOT NULL,
+        phase TEXT NOT NULL DEFAULT 'waiting',
+        prize_pool DECIMAL(10,8) DEFAULT 0,
+        max_players INTEGER DEFAULT 20,
+        timer_duration INTEGER DEFAULT 120,
+        started_at DATETIME,
+        completed_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      
+      INSERT INTO rounds SELECT * FROM rounds_backup;
+      DROP TABLE rounds_backup;
+      
+      -- Recreate indexes
+      CREATE INDEX IF NOT EXISTS idx_rounds_phase ON rounds(phase);
+      CREATE INDEX IF NOT EXISTS idx_rounds_created_at ON rounds(created_at);
+    `
   }
 ];
 

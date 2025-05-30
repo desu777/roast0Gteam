@@ -141,16 +141,21 @@ class VotingService {
 
       const totalVotes = stats.reduce((sum, stat) => sum + stat.vote_count, 0);
       
-      // Convert to map for easier access
+      // Initialize with all characters at 0 votes for consistent UI
       const votesByCharacter = {};
+      Object.keys(CHARACTERS).forEach(characterId => {
+        votesByCharacter[characterId] = 0;
+      });
+      
+      // Update with actual votes from database
       stats.forEach(stat => {
         votesByCharacter[stat.character_id] = stat.vote_count;
       });
 
-      // Get winner (most voted)
-      const winner = stats.length > 0 ? stats[0] : null;
+      // Get winner (most voted) - only if there are votes
+      const winner = stats.length > 0 && stats[0].vote_count > 0 ? stats[0] : null;
 
-      return {
+      const result = {
         roundId,
         votesByCharacter,
         totalVotes,
@@ -161,9 +166,33 @@ class VotingService {
         isLocked: this.votingLocked.get(roundId) || false
       };
 
+      if (config.logging.testEnv) {
+        logger.debug('Voting stats retrieved', { 
+          roundId, 
+          totalVotes, 
+          hasWinner: !!winner,
+          isLocked: result.isLocked 
+        });
+      }
+
+      return result;
+
     } catch (error) {
       logger.error('Failed to get voting stats', { error: error.message, roundId });
-      throw error;
+      
+      // Fallback - return empty stats structure
+      const votesByCharacter = {};
+      Object.keys(CHARACTERS).forEach(characterId => {
+        votesByCharacter[characterId] = 0;
+      });
+      
+      return {
+        roundId,
+        votesByCharacter,
+        totalVotes: 0,
+        winner: null,
+        isLocked: this.votingLocked.get(roundId) || false
+      };
     }
   }
 

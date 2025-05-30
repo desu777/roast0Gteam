@@ -108,17 +108,20 @@ export const useGameState = () => {
   ]);
       
   // ================================
-  // ENHANCED LOAD VOTING STATS
+  // ENHANCED LOAD VOTING STATS (BEZ DEPENDENCY PROBLEMU)
   // ================================
   const loadVotingStats = useCallback(() => {
+    // Pobierz aktualną rundę na bieżąco, nie używaj dependency
+    const currentRound = gameCore.currentRound;
+    
     return votingSystem.loadVotingStats(
-      gameCore.currentRound,
+      currentRound,
       gameCore.isAuthenticated,
       gameCore.userAddress
     );
   }, [
     votingSystem.loadVotingStats,
-    gameCore.currentRound,
+    // NIE dodawaj gameCore.currentRound do dependency!
     gameCore.isAuthenticated,
     gameCore.userAddress
   ]);
@@ -198,16 +201,20 @@ export const useGameState = () => {
   // LOAD VOTING STATS ON ROUND CHANGE (DEBOUNCED)
   // ================================
   useEffect(() => {
-    if (gameCore.currentRound?.id && gameCore.isAuthenticated) {
+    // WARUNEK: tylko jeśli mamy pełny currentRound object, nie tylko ID
+    if (gameCore.currentRound?.id && gameCore.currentRound.phase && gameCore.isAuthenticated) {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('🗳️ Loading voting stats for new round:', gameCore.currentRound.id);
+        console.log('🗳️ Loading voting stats for round change:', gameCore.currentRound.id, 'phase:', gameCore.currentRound.phase);
       }
-      // Add delay to prevent rapid calls
+      // Zwiększony delay żeby uniknąć race conditions z backend
       setTimeout(() => {
-      loadVotingStats();
-      }, 2000);
+        // Double-check że currentRound wciąż istnieje
+        if (gameCore.currentRound?.id) {
+          loadVotingStats();
+        }
+      }, 1000); // Zwiększone z 2000 na 1000 ale z lepszym warunkiem
     }
-  }, [gameCore.currentRound?.id, gameCore.isAuthenticated, loadVotingStats]);
+  }, [gameCore.currentRound?.id, gameCore.currentRound?.phase, gameCore.isAuthenticated, loadVotingStats]);
 
   // ================================
   // CLEANUP ON UNMOUNT

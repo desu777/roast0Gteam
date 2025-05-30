@@ -138,6 +138,19 @@ export const useWebSocketEvents = ({
       
       // Załaduj nową rundę (powinno potwierdzić dane)
       functionsRef.current.loadCurrentRound();
+      
+      // NATYCHMIAST załaduj voting stats używając roundId z WebSocket event
+      if (data.roundId && address && isAuthenticated) {
+        // Stwórz temporary round object dla loadVotingStats
+        const tempRound = { id: data.roundId };
+        setTimeout(() => {
+          if (import.meta.env.VITE_TEST_ENV === 'true') {
+            console.log('🗳️ Loading voting stats immediately for new round:', data.roundId);
+          }
+          functionsRef.current.loadVotingStats(tempRound, isAuthenticated, address, true);
+        }, 500); // Krótki delay żeby backend zdążył przygotować dane
+      }
+      
       functionsRef.current.playSound('start');
     };
 

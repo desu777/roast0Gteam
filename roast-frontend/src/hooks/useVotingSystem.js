@@ -21,7 +21,7 @@ export const useVotingSystem = () => {
   const loadVotingStats = useCallback(async (currentRound, isAuthenticated, address, force = false) => {
     if (!currentRound?.id) {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('🗳️ No current round for voting stats');
+        console.log('🗳️ No current round for voting stats - currentRound:', currentRound);
       }
       return;
     }
@@ -62,9 +62,12 @@ export const useVotingSystem = () => {
       }
       setVotingStats(stats);
       
-      // Check if voting is locked
-      if (stats.isLocked) {
-        setVotingLocked(true);
+      // FORCE RESET voting locked dla nowej rundy jeśli nie jest locked w backend
+      if (stats.isLocked !== undefined) {
+        setVotingLocked(stats.isLocked);
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🔓 Voting lock set to:', stats.isLocked);
+        }
       }
       
       // Load user's vote if authenticated
@@ -78,9 +81,13 @@ export const useVotingSystem = () => {
             if (import.meta.env.VITE_TEST_ENV === 'true') {
               console.log('🗳️ User vote loaded:', userData.characterId);
             }
+          } else {
+            // Clear user vote jeśli nie ma w backend
+            setUserVote(null);
           }
         } catch (userVoteError) {
           // User hasn't voted yet - this is normal
+          setUserVote(null);
           if (userVoteError.response?.status !== 404 && userVoteError.response?.status !== 429) {
             if (import.meta.env.VITE_TEST_ENV === 'true') {
               console.error('Failed to load user vote:', userVoteError);
@@ -231,11 +238,19 @@ export const useVotingSystem = () => {
   // Reset voting state for new round
   const resetVotingState = useCallback(() => {
     if (import.meta.env.VITE_TEST_ENV === 'true') {
-      console.log('🗳️ Resetting voting state for new round');
+      console.log('🗳️ Resetting voting state for new round - current state:', {
+        votingStats,
+        userVote,
+        votingLocked,
+        isVoting,
+        votingError
+      });
     }
+    
+    // FORCE reset wszystkich stanów
     setVotingStats({});
     setUserVote(null);
-    setVotingLocked(false);
+    setVotingLocked(false); // FORCE unlock voting
     setIsVoting(false);
     setVotingError(null);
     
@@ -245,9 +260,19 @@ export const useVotingSystem = () => {
       castVoteTimeoutRef.current = null;
     }
     
+    // Clear any pending load timeout
+    if (loadVotingStatsTimeoutRef.current) {
+      clearTimeout(loadVotingStatsTimeoutRef.current);
+      loadVotingStatsTimeoutRef.current = null;
+    }
+    
     // Reset debouncing timers
     lastLoadVotingStatsTime.current = 0;
-  }, []);
+    
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('✅ Voting state reset complete');
+    }
+  }, [votingStats, userVote, votingLocked, isVoting, votingError]);
 
   // Handle voting WebSocket events
   const handleVotingUpdate = useCallback((data, address) => {
@@ -324,9 +349,25 @@ export const useVotingSystem = () => {
     }
     resetVotingState();
     
-    // Load voting stats for new round
+    // Natychmiast ustaw voting stats dla nowej rundy jeśli są dostępne
     if (data.newRoundId && data.votingStats) {
       setVotingStats(data.votingStats);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Set initial voting stats from WebSocket:', data.votingStats);
+      }
+    }
+    
+    // Opcjonalnie: załaduj fresh voting stats z API dla nowej rundy
+    if (data.newRoundId) {
+      setTimeout(() => {
+        // Próbuj załadować z API żeby mieć najnowsze dane
+        const tempRound = { id: data.newRoundId };
+        // Note: będzie potrzebne isAuthenticated i address z kontekstu
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🗳️ Will load fresh voting stats for new round:', data.newRoundId);
+        }
+        // loadVotingStats(tempRound, isAuthenticated, address, true); // To będzie wywołane przez useGameState effect
+      }, 1000);
     }
   }, [resetVotingState]);
 
