@@ -71,7 +71,7 @@ class VotingService {
         `).run(roundId, characterId);
 
         return { success: true, voteId: voteInfo.lastInsertRowid };
-      })();
+      });
 
       if (!result.success) {
         return result;
