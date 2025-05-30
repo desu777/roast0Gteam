@@ -262,10 +262,12 @@ export const useWebSocketEvents = ({
         }
       }
       
-      // Utwórz obiekt winner z danych otrzymanych z backendu
+      // ✨ KLUCZOWE: Utwórz obiekt winner z prizeAmount z backendu
       const winnerData = {
         address: data.winnerAddress,
         roastText: data.winningRoast,
+        prizeAmount: data.prizeAmount, // Dodaj prizeAmount z round-completed event
+        payoutTxHash: data.payoutTxHash, // Dodaj też transaction hash
         isUser: address && data.winnerAddress?.toLowerCase() === address.toLowerCase()
       };
       
@@ -280,18 +282,20 @@ export const useWebSocketEvents = ({
       // Ustaw countdown do następnej rundy - zwiększamy czas
       functionsRef.current.setNextRoundCountdown(30);
       
-      // ✨ KLUCZOWE: Po 3 sekundach wyników, zresetuj dane z poprzedniej rundy
-      // żeby uniknąć pokazywania starych danych podczas tworzenia nowej rundy
+      // ✨ POPRAWIONE: Nie resetuj prizePool - zostaw winner.prizeAmount
+      // Pozostałe dane można zresetować po 3 sekundach
       setTimeout(() => {
         if (import.meta.env.VITE_TEST_ENV === 'true') {
-          console.log('🧹 Resetting stale data after results display');
+          console.log('🧹 Resetting stale data after results display (keeping winner.prizeAmount)');
         }
-        // Reset danych które mogą mylić użytkownika
-        functionsRef.current.setPrizePool(0);
+        // Reset danych które mogą mylić użytkownika, ale NIE prizePool
+        // bo winner.prizeAmount jest niezależny
         functionsRef.current.setParticipants([]);
         functionsRef.current.setUserSubmitted(false);
         functionsRef.current.setRoastText('');
         functionsRef.current.setTimeLeft(0);
+        // Prizepool można zresetować, bo używamy winner.prizeAmount w ResultsPhase
+        functionsRef.current.setPrizePool(0);
       }, 3000); // 3 sekundy po wynikach
     };
 

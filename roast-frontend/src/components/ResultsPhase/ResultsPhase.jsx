@@ -38,7 +38,12 @@ const ResultsPhase = ({
                 )}
               </div>
               <div className="prize-amount">
-                Wins {(prizePool * 0.95).toFixed(3)} 0G
+                {/* 
+                  ✨ KLUCZOWE: Używaj winner.prizeAmount z bazy danych zamiast kalkulacji 
+                  Powód: prizePool może zostać zresetowany po 3 sekundach, ale winner.prizeAmount
+                  pochodzi bezpośrednio z round-completed WebSocket event i jest stały
+                */}
+                Wins {winner.prizeAmount ? winner.prizeAmount.toFixed(3) : (prizePool * 0.95).toFixed(3)} 0G
               </div>
               {winner.roastText && (
                 <div className="winning-roast">
@@ -46,7 +51,6 @@ const ResultsPhase = ({
                   <p className="roast-text">"{winner.roastText}"</p>
                 </div>
               )}
-              {/* Dodaj sekcję transakcji */}
               {winner.payoutTxHash && (
                 <div className="payout-info">
                   <div className="payout-label">Prize Payout:</div>
@@ -56,7 +60,7 @@ const ResultsPhase = ({
                     rel="noopener noreferrer"
                     className="payout-link"
                   >
-                    View Transaction <ExternalLink size={14} />
+                    View Transaction ↗
                   </a>
                 </div>
               )}
@@ -234,24 +238,24 @@ const ResultsPhase = ({
           color: #00D2E9;
           text-transform: uppercase;
           letter-spacing: 1px;
-          margin-bottom: 4px;
+          margin-bottom: 6px;
           font-weight: 700;
         }
 
         .payout-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
           color: #00D2E9;
           text-decoration: none;
           font-size: 14px;
           font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
           transition: all 0.2s ease;
         }
 
         .payout-link:hover {
-          color: #00B8D4;
-          transform: translateX(2px);
+          color: #FFD700;
+          text-decoration: underline;
         }
 
         .ai-verdict {
