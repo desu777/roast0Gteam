@@ -13,6 +13,10 @@ const WritingPhase = ({
   isConnected,
   joinRound
 }) => {
+  
+  // Check if submissions should be disabled (less than 10 seconds left)
+  const isSubmissionDisabled = timeLeft !== null && timeLeft < 10;
+  
   return (
     <>
       <div className="writing-phase">
@@ -20,9 +24,11 @@ const WritingPhase = ({
           <div className="timer-section">
             <div className="timer-display">
               <Timer size={24} />
-              <span className="timer-text">{formatTime(timeLeft)}</span>
+              <span className={`timer-text ${isSubmissionDisabled ? 'timer-warning' : ''}`}>{formatTime(timeLeft)}</span>
             </div>
-            <p className="timer-label">Time to submit roasts</p>
+            <p className="timer-label">
+              {isSubmissionDisabled ? 'Submissions closing!' : 'Time to submit roasts'}
+            </p>
           </div>
           
           <div className="participants-count">
@@ -86,9 +92,9 @@ const WritingPhase = ({
               </div>
               
               <button
-                className={`submit-roast-btn ${roastText.trim() ? 'ready' : ''}`}
+                className={`submit-roast-btn ${roastText.trim() ? 'ready' : ''} ${isSubmissionDisabled ? 'disabled' : ''}`}
                 onClick={joinRound}
-                disabled={!roastText.trim() || isSubmitting || !isConnected}
+                disabled={!roastText.trim() || isSubmitting || !isConnected || isSubmissionDisabled}
               >
                 <div className="btn-flame-bg"></div>
                 <div className="btn-content">
@@ -101,6 +107,11 @@ const WritingPhase = ({
                     <>
                       <Zap size={20} />
                       <span>Connect to Roast</span>
+                    </>
+                  ) : isSubmissionDisabled ? (
+                    <>
+                      <Timer size={20} />
+                      <span>Time's Up!</span>
                     </>
                   ) : (
                     <>
@@ -187,6 +198,16 @@ const WritingPhase = ({
           font-weight: 700;
           color: #FFD700;
           font-family: 'Courier New', monospace;
+        }
+
+        .timer-text.timer-warning {
+          color: #FF5C5C;
+          animation: warningBlink 1s ease-in-out infinite;
+        }
+
+        @keyframes warningBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
         }
 
         .timer-label {
@@ -476,6 +497,16 @@ const WritingPhase = ({
         .submit-roast-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .submit-roast-btn.disabled {
+          border-color: rgba(255, 92, 92, 0.3);
+          animation: none;
+        }
+
+        .submit-roast-btn.disabled .btn-content {
+          background: linear-gradient(135deg, rgba(255, 92, 92, 0.1), rgba(100, 100, 100, 0.1));
+          color: #FF5C5C;
         }
 
         .spinner {

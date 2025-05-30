@@ -76,20 +76,94 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true })
   ),
   transports,
-  // Handle uncaught exceptions and unhandled rejections
+  // Handle uncaught exceptions and unhandled rejections more safely
   exceptionHandlers: [
     new winston.transports.File({
       filename: path.join(logsDir, 'exceptions.log'),
-      format: fileFormat
+      format: fileFormat,
+      handleExceptions: true
     })
   ],
   rejectionHandlers: [
     new winston.transports.File({
       filename: path.join(logsDir, 'rejections.log'),
-      format: fileFormat
+      format: fileFormat,
+      handleRejections: true
     })
   ],
   exitOnError: false
+});
+
+// Prevent "write after end" errors by wrapping logger methods
+const originalMethods = {
+  error: logger.error.bind(logger),
+  warn: logger.warn.bind(logger),
+  info: logger.info.bind(logger),
+  debug: logger.debug.bind(logger)
+};
+
+// Safe logging wrapper
+const safeLog = (originalMethod, level) => {
+  return function(message, meta = {}) {
+    try {
+      // Only log if TEST_ENV is true when in test environment
+      if (config.server.env === 'test' && !config.logging.testEnv) {
+        return;
+      }
+      
+      // Check if we're not in shutdown state
+      if (!process.exitCode && originalMethod) {
+        originalMethod.call(this, message, meta);
+      }
+    } catch (error) {
+      // Fallback to console if logger fails
+      if (config.server.env === 'development' || config.logging.testEnv) {
+        console.log(`[${level.toUpperCase()}] ${message}`, meta);
+      }
+    }
+  };
+};
+
+// Replace logger methods with safe versions
+logger.error = safeLog(originalMethods.error, 'error');
+logger.warn = safeLog(originalMethods.warn, 'warn');
+logger.info = safeLog(originalMethods.info, 'info');
+logger.debug = safeLog(originalMethods.debug, 'debug');
+
+// Graceful shutdown handling
+let shutdownInProgress = false;
+
+const gracefulShutdown = () => {
+  if (!shutdownInProgress) {
+    shutdownInProgress = true;
+    console.log('Shutting down logger gracefully...');
+    
+    try {
+      logger.end();
+    } catch (error) {
+      console.log('Logger shutdown error:', error.message);
+    }
+    
+    setTimeout(() => {
+      process.exit(0);
+    }, 1000);
+  }
+};
+
+// Handle process termination signals
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGQUIT', gracefulShutdown);
+
+// Handle uncaught exceptions to prevent crashes
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  gracefulShutdown();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  gracefulShutdown();
 });
 
 // Enhanced logging methods with context

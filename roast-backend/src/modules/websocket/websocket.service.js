@@ -369,6 +369,7 @@ class WebSocketService {
           socket.emit('vote-cast-success', {
             success: true,
             voteId: result.voteId,
+            characterId: data.characterId,
             votingStats: result.votingStats
           });
         } else {

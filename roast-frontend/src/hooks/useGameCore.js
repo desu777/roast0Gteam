@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { GAME_PHASES } from '../constants/gameConstants';
 import { TEAM_MEMBERS } from '../data/teamMembers';
 import { gameApi } from '../services/api';
@@ -15,6 +15,10 @@ export const useGameCore = () => {
   const loadStatsTimeoutRef = useRef(null);
   const lastLoadRoundTime = useRef(0);
   const lastLoadStatsTime = useRef(0);
+  
+  // Local timer refs
+  const localTimerRef = useRef(null);
+  const lastSyncTimeRef = useRef(0);
 
   // Game State
   const [currentPhase, setCurrentPhase] = useState(GAME_PHASES.WAITING);
@@ -44,6 +48,103 @@ export const useGameCore = () => {
   // Results lock state
   const [resultsLocked, setResultsLocked] = useState(false);
   const [resultsLockTimer, setResultsLockTimer] = useState(null);
+
+  // ================================
+  // LOCAL TIMER MANAGEMENT
+  // ================================
+  
+  // Start local timer that counts down every second
+  const startLocalTimer = useCallback((initialTime) => {
+    // Clear existing timer
+    if (localTimerRef.current) {
+      clearInterval(localTimerRef.current);
+    }
+    
+    let currentTime = initialTime;
+    lastSyncTimeRef.current = Date.now();
+    
+    localTimerRef.current = setInterval(() => {
+      currentTime--;
+      setTimeLeft(Math.max(0, currentTime));
+      
+      // Stop timer when it reaches 0
+      if (currentTime <= 0) {
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
+      }
+    }, 1000);
+    
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`⏱️ Local timer started: ${initialTime}s`);
+    }
+  }, []);
+
+  // Sync with backend timer update
+  const syncWithBackendTimer = useCallback((backendTimeLeft) => {
+    // Only sync if we're in active phase
+    if (currentPhase !== GAME_PHASES.WRITING) {
+      return;
+    }
+    
+    // Calculate how much time passed since last sync
+    const now = Date.now();
+    const timeSinceSync = Math.floor((now - lastSyncTimeRef.current) / 1000);
+    
+    // If backend time is significantly different from expected local time, resync
+    const expectedLocalTime = timeLeft - timeSinceSync;
+    const timeDiff = Math.abs(backendTimeLeft - expectedLocalTime);
+    
+    if (timeDiff > 2) { // Resync if difference > 2 seconds
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log(`⏱️ Timer resync: backend=${backendTimeLeft}s, expected=${expectedLocalTime}s, diff=${timeDiff}s`);
+      }
+      setTimeLeft(backendTimeLeft);
+      startLocalTimer(backendTimeLeft);
+    } else {
+      // Just update the sync reference time
+      lastSyncTimeRef.current = now;
+    }
+  }, [currentPhase, timeLeft, startLocalTimer]);
+
+  // Stop local timer
+  const stopLocalTimer = useCallback(() => {
+    if (localTimerRef.current) {
+      clearInterval(localTimerRef.current);
+      localTimerRef.current = null;
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('⏱️ Local timer stopped');
+      }
+    }
+  }, []);
+
+  // Effect to manage timer based on phase changes
+  useEffect(() => {
+    if (currentPhase === GAME_PHASES.WRITING && timeLeft > 0) {
+      // Start local timer for writing phase
+      startLocalTimer(timeLeft);
+    } else {
+      // Stop timer for other phases
+      stopLocalTimer();
+    }
+    
+    return () => {
+      stopLocalTimer();
+    };
+  }, [currentPhase, startLocalTimer, stopLocalTimer]); // Note: timeLeft not in dependency to avoid restart on every tick
+
+  // Enhanced setTimeLeft that also manages local timer
+  const setTimeLeftWithTimer = useCallback((newTimeLeft) => {
+    setTimeLeft(newTimeLeft);
+    
+    // Start local timer if we're in writing phase and timer > 0
+    if (currentPhase === GAME_PHASES.WRITING && newTimeLeft > 0) {
+      startLocalTimer(newTimeLeft);
+    }
+  }, [currentPhase, startLocalTimer]);
+
+  // ================================
+  // ORIGINAL CODE CONTINUES...
+  // ================================
 
   // Sound effects
   const playSound = (type) => {
@@ -129,12 +230,12 @@ export const useGameCore = () => {
         // Ustaw czas pozostały - priorytet dla timeLeft z API
         if (round.phase === 'active' && (round.timeLeft !== undefined || round.time_left !== undefined)) {
           const apiTimeLeft = round.timeLeft !== undefined ? round.timeLeft : round.time_left;
-          setTimeLeft(apiTimeLeft);
+          setTimeLeftWithTimer(apiTimeLeft);
           if (import.meta.env.VITE_TEST_ENV === 'true') {
             console.log(`⏱️ Timer set from API: ${apiTimeLeft}s`);
           }
         } else {
-          setTimeLeft(120); // Default timer duration
+          setTimeLeftWithTimer(120); // Default timer duration
         }
         
         // Znajdź sędziego na podstawie character ID
@@ -246,7 +347,7 @@ export const useGameCore = () => {
         setError('Failed to load game data');
       }
     }
-  }, [address, resultsLocked, currentJudge]);
+  }, [address, resultsLocked]);
 
   // Debounced załaduj statystyki gry
   const loadGameStats = useCallback(async (force = false) => {
@@ -363,7 +464,9 @@ export const useGameCore = () => {
     if (loadStatsTimeoutRef.current) {
       clearTimeout(loadStatsTimeoutRef.current);
     }
-  }, []);
+    // Cleanup local timer
+    stopLocalTimer();
+  }, [stopLocalTimer]);
 
   return {
     // Game State
@@ -374,7 +477,7 @@ export const useGameCore = () => {
     roastText,
     setRoastText,
     timeLeft,
-    setTimeLeft,
+    setTimeLeft: setTimeLeftWithTimer, // Use enhanced version
     participants,
     setParticipants,
     winner,
@@ -426,6 +529,11 @@ export const useGameCore = () => {
     playSound,
     clearError: () => setError(null),
     cleanup,
+    
+    // Timer methods
+    syncWithBackendTimer,
+    startLocalTimer,
+    stopLocalTimer,
 
     // Wallet state
     isConnected: isConnected && wsConnected,

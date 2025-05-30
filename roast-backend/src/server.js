@@ -265,9 +265,10 @@ const startServer = async () => {
     gameService = new GameService(wsService, aiService, treasuryService, votingService);
     gameController = new GameController(gameService);
     
-    // Connect Game Service to WebSocket Service
+    // Connect Game Service to WebSocket Service and Voting Service
     wsService.setServices(gameService, votingService);
     votingService.setWSEmitter(wsService);
+    votingService.setGameService(gameService);
     
     // Mount game routes
     app.use('/api/game', createGameRoutes(gameController));

@@ -336,6 +336,15 @@ class AIService {
   }
 
   /**
+   * Sprawdza czy postać istnieje
+   * @param {string} characterId - Character ID
+   * @returns {boolean} Character exists
+   */
+  characterExists(characterId) {
+    return this.characterService.characterExists(characterId);
+  }
+
+  /**
    * Resetuje dzienne liczniki API (może być wywoływane przez cron)
    */
   resetDailyCounters() {

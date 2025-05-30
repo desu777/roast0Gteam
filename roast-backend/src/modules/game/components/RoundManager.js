@@ -72,8 +72,8 @@ class RoundManager {
 
       gameLogger.roundCreated(roundId, selectedCharacter);
 
-      // Reset voting for new round
-      if (this.votingService && preferredCharacter) {
+      // Reset voting for new round - ZAWSZE resetuj dla nowej rundy
+      if (this.votingService) {
         this.votingService.resetVoting(null, roundId);
       }
 
@@ -403,19 +403,27 @@ class RoundManager {
   // VOTING INTEGRATION
   // ================================
 
-  setNextJudgeVotingResult(characterId) {
+  setNextJudgeVotingResult(characterId, metadata = {}) {
     if (characterId && this.aiService && this.aiService.characterExists(characterId)) {
       this.nextJudgeVotingResult = characterId;
       
       if (config.logging.testEnv) {
-        logger.info('Next judge voting result set', { characterId });
+        logger.info('Next judge voting result set', { 
+          characterId,
+          method: metadata.method,
+          tieBreaker: metadata.tieBreaker,
+          totalVotes: metadata.totalVotes
+        });
       }
       
       // Emit to all clients that voting result was accepted
       if (this.eventEmitter) {
         this.eventEmitter.emitToAll('voting-result-accepted', {
           nextJudge: characterId,
-          source: 'community-vote'
+          source: 'community-vote',
+          method: metadata.method,
+          tieBreaker: metadata.tieBreaker,
+          totalVotes: metadata.totalVotes
         });
       }
       

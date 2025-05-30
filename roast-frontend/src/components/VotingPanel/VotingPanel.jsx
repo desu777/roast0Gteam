@@ -28,6 +28,9 @@ const VotingPanel = ({
   const votesByCharacter = votingStats?.votesByCharacter || {};
   const votingWinner = votingStats?.winner?.characterId || null;
 
+  // Check if voting should be disabled (less than 10 seconds left)
+  const isVotingDisabled = timeLeft !== null && timeLeft < 10;
+
   // Calculate vote percentage
   const getVotePercentage = (characterVotes) => {
     if (totalVotes === 0) return 0;
@@ -36,12 +39,14 @@ const VotingPanel = ({
 
   // Handle vote casting
   const handleVote = (characterId) => {
-    if (!isConnected || userVote || votingLocked || isVoting) {
+    if (!isConnected || userVote || votingLocked || isVoting || isVotingDisabled) {
       console.log('🗳️ Vote blocked:', {
         connected: isConnected,
         userVote: !!userVote,
         votingLocked,
-        isVoting
+        isVoting,
+        isVotingDisabled,
+        timeLeft
       });
       return;
     }
@@ -66,6 +71,12 @@ const VotingPanel = ({
         <div className="voting-header">
           <h3><Vote size={18} /> Vote for Next Judge</h3>
           <div className="voting-status">
+            {isVotingDisabled && !votingLocked && (
+              <div className="voting-closing">
+                <Lock size={14} />
+                <span>Voting closing...</span>
+              </div>
+            )}
             {votingLocked && votingWinner && (
               <div className="voting-winner">
                 <Trophy size={14} />
@@ -78,7 +89,7 @@ const VotingPanel = ({
                 <span>Voting ended</span>
               </div>
             )}
-            {!votingLocked && (
+            {!votingLocked && !isVotingDisabled && (
               <div className="vote-count">
                 {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
               </div>
@@ -136,11 +147,11 @@ const VotingPanel = ({
                 </div>
                 
                 {/* Vote Button - Live System */}
-                {isConnected && !userVote && !votingLocked && (
+                {isConnected && !userVote && !votingLocked && !isVotingDisabled && (
                   <button
                     className={`vote-button ${isVoting ? 'loading' : ''}`}
                     onClick={() => handleVote(member.id)}
-                    disabled={isVoting}
+                    disabled={isVoting || isVotingDisabled}
                   >
                     {isVoting ? (
                       <>
@@ -255,6 +266,25 @@ const VotingPanel = ({
           color: #FF5C5C;
           font-size: 12px;
           font-weight: 600;
+        }
+
+        .voting-closing {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: rgba(255, 170, 0, 0.1);
+          border: 1px solid rgba(255, 170, 0, 0.3);
+          border-radius: 8px;
+          color: #FFAA00;
+          font-size: 12px;
+          font-weight: 600;
+          animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
         }
 
         .vote-count {

@@ -27,16 +27,31 @@ class TimerManager {
     this.clearTimer(roundId);
 
     let timeLeft = durationSeconds;
+    let lastEmitTime = 0;
     
     const timer = setInterval(() => {
       timeLeft--;
 
-      // Emit timer update
-      if (this.eventEmitter) {
+      // Emit timer update only every 5 seconds or on important milestones
+      const now = Date.now();
+      const shouldEmit = (
+        now - lastEmitTime >= 5000 || // Every 5 seconds
+        timeLeft <= 60 || // Every second in last minute
+        timeLeft === 30 || // Warning at 30 seconds
+        timeLeft === 10 || // Final countdown
+        timeLeft <= 0     // Time's up
+      );
+
+      if (shouldEmit && this.eventEmitter) {
         this.eventEmitter.emitToRoom(roundId, WS_EVENTS.TIMER_UPDATE, {
           roundId,
           timeLeft
         });
+        lastEmitTime = now;
+        
+        if (config.logging.testEnv) {
+          console.log(`⏱️ Timer update sent: ${timeLeft}s (shouldEmit: ${timeLeft <= 60 ? 'last_minute' : 'periodic'})`);
+        }
       }
 
       // Warning at 30 seconds

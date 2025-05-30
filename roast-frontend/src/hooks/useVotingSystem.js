@@ -26,9 +26,9 @@ export const useVotingSystem = () => {
       return;
     }
 
-    // Debouncing - max 1 request per 3 seconds unless forced
+    // Debouncing - max 1 request per 5 seconds unless forced
     const now = Date.now();
-    if (!force && (now - lastLoadVotingStatsTime.current) < 3000) {
+    if (!force && (now - lastLoadVotingStatsTime.current) < 5000) {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🔄 Debouncing loadVotingStats call');
       }
@@ -44,7 +44,7 @@ export const useVotingSystem = () => {
     if (!force) {
       loadVotingStatsTimeoutRef.current = setTimeout(() => {
         loadVotingStats(currentRound, isAuthenticated, address, true);
-      }, 800);
+      }, 1500);
       return;
     }
 
@@ -136,55 +136,49 @@ export const useVotingSystem = () => {
     // Set timeout to prevent rapid successive votes
     castVoteTimeoutRef.current = setTimeout(() => {
       castVoteTimeoutRef.current = null;
-    }, 2000);
+    }, 3000);
     
     try {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🗳️ Casting vote for character:', characterId);
       }
       
-      // Optimistic update first
-      setUserVote(characterId);
+      // NIE robimy optimistic update - czekamy na potwierdzenie
       
       // Primary: Use WebSocket for real-time updates
       if (wsService && wsService.castVote) {
         wsService.castVote(currentRound.id, characterId);
-      }
-      
-      // Backup: Also call API directly but handle rate limiting gracefully
-      try {
-        await votingApi.castVote(currentRound.id, characterId, address);
         
-        if (playSound) {
-          playSound('vote');
-        }
-        
+        // Pokaż informację o wysłaniu głosu
         if (addNotification) {
           addNotification({
-            type: 'success',
-            message: `Vote cast for ${TEAM_MEMBERS.find(m => m.id === characterId)?.name}! 🗳️`,
-            duration: 3000
+            type: 'info',
+            message: `Sending vote for ${TEAM_MEMBERS.find(m => m.id === characterId)?.name}...`,
+            duration: 2000
           });
         }
+      } else {
+        // Fallback: Use API directly
+        const response = await votingApi.castVote(currentRound.id, characterId, address);
         
-      } catch (apiError) {
-        if (apiError.response?.status === 429) {
-          if (import.meta.env.VITE_TEST_ENV === 'true') {
-            console.warn('🗳️ API vote rate limited (WebSocket should handle)');
+        if (response.data.success) {
+          // Ustaw głos po potwierdzeniu
+          const voteData = response.data.data || response.data;
+          setUserVote(voteData.characterId || characterId);
+          
+          if (playSound) {
+            playSound('vote');
           }
-          // Don't show error for rate limit if WebSocket is handling it
-          if (wsService && wsService.castVote) {
-            if (addNotification) {
-              addNotification({
-                type: 'info',
-                message: `Vote submitted via WebSocket for ${TEAM_MEMBERS.find(m => m.id === characterId)?.name}! 🗳️`,
-                duration: 3000
-              });
-            }
-          }
-        } else {
-          if (import.meta.env.VITE_TEST_ENV === 'true') {
-            console.warn('API vote call failed (WebSocket should handle):', apiError);
+          
+          if (addNotification) {
+            const characterName = TEAM_MEMBERS.find(m => m.id === (voteData.characterId || characterId))?.name;
+            addNotification({
+              type: 'success',
+              message: voteData.alreadyVoted 
+                ? `You already voted for ${characterName}! 🗳️`
+                : `Vote cast for ${characterName}! 🗳️`,
+              duration: 3000
+            });
           }
         }
       }
@@ -196,13 +190,27 @@ export const useVotingSystem = () => {
         console.error('💥 Failed to cast vote:', error);
       }
       
+      // Handle different error types
       if (error.response?.status === 429) {
         setVotingError('Too many vote requests - please wait a moment');
         if (addNotification) {
           addNotification({
             type: 'warning',
-            message: 'Please wait a moment before voting again',
+            message: '⚠️ Rate limited - please wait a moment',
             duration: 4000
+          });
+        }
+      } else if (error.response?.data?.error === 'ALREADY_VOTED') {
+        // This shouldn't happen anymore, but handle it gracefully
+        const voteChar = await votingApi.getUserVote(currentRound.id, address);
+        if (voteChar?.data?.data?.characterId) {
+          setUserVote(voteChar.data.data.characterId);
+        }
+        if (addNotification) {
+          addNotification({
+            type: 'info',
+            message: 'You have already voted in this round! 🗳️',
+            duration: 3000
           });
         }
       } else {
@@ -217,7 +225,6 @@ export const useVotingSystem = () => {
       }
       
       setIsVoting(false);
-      setUserVote(null); // Reset optimistic update only on real errors
     }
   }, [isVoting, userVote, votingLocked]);
 
@@ -264,16 +271,26 @@ export const useVotingSystem = () => {
       console.log('🗳️ Vote cast confirmed:', data);
     }
     
+    // Pobierz characterId z różnych możliwych pól
+    const characterId = data.characterId || data.character_id || data.voteCharacterId;
+    
     // Confirm user's vote
-    setUserVote(data.characterId);
+    if (characterId) {
+      setUserVote(characterId);
+    }
     setIsVoting(false);
     setVotingError(null);
     
-    const characterName = TEAM_MEMBERS.find(m => m.id === data.characterId)?.name;
+    const characterName = characterId 
+      ? TEAM_MEMBERS.find(m => m.id === characterId)?.name || 'Unknown'
+      : 'Unknown';
+      
     if (addNotification) {
       addNotification({
         type: 'success',
-        message: `Vote confirmed for ${characterName}! 🗳️`,
+        message: data.alreadyVoted 
+          ? `You already voted for ${characterName}! 🗳️`
+          : `Vote confirmed for ${characterName}! 🗳️`,
         duration: 3000
       });
     }
@@ -282,7 +299,7 @@ export const useVotingSystem = () => {
     if (loadVotingStatsCallback) {
       setTimeout(() => {
         loadVotingStatsCallback();
-      }, 1000);
+      }, 1500);
     }
   }, []);
 
@@ -333,6 +350,40 @@ export const useVotingSystem = () => {
     }
   }, [isVoting]);
 
+  const handleVotingResultAccepted = useCallback((data, addNotification) => {
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('🗳️ Voting result accepted:', data);
+    }
+    
+    const characterName = TEAM_MEMBERS.find(m => m.id === data.nextJudge)?.name || 'Unknown';
+    
+    let message = '';
+    let messageType = 'success';
+    
+    if (data.source === 'community-vote') {
+      // Check if it was from WebSocket event with method info
+      if (data.method === 'tie_breaker') {
+        message = `🎲 TIE! ${characterName} was randomly selected as next judge among tied candidates`;
+        messageType = 'info';
+      } else if (data.method === 'random_no_votes') {
+        message = `🎯 No votes cast - ${characterName} was randomly selected as judge`;
+        messageType = 'warning';
+      } else {
+        message = `🗳️ ${characterName} will judge the next round! (Community Vote)`;
+      }
+    } else {
+      message = `🎯 ${characterName} will judge the next round!`;
+    }
+    
+    if (addNotification) {
+      addNotification({
+        type: messageType,
+        message: message,
+        duration: 5000
+      });
+    }
+  }, []);
+
   // Cleanup timeouts
   const cleanup = useCallback(() => {
     if (loadVotingStatsTimeoutRef.current) {
@@ -367,6 +418,7 @@ export const useVotingSystem = () => {
     handleVoteCastSuccess,
     handleVotingLocked,
     handleVotingReset,
+    handleVotingResultAccepted,
     handleVotingError
   };
 }; 

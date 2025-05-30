@@ -49,14 +49,18 @@ export const useGameState = () => {
     playSound: gameCore.playSound,
     setTimeLeft: gameCore.setTimeLeft,
     
+    // Timer sync methods
+    syncWithBackendTimer: gameCore.syncWithBackendTimer,
+    
     // Voting props
     resetVotingState: votingSystem.resetVotingState,
-    handleVotingUpdate: (data) => votingSystem.handleVotingUpdate(data, gameCore.userAddress),
+    handleVotingUpdate: votingSystem.handleVotingUpdate,
     handleVoteCastSuccess: votingSystem.handleVoteCastSuccess,
     handleVotingLocked: votingSystem.handleVotingLocked,
     handleVotingReset: votingSystem.handleVotingReset,
     handleVotingError: votingSystem.handleVotingError,
-    loadVotingStats: () => votingSystem.loadVotingStats(gameCore.currentRound, gameCore.isAuthenticated, gameCore.userAddress),
+    loadVotingStats: votingSystem.loadVotingStats,
+    handleVotingResultAccepted: votingSystem.handleVotingResultAccepted,
     
     // Notifications
     addNotification: notificationSystem.addNotification,

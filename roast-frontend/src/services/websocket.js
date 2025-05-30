@@ -128,6 +128,10 @@ class WebSocketService {
       this.emit('voting-reset', data);
     });
 
+    this.socket.on('voting-result-accepted', (data) => {
+      this.emit('voting-result-accepted', data);
+    });
+
     // Submission locking events
     this.socket.on('submission-locked', (data) => {
       this.emit('submission-locked', data);
@@ -251,6 +255,7 @@ class WebSocketService {
       this.socket.off('vote-cast-success');
       this.socket.off('voting-locked');
       this.socket.off('voting-reset');
+      this.socket.off('voting-result-accepted');
       this.socket.off('submission-locked');
       
       // Complete cleanup

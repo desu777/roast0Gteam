@@ -1,16 +1,23 @@
 const { config } = require('../../config/app.config');
 const { logger } = require('../../services/logger.service');
 const database = require('../../database/database.service');
-const { CHARACTERS, ERROR_CODES } = require('../../utils/constants');
+const { 
+  ERROR_CODES,
+  CHARACTERS
+} = require('../../utils/constants');
 
 class VotingService {
-  constructor(wsEmitter = null) {
+  constructor(wsEmitter = null, gameService = null) {
     this.wsEmitter = wsEmitter;
+    this.gameService = gameService;
     this.votingLocked = new Map(); // roundId -> boolean
     this.lockTimers = new Map(); // roundId -> timer
     
     if (config.logging.testEnv) {
-      logger.info('Voting service initialized');
+      logger.info('Voting service initialized', {
+        wsEmitter: !!wsEmitter,
+        gameService: !!gameService
+      });
     }
   }
 
@@ -46,12 +53,18 @@ class VotingService {
       const result = database.transaction(() => {
         // Check if user already voted for this round
         const existingVote = database.db.prepare(`
-          SELECT id FROM judge_votes 
+          SELECT id, character_id FROM judge_votes 
           WHERE round_id = ? AND voter_address = ?
         `).get(roundId, voterAddress.toLowerCase());
 
         if (existingVote) {
-          return { success: false, error: ERROR_CODES.ALREADY_VOTED };
+          // Jeśli użytkownik już głosował, zwróć to jako sukces
+          return { 
+            success: true, 
+            voteId: existingVote.id,
+            characterId: existingVote.character_id,
+            alreadyVoted: true 
+          };
         }
 
         // Insert vote
@@ -70,7 +83,12 @@ class VotingService {
             last_updated = CURRENT_TIMESTAMP
         `).run(roundId, characterId);
 
-        return { success: true, voteId: voteInfo.lastInsertRowid };
+        return { 
+          success: true, 
+          voteId: voteInfo.lastInsertRowid,
+          characterId: characterId,
+          alreadyVoted: false 
+        };
       });
 
       if (!result.success) {
@@ -81,21 +99,24 @@ class VotingService {
       const votingStats = this.getVotingStats(roundId);
       
       // Emit real-time update to all clients
-      this.emitVotingUpdate(roundId, votingStats, voterAddress, characterId);
+      this.emitVotingUpdate(roundId, votingStats, voterAddress, result.characterId);
 
       if (config.logging.testEnv) {
         logger.info('Vote cast successfully', {
           roundId,
           voterAddress,
-          characterId,
-          totalVotes: votingStats.totalVotes
+          characterId: result.characterId,
+          totalVotes: votingStats.totalVotes,
+          alreadyVoted: result.alreadyVoted
         });
       }
 
       return {
         success: true,
         voteId: result.voteId,
-        votingStats
+        characterId: result.characterId,
+        votingStats,
+        alreadyVoted: result.alreadyVoted
       };
 
     } catch (error) {
@@ -147,7 +168,117 @@ class VotingService {
   }
 
   /**
-   * Lock voting for a round (called 10 seconds before round ends)
+   * Finalize voting with tie-breaker logic - returns definitive winner
+   * @param {number} roundId - Round ID
+   * @returns {Object} Final voting result with tie-breaker applied
+   */
+  finalizeVotingWithTieBreaker(roundId) {
+    try {
+      const stats = database.db.prepare(`
+        SELECT character_id, vote_count
+        FROM voting_stats
+        WHERE round_id = ?
+        ORDER BY vote_count DESC, character_id ASC
+      `).all(roundId);
+
+      if (stats.length === 0) {
+        // No votes - random selection from all characters
+        const characterIds = Object.keys(CHARACTERS);
+        const randomCharacter = characterIds[Math.floor(Math.random() * characterIds.length)];
+        
+        if (config.logging.testEnv) {
+          logger.info('No votes - random judge selected', { 
+            roundId, 
+            selectedCharacter: randomCharacter 
+          });
+        }
+        
+        return {
+          roundId,
+          winner: {
+            characterId: randomCharacter,
+            votes: 0
+          },
+          totalVotes: 0,
+          method: 'random_no_votes',
+          tieBreaker: false
+        };
+      }
+
+      const totalVotes = stats.reduce((sum, stat) => sum + stat.vote_count, 0);
+      const highestVoteCount = stats[0].vote_count;
+      
+      // Find all characters with highest vote count (tie detection)
+      const topCandidates = stats.filter(stat => stat.vote_count === highestVoteCount);
+      
+      let selectedWinner;
+      let method = 'normal';
+      let tieBreaker = false;
+      
+      if (topCandidates.length > 1) {
+        // TIE! Random selection among top candidates
+        const randomIndex = Math.floor(Math.random() * topCandidates.length);
+        selectedWinner = topCandidates[randomIndex];
+        method = 'tie_breaker';
+        tieBreaker = true;
+        
+        if (config.logging.testEnv) {
+          logger.info('Tie detected - random selection among top candidates', {
+            roundId,
+            topCandidates: topCandidates.map(c => ({ id: c.character_id, votes: c.vote_count })),
+            selectedWinner: selectedWinner.character_id,
+            totalVotes
+          });
+        }
+      } else {
+        // Clear winner
+        selectedWinner = topCandidates[0];
+        
+        if (config.logging.testEnv) {
+          logger.info('Clear voting winner', {
+            roundId,
+            winner: selectedWinner.character_id,
+            votes: selectedWinner.vote_count,
+            totalVotes
+          });
+        }
+      }
+
+      return {
+        roundId,
+        winner: {
+          characterId: selectedWinner.character_id,
+          votes: selectedWinner.vote_count
+        },
+        totalVotes,
+        method,
+        tieBreaker,
+        topCandidates: tieBreaker ? topCandidates.map(c => c.character_id) : null
+      };
+
+    } catch (error) {
+      logger.error('Failed to finalize voting', { error: error.message, roundId });
+      
+      // Fallback - random selection
+      const characterIds = Object.keys(CHARACTERS);
+      const randomCharacter = characterIds[Math.floor(Math.random() * characterIds.length)];
+      
+      return {
+        roundId,
+        winner: {
+          characterId: randomCharacter,
+          votes: 0
+        },
+        totalVotes: 0,
+        method: 'error_fallback',
+        tieBreaker: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Lock voting for a round (called 5 seconds before round ends)
    * @param {number} roundId - Round ID
    */
   lockVoting(roundId) {
@@ -163,6 +294,51 @@ class VotingService {
     
     if (config.logging.testEnv) {
       logger.info('Voting locked for round', { roundId });
+    }
+
+    // Get final voting results with tie-breaker logic
+    const finalResult = this.finalizeVotingWithTieBreaker(roundId);
+    
+    if (finalResult.winner) {
+      // Emit final result for game service to pick up
+      this.emitToAll('voting-final-result', {
+        roundId,
+        nextJudge: finalResult.winner.characterId,
+        totalVotes: finalResult.totalVotes,
+        method: finalResult.method,
+        tieBreaker: finalResult.tieBreaker,
+        topCandidates: finalResult.topCandidates,
+        finalStats: finalResult
+      });
+
+      if (config.logging.testEnv) {
+        logger.info('Voting final result emitted', { 
+          roundId, 
+          nextJudge: finalResult.winner.characterId,
+          totalVotes: finalResult.totalVotes,
+          method: finalResult.method,
+          tieBreaker: finalResult.tieBreaker
+        });
+      }
+      
+      // Call gameService to set next judge voting result
+      if (this.gameService && this.gameService.setNextJudgeVotingResult) {
+        this.gameService.setNextJudgeVotingResult(finalResult.winner.characterId, {
+          method: finalResult.method,
+          tieBreaker: finalResult.tieBreaker,
+          totalVotes: finalResult.totalVotes
+        });
+        if (config.logging.testEnv) {
+          logger.info('Set next judge voting result in game service', {
+            characterId: finalResult.winner.characterId,
+            method: finalResult.method,
+            tieBreaker: finalResult.tieBreaker
+          });
+        }
+      }
+    } else {
+      // No winner found - this shouldn't happen with fallback logic
+      logger.warn('No voting winner found after finalization', { roundId });
     }
   }
 
@@ -307,6 +483,13 @@ class VotingService {
 
   setWSEmitter(wsEmitter) {
     this.wsEmitter = wsEmitter;
+  }
+
+  setGameService(gameService) {
+    this.gameService = gameService;
+    if (config.logging.testEnv) {
+      logger.info('Game service connected to voting service');
+    }
   }
 
   // ================================

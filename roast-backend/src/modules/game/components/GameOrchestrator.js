@@ -102,12 +102,17 @@ class GameOrchestrator {
           (lockedRoundId) => this.submissionManager.lockSubmissions(lockedRoundId)
         );
 
-        // Schedule voting lock if voting service available
+        // Schedule voting lock 5 seconds before round ends for voting finalization
         if (this.votingService) {
           this.timerManager.scheduleLockTimer(
             roundId,
-            config.game.roundTimerDuration - 10,
-            (lockedRoundId) => this.votingService.lockVoting(lockedRoundId)
+            config.game.roundTimerDuration - 5,
+            (lockedRoundId) => {
+              if (config.logging.testEnv) {
+                logger.info('Finalizing voting for round', { roundId: lockedRoundId });
+              }
+              this.votingService.lockVoting(lockedRoundId);
+            }
           );
         }
 
@@ -160,6 +165,32 @@ class GameOrchestrator {
       const result = await this.roundManager.completeRound(roundId);
       
       if (result.success) {
+        // SYNCHRONOUS VOTING FINALIZATION - przed scheduleNextRound!
+        if (this.votingService) {
+          try {
+            if (config.logging.testEnv) {
+              logger.info('Finalizing voting before scheduling next round', { roundId });
+            }
+            const finalResult = this.votingService.finalizeVotingWithTieBreaker(roundId);
+            if (finalResult.winner) {
+              this.setNextJudgeVotingResult(finalResult.winner.characterId);
+              if (config.logging.testEnv) {
+                logger.info('Voting result set for next round', { 
+                  roundId,
+                  nextJudge: finalResult.winner.characterId,
+                  method: finalResult.method,
+                  totalVotes: finalResult.totalVotes
+                });
+              }
+            }
+          } catch (votingError) {
+            logger.warn('Failed to finalize voting in completeRound', { 
+              roundId, 
+              error: votingError.message 
+            });
+          }
+        }
+
         // Emit round completed event
         this.eventEmitter.emitRoundCompleted({
           roundId,
@@ -188,12 +219,52 @@ class GameOrchestrator {
   // ================================
 
   scheduleNextRound() {
-    // Get voting result for next judge
-    const preferredCharacter = this.roundManager.getNextJudgeVotingResult();
-    
     this.timerManager.scheduleNextRound(() => {
+      // Get voting result for next judge
+      let preferredCharacter = this.roundManager.getNextJudgeVotingResult();
+      
+      // FALLBACK: Jeśli nie ma voting result, spróbuj pobrać z ostatniej rundy
+      if (!preferredCharacter && this.votingService) {
+        try {
+          if (config.logging.testEnv) {
+            logger.info('No voting result found, checking last completed round');
+          }
+          
+          // Znajdź ostatnią ukończoną rundę
+          const lastRound = database.db.prepare(`
+            SELECT id FROM rounds 
+            WHERE phase = 'completed' 
+            ORDER BY created_at DESC 
+            LIMIT 1
+          `).get();
+          
+          if (lastRound) {
+            const finalResult = this.votingService.finalizeVotingWithTieBreaker(lastRound.id);
+            if (finalResult.winner) {
+              preferredCharacter = finalResult.winner.characterId;
+              if (config.logging.testEnv) {
+                logger.info('Found voting result from last round', { 
+                  lastRoundId: lastRound.id,
+                  nextJudge: preferredCharacter,
+                  method: finalResult.method,
+                  totalVotes: finalResult.totalVotes
+                });
+              }
+            }
+          }
+        } catch (fallbackError) {
+          logger.warn('Fallback voting check failed', { error: fallbackError.message });
+        }
+      }
+      
       // Clear the voting result after using it
       this.roundManager.clearNextJudgeVotingResult();
+      
+      if (config.logging.testEnv) {
+        logger.info('Creating new round with judge', { 
+          preferredCharacter: preferredCharacter || 'random'
+        });
+      }
       
       this.createNewRound(preferredCharacter).catch(error => {
         logger.error('Auto-create next round failed', { error: error.message });

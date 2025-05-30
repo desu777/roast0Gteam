@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import wsService from '../services/websocket';
 import { GAME_PHASES } from '../constants/gameConstants';
 import { TEAM_MEMBERS } from '../data/teamMembers';
@@ -25,6 +25,9 @@ export const useWebSocketEvents = ({
   playSound,
   setTimeLeft,
   
+  // Timer sync methods
+  syncWithBackendTimer,
+  
   // Voting props
   resetVotingState,
   handleVotingUpdate,
@@ -33,6 +36,7 @@ export const useWebSocketEvents = ({
   handleVotingReset,
   handleVotingError,
   loadVotingStats,
+  handleVotingResultAccepted,
   
   // Notifications
   addNotification,
@@ -42,241 +46,11 @@ export const useWebSocketEvents = ({
   isAuthenticated
 }) => {
   
-  // Konfiguracja WebSocket event handlerów
-  useEffect(() => {
-    // Connection status
-    wsService.on('connection-status', (data) => {
-      setWsConnected(data.connected);
-    });
-
-    // Authentication
-    wsService.on('authenticated', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('🔐 WebSocket authenticated successfully:', data);
-      }
-      
-      // Dołącz do aktualnej rundy po uwierzytelnieniu
-      if (currentRound?.id) {
-        if (import.meta.env.VITE_TEST_ENV === 'true') {
-          console.log('🎮 Joining round after authentication:', currentRound.id);
-        }
-        wsService.joinRound(currentRound.id);
-      }
-    });
-
-    // Round events
-    wsService.on('round-created', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('New round created:', data);
-      }
-      // Resetuj stan dla nowej rundy
-      setUserSubmitted(false);
-      setRoastText('');
-      setWinner(null);
-      setAiReasoning('');
-      setCurrentPhase(GAME_PHASES.WAITING);
-      setNextRoundCountdown(0);
-      // Reset voting state for new round
-      resetVotingState();
-      // Załaduj nową rundę
-      loadCurrentRound();
-      playSound('start');
-    });
-
-    wsService.on('round-updated', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('Round updated:', data);
-      }
-      loadCurrentRound();
-    });
-
-    wsService.on('timer-update', (data) => {
-      if (data.roundId === currentRound?.id) {
-        // Aktualizuj timer na żywo tylko dla aktywnej rundy
-        if (data.timeLeft !== undefined && data.timeLeft >= 0) {
-          setTimeLeft(Math.max(0, data.timeLeft));
-          
-          if (import.meta.env.VITE_TEST_ENV === 'true') {
-            console.log(`⏱️ Timer update: ${data.timeLeft}s`);
-          }
-        }
-      }
-    });
-
-    wsService.on('player-joined', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('Player joined:', data);
-      }
-      // Odśwież uczestników
-      loadCurrentRound();
-    });
-
-    wsService.on('judging-started', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('Judging started:', data);
-      }
-      setCurrentPhase(GAME_PHASES.JUDGING);
-      playSound('judging');
-    });
-
-    wsService.on('round-completed', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('Round completed:', data);
-      }
-      
-      // Zapobiegaj wielokrotnym wywołaniom
-      if (currentPhase === GAME_PHASES.RESULTS || resultsLocked) {
-        if (import.meta.env.VITE_TEST_ENV === 'true') {
-          console.log('Already in results phase or results locked, skipping duplicate event');
-        }
-        return;
-      }
-      
-      // Ustaw blokadę na 20 sekund
-      setResultsLocked(true);
-      const lockTimer = setTimeout(() => {
-        if (import.meta.env.VITE_TEST_ENV === 'true') {
-          console.log('🔓 Results lock expired, allowing updates');
-        }
-        setResultsLocked(false);
-      }, 20000);
-      setResultsLockTimer(lockTimer);
-      
-      setCurrentPhase(GAME_PHASES.RESULTS);
-      
-      // Zachowaj obecnego sędziego lub znajdź go na podstawie danych
-      if (data.character) {
-        const judge = TEAM_MEMBERS.find(member => member.id === data.character);
-        if (judge) {
-          setCurrentJudge(judge);
-        }
-      }
-      
-      // Utwórz obiekt winner z danych otrzymanych z backendu
-      const winnerData = {
-        address: data.winnerAddress,
-        roastText: data.winningRoast,
-        isUser: address && data.winnerAddress?.toLowerCase() === address.toLowerCase()
-      };
-      
-      setWinner(winnerData);
-      setAiReasoning(data.aiReasoning);
-      setShowParticles(true);
-      playSound('winner');
-      
-      // Wydłużamy czas wyświetlania cząsteczek
-      setTimeout(() => setShowParticles(false), 8000); // Zwiększone z 5000 na 8000
-      
-      // Ustaw countdown do następnej rundy - zwiększamy czas
-      setNextRoundCountdown(30); // Zwiększone z 20 na 30 sekund
-    });
-
-    wsService.on('roast-submitted', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('Roast submitted successfully:', data);
-      }
-      setIsSubmitting(false);
-      setUserSubmitted(true);
-      playSound('submit');
-      
-      // Pokaż efekt ognia
-      setShowFireEffect(true);
-      setTimeout(() => setShowFireEffect(false), 2000);
-      
-      // Dodaj powiadomienie o wysłaniu roastu
-      addNotification({
-        type: 'success',
-        message: 'Your roast has been successfully submitted! Good luck! 🔥',
-      });
-    });
-
-    wsService.on('prize-distributed', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('Prize distributed:', data);
-      }
-      
-      // Jeśli to nasz adres, pokaż powiadomienie
-      if (address && data.winnerAddress?.toLowerCase() === address.toLowerCase()) {
-        addNotification({
-          type: 'success',
-          message: `Congratulations! You won ${data.prizeAmount.toFixed(3)} 0G! 🎉`,
-          txHash: data.transactionHash
-        });
-      }
-    });
-
-    // ================================
-    // VOTING WEBSOCKET EVENTS
-    // ================================
-
-    wsService.on('voting-update', handleVotingUpdate);
-
-    wsService.on('vote-cast-success', (data) => {
-      handleVoteCastSuccess(data, addNotification, loadVotingStats);
-    });
-
-    wsService.on('voting-locked', (data) => {
-      handleVotingLocked(data, addNotification);
-    });
-
-    wsService.on('voting-reset', handleVotingReset);
-
-    wsService.on('submission-locked', (data) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('🔒 Submissions locked for round:', data.roundId);
-      }
-      
-      addNotification({
-        type: 'warning',
-        message: 'Submissions are now locked! ⏰',
-        duration: 2000
-      });
-    });
-
-    wsService.on('error', (error) => {
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.error('WebSocket error:', error);
-      }
-      setIsSubmitting(false);
-      
-      // Handle voting-specific errors
-      handleVotingError(error);
-    });
-
-    // Cleanup
-    return () => {
-      wsService.off('connection-status');
-      wsService.off('authenticated');
-      wsService.off('round-created');
-      wsService.off('round-updated');
-      wsService.off('timer-update');
-      wsService.off('player-joined');
-      wsService.off('judging-started');
-      wsService.off('round-completed');
-      wsService.off('roast-submitted');
-      wsService.off('prize-distributed');
-      wsService.off('voting-update');
-      wsService.off('vote-cast-success');
-      wsService.off('voting-locked');
-      wsService.off('voting-reset');
-      wsService.off('submission-locked');
-      wsService.off('error');
-    };
-  }, [
-    currentRound?.id, 
-    currentPhase,
-    resultsLocked,
-    address,
-    loadCurrentRound,
-    resetVotingState,
-    handleVotingUpdate,
-    handleVoteCastSuccess,
-    handleVotingLocked,
-    handleVotingReset,
-    handleVotingError,
-    loadVotingStats,
-    addNotification,
-    playSound,
+  // Use refs to avoid recreating event listeners
+  const functionsRef = useRef({});
+  
+  // Update refs with current functions
+  functionsRef.current = {
     setCurrentPhase,
     setUserSubmitted,
     setRoastText,
@@ -290,10 +64,296 @@ export const useWebSocketEvents = ({
     setCurrentJudge,
     setResultsLocked,
     setResultsLockTimer,
-    setTimeLeft
-  ]);
+    loadCurrentRound,
+    playSound,
+    setTimeLeft,
+    syncWithBackendTimer,
+    resetVotingState,
+    handleVotingUpdate,
+    handleVoteCastSuccess,
+    handleVotingLocked,
+    handleVotingReset,
+    handleVotingError,
+    loadVotingStats,
+    handleVotingResultAccepted,
+    addNotification
+  };
+  
+  // Konfiguracja WebSocket event handlerów - TYLKO RAZ!
+  useEffect(() => {
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('🔧 Setting up WebSocket event listeners (should happen only once)');
+    }
+    
+    // Connection status
+    const handleConnectionStatus = (data) => {
+      functionsRef.current.setWsConnected(data.connected);
+    };
 
-  // Połącz WebSocket gdy użytkownik jest uwierzytelniony
+    // Authentication
+    const handleAuthenticated = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🔐 WebSocket authenticated successfully:', data);
+      }
+      
+      // Dołącz do aktualnej rundy po uwierzytelnieniu
+      if (currentRound?.id) {
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🎮 Joining round after authentication:', currentRound.id);
+        }
+        wsService.joinRound(currentRound.id);
+      }
+    };
+
+    // Round events
+    const handleRoundCreated = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('New round created:', data);
+      }
+      
+      // NATYCHMIAST ustaw nowego sędziego - nie czekaj na loadCurrentRound
+      if (data.judgeCharacter) {
+        const newJudge = TEAM_MEMBERS.find(member => member.id === data.judgeCharacter);
+        if (newJudge) {
+          functionsRef.current.setCurrentJudge(newJudge);
+          if (import.meta.env.VITE_TEST_ENV === 'true') {
+            console.log('🎯 New judge set immediately:', newJudge.name);
+          }
+        }
+      }
+      
+      // Resetuj stan dla nowej rundy
+      functionsRef.current.setUserSubmitted(false);
+      functionsRef.current.setRoastText('');
+      functionsRef.current.setWinner(null);
+      functionsRef.current.setAiReasoning('');
+      functionsRef.current.setCurrentPhase(GAME_PHASES.WAITING);
+      functionsRef.current.setNextRoundCountdown(0);
+      
+      // PEŁNY reset voting state dla nowej rundy
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Resetting voting for new round');
+      }
+      functionsRef.current.resetVotingState();
+      
+      // Załaduj nową rundę (powinno potwierdzić dane)
+      functionsRef.current.loadCurrentRound();
+      functionsRef.current.playSound('start');
+    };
+
+    const handleRoundUpdated = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Round updated:', data);
+      }
+      functionsRef.current.loadCurrentRound();
+    };
+
+    const handleTimerUpdate = (data) => {
+      if (data.roundId === currentRound?.id) {
+        // Use sync function for live timer management
+        if (data.timeLeft !== undefined && data.timeLeft >= 0) {
+          if (functionsRef.current.syncWithBackendTimer) {
+            functionsRef.current.syncWithBackendTimer(data.timeLeft);
+          } else {
+            // Fallback to direct update
+            functionsRef.current.setTimeLeft(Math.max(0, data.timeLeft));
+          }
+        }
+      }
+    };
+
+    const handlePlayerJoined = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Player joined:', data);
+      }
+      // Odśwież uczestników
+      functionsRef.current.loadCurrentRound();
+    };
+
+    const handleJudgingStarted = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Judging started:', data);
+      }
+      functionsRef.current.setCurrentPhase(GAME_PHASES.JUDGING);
+      functionsRef.current.playSound('judging');
+    };
+
+    const handleRoundCompleted = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Round completed:', data);
+      }
+      
+      // Zapobiegaj wielokrotnym wywołaniom
+      if (currentPhase === GAME_PHASES.RESULTS || resultsLocked) {
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('Already in results phase or results locked, skipping duplicate event');
+        }
+        return;
+      }
+      
+      // Ustaw blokadę na 20 sekund
+      functionsRef.current.setResultsLocked(true);
+      const lockTimer = setTimeout(() => {
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🔓 Results lock expired, allowing updates');
+        }
+        functionsRef.current.setResultsLocked(false);
+      }, 20000);
+      functionsRef.current.setResultsLockTimer(lockTimer);
+      
+      functionsRef.current.setCurrentPhase(GAME_PHASES.RESULTS);
+      
+      // Zachowaj obecnego sędziego lub znajdź go na podstawie danych
+      if (data.character) {
+        const judge = TEAM_MEMBERS.find(member => member.id === data.character);
+        if (judge) {
+          functionsRef.current.setCurrentJudge(judge);
+        }
+      }
+      
+      // Utwórz obiekt winner z danych otrzymanych z backendu
+      const winnerData = {
+        address: data.winnerAddress,
+        roastText: data.winningRoast,
+        isUser: address && data.winnerAddress?.toLowerCase() === address.toLowerCase()
+      };
+      
+      functionsRef.current.setWinner(winnerData);
+      functionsRef.current.setAiReasoning(data.aiReasoning);
+      functionsRef.current.setShowParticles(true);
+      functionsRef.current.playSound('winner');
+      
+      // Wydłużamy czas wyświetlania cząsteczek
+      setTimeout(() => functionsRef.current.setShowParticles(false), 8000);
+      
+      // Ustaw countdown do następnej rundy - zwiększamy czas
+      functionsRef.current.setNextRoundCountdown(30);
+    };
+
+    const handleRoastSubmitted = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Roast submitted successfully:', data);
+      }
+      functionsRef.current.setIsSubmitting(false);
+      functionsRef.current.setUserSubmitted(true);
+      functionsRef.current.playSound('submit');
+      
+      // Pokaż efekt ognia
+      functionsRef.current.setShowFireEffect(true);
+      setTimeout(() => functionsRef.current.setShowFireEffect(false), 2000);
+      
+      // Dodaj powiadomienie o wysłaniu roastu
+      functionsRef.current.addNotification({
+        type: 'success',
+        message: 'Your roast has been successfully submitted! Good luck! 🔥',
+      });
+    };
+
+    const handlePrizeDistributed = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Prize distributed:', data);
+      }
+      
+      // Jeśli to nasz adres, pokaż powiadomienie
+      if (address && data.winnerAddress?.toLowerCase() === address.toLowerCase()) {
+        functionsRef.current.addNotification({
+          type: 'success',
+          message: `Congratulations! You won ${data.prizeAmount.toFixed(3)} 0G! 🎉`,
+          txHash: data.transactionHash
+        });
+      }
+    };
+
+    // Voting events
+    const handleVotingUpdateWrapper = (data) => {
+      functionsRef.current.handleVotingUpdate(data, address);
+    };
+
+    const handleVoteCastSuccessWrapper = (data) => {
+      functionsRef.current.handleVoteCastSuccess(data, functionsRef.current.addNotification, functionsRef.current.loadVotingStats);
+    };
+
+    const handleVotingLockedWrapper = (data) => {
+      functionsRef.current.handleVotingLocked(data, functionsRef.current.addNotification);
+    };
+
+    const handleVotingResetWrapper = (data) => {
+      functionsRef.current.handleVotingReset(data);
+    };
+
+    const handleVotingResultAcceptedWrapper = (data) => {
+      if (functionsRef.current.handleVotingResultAccepted) {
+        functionsRef.current.handleVotingResultAccepted(data, functionsRef.current.addNotification);
+      }
+    };
+
+    const handleSubmissionLocked = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🔒 Submissions locked for round:', data.roundId);
+      }
+      
+      functionsRef.current.addNotification({
+        type: 'warning',
+        message: 'Submissions are now locked! ⏰',
+        duration: 2000
+      });
+    };
+
+    const handleError = (error) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('WebSocket error:', error);
+      }
+      functionsRef.current.setIsSubmitting(false);
+      
+      // Handle voting-specific errors
+      functionsRef.current.handleVotingError(error);
+    };
+
+    // Add event listeners
+    wsService.on('connection-status', handleConnectionStatus);
+    wsService.on('authenticated', handleAuthenticated);
+    wsService.on('round-created', handleRoundCreated);
+    wsService.on('round-updated', handleRoundUpdated);
+    wsService.on('timer-update', handleTimerUpdate);
+    wsService.on('player-joined', handlePlayerJoined);
+    wsService.on('judging-started', handleJudgingStarted);
+    wsService.on('round-completed', handleRoundCompleted);
+    wsService.on('roast-submitted', handleRoastSubmitted);
+    wsService.on('prize-distributed', handlePrizeDistributed);
+    wsService.on('voting-update', handleVotingUpdateWrapper);
+    wsService.on('vote-cast-success', handleVoteCastSuccessWrapper);
+    wsService.on('voting-locked', handleVotingLockedWrapper);
+    wsService.on('voting-reset', handleVotingResetWrapper);
+    wsService.on('voting-result-accepted', handleVotingResultAcceptedWrapper);
+    wsService.on('submission-locked', handleSubmissionLocked);
+    wsService.on('error', handleError);
+
+    // Cleanup - WAŻNE!
+    return () => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🧹 Cleaning up WebSocket event listeners');
+      }
+      wsService.off('connection-status', handleConnectionStatus);
+      wsService.off('authenticated', handleAuthenticated);
+      wsService.off('round-created', handleRoundCreated);
+      wsService.off('round-updated', handleRoundUpdated);
+      wsService.off('timer-update', handleTimerUpdate);
+      wsService.off('player-joined', handlePlayerJoined);
+      wsService.off('judging-started', handleJudgingStarted);
+      wsService.off('round-completed', handleRoundCompleted);
+      wsService.off('roast-submitted', handleRoastSubmitted);
+      wsService.off('prize-distributed', handlePrizeDistributed);
+      wsService.off('voting-update', handleVotingUpdateWrapper);
+      wsService.off('vote-cast-success', handleVoteCastSuccessWrapper);
+      wsService.off('voting-locked', handleVotingLockedWrapper);
+      wsService.off('voting-reset', handleVotingResetWrapper);
+      wsService.off('voting-result-accepted', handleVotingResultAcceptedWrapper);
+      wsService.off('submission-locked', handleSubmissionLocked);
+      wsService.off('error', handleError);
+    };
+  }, []); // EMPTY DEPENDENCY ARRAY - ustawiane tylko raz!
+
+  // Separate effect for connection management 
   useEffect(() => {
     if (isAuthenticated && address) {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
