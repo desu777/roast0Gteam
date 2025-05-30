@@ -83,7 +83,7 @@ const JudgingPhase = ({ currentJudge, participants }) => {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #00D2E9;
+          background: ${currentJudge.color};
           animation: thinkingDots 1.4s infinite;
         }
 

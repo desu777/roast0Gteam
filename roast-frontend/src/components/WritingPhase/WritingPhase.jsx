@@ -153,11 +153,19 @@ const WritingPhase = ({
               {visibleParticipants.map((participant, index) => (
                 <div key={index} className={`participant-card ${participant.isUser ? 'user-participant' : ''}`}>
                   <div className="participant-address">
-                    {/* Skrócona wersja adresu */}
-                    {participant.address ? 
-                      `${participant.address.slice(0, 6)}...${participant.address.slice(-4)}` : 
+                    {participant.address ? (
+                      <a 
+                        href={`https://chainscan-galileo.0g.ai/address/${participant.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="address-link"
+                        title={`View ${participant.address} on chain scanner`}
+                      >
+                        {`${participant.address.slice(0, 6)}...${participant.address.slice(-4)}`}
+                      </a>
+                    ) : (
                       'Anonymous'
-                    }
+                    )}
                     {participant.isUser && <span className="you-badge">YOU</span>}
                   </div>
                 </div>
@@ -634,6 +642,22 @@ const WritingPhase = ({
           font-size: 14px;
           color: #E6E6E6;
           font-weight: 500;
+        }
+
+        .address-link {
+          color: inherit;
+          text-decoration: none;
+          transition: all 0.2s ease;
+          cursor: pointer;
+        }
+
+        .address-link:hover {
+          color: #FFD700;
+          text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+        }
+
+        .address-link:visited {
+          color: inherit;
         }
 
         .you-badge {

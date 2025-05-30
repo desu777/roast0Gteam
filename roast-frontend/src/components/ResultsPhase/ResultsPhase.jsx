@@ -464,8 +464,10 @@ const ResultsPhase = ({
         }
 
         .winner-identity {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: flex-start;
           gap: 30px;
           padding: 25px;
           background: rgba(255, 215, 0, 0.03);
@@ -473,6 +475,7 @@ const ResultsPhase = ({
           border-radius: 16px;
           position: relative;
           overflow: hidden;
+          width: 100%;
         }
 
         .winner-identity::before {
@@ -500,6 +503,8 @@ const ResultsPhase = ({
           text-align: center;
           position: relative;
           z-index: 2;
+          flex: 1;
+          min-width: 0;
         }
 
         .address-label, .prize-label {
@@ -903,7 +908,7 @@ const ResultsPhase = ({
           }
 
           .winner-identity {
-            grid-template-columns: 1fr;
+            flex-direction: column;
             gap: 20px;
           }
 
