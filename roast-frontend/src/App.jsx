@@ -4,21 +4,15 @@ import { GAME_PHASES } from './constants/gameConstants';
 import { gameApi } from './services/api';
 
 // Components
-import ParticleEffect from './components/ParticleEffect/ParticleEffect';
+import GameEffects from './components/GameEffects/GameEffects';
 import Header from './components/Header/Header';
-import JudgeBanner from './components/JudgeBanner/JudgeBanner';
-import WritingPhase from './components/WritingPhase/WritingPhase';
-import JudgingPhase from './components/JudgingPhase/JudgingPhase';
-import ResultsPhase from './components/ResultsPhase/ResultsPhase';
+import GameLayout from './components/GameLayout/GameLayout';
 import JudgeModal from './components/JudgeModal/JudgeModal';
 import TransactionNotification from './components/TransactionNotification/TransactionNotification';
 import Footer from './components/Footer/Footer';
-import FireEffect from './components/FireEffect/FireEffect';
-import RecentWinners from './components/RecentWinners/RecentWinners';
-import VotingPanel from './components/VotingPanel/VotingPanel';
 
-// Lucide React Icons
-import { Target, Clock, Users, Flame, Loader, DollarSign, Trophy } from 'lucide-react';
+// Styles
+import { globalStyles, appStyles } from './styles/appStyles';
 
 const App = () => {
   const containerRef = useRef(null);
@@ -85,12 +79,6 @@ const App = () => {
     resetVotingState
   } = useGameState();
 
-  // Legacy voting handlers (kept for backward compatibility)
-  const handleVote = (characterId) => {
-    console.log('🗳️ Legacy vote handler - redirecting to castVote:', characterId);
-    castVote(characterId);
-  };
-
   // Legacy voting complete handler (will be replaced by WebSocket events)
   const handleVotingComplete = async (winnerCharacterId, totalVotes = 0) => {
     console.log('🗳️ Legacy voting complete handler:', { winnerCharacterId, totalVotes });
@@ -126,14 +114,12 @@ const App = () => {
   return (
     <>
       <div className="arena-container" ref={containerRef}>
-        {/* Particle Effect */}
-        <ParticleEffect 
-          show={showParticles} 
-          color={currentJudge?.color || '#FFD700'} 
+        {/* Game Effects */}
+        <GameEffects 
+          showParticles={showParticles}
+          showFireEffect={showFireEffect}
+          currentJudge={currentJudge}
         />
-
-        {/* Fire Effect */}
-        <FireEffect show={showFireEffect} />
 
         {/* Header */}
         <Header 
@@ -152,105 +138,10 @@ const App = () => {
           </div>
         )}
 
-        {/* Main Content */}
-        <main className="arena-main">
-          {/* Desktop: 3-column layout, Mobile: stacked layout */}
-          <div className="arena-layout">
-            
-            {/* Left Column - Recent Winners (Desktop) / Bottom (Mobile) */}
-            <div className="left-column">
-              <RecentWinners />
-            </div>
-
-            {/* Center Column - Main Game Content */}
-            <div className="center-column">
-              {/* Current Judge Display - Always visible */}
-              <JudgeBanner 
-                currentJudge={currentJudge}
-                setShowJudgeDetails={setShowJudgeDetails}
-              />
-
-              {/* Phase-specific content */}
-              {currentPhase === GAME_PHASES.WAITING && (
-                <div className="waiting-phase">
-                  <div className="waiting-content">
-                    <h2><Target size={24} className="inline-icon" /> Waiting for Players</h2>
-                    <p>A new round is starting soon! Get ready to roast the 0G team!</p>
-                    <div className="waiting-stats">
-                      <div className="stat">
-                        <span className="stat-label">Prize Pool:</span>
-                        <span className="stat-value">{prizePool.toFixed(3)} 0G</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-label">Entry Fee:</span>
-                        <span className="stat-value">0.025 0G</span>
-                      </div>
-                    </div>
-                    
-                    {/* Formularz do roasta - tak jak w fazie WRITING */}
-                    {isConnected && currentJudge && (
-                      <div className="roast-form">
-                        <div className="timer-section">
-                          <div className="timer"><Clock size={18} className="inline-icon" /> Waiting for 2nd player</div>
-                          <div className="participants-count"><Users size={16} className="inline-icon" /> {participants.length} roasters joined</div>
-                        </div>
-                        
-                        {!userSubmitted ? (
-                          <div className="roast-section">
-                            <h3><Flame size={20} className="inline-icon" /> Roast the 0G Team for {currentJudge.name}!</h3>
-                            
-                            <div className="roast-input">
-                              <textarea
-                                value={roastText}
-                                onChange={(e) => setRoastText(e.target.value)}
-                                placeholder={`Write your best roast for ${currentJudge.name} to judge...`}
-                                maxLength={280}
-                                disabled={userSubmitted || isSubmitting}
-                              />
-                              <div className="char-count">{roastText.length}/280</div>
-                            </div>
-                            
-                            <button
-                              className="submit-button"
-                              onClick={joinRound}
-                              disabled={!roastText.trim() || userSubmitted || isSubmitting}
-                            >
-                              {isSubmitting ? (
-                                <>
-                                  <Loader size={16} className="inline-icon spinning" /> Submitting...
-                                </>
-                              ) : (
-                                <>
-                                  <Flame size={16} className="inline-icon" /> Submit your roast!
-                                </>
-                              )}
-                            </button>
-                            
-                            <div className="entry-fee"><DollarSign size={16} className="inline-icon" /> 0.025 0G entry</div>
-                          </div>
-                        ) : (
-                          <div className="submitted-status">
-                            <div className="submitted-badge">
-                              <div className="trophy-icon"><Trophy size={32} /></div>
-                              <h3>Roast Submitted!</h3>
-                              <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {!isConnected && (
-                      <div className="connect-prompt">
-                        <p>Connect your wallet to join the round!</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {currentPhase === GAME_PHASES.WRITING && (
-                <WritingPhase 
+        {/* Main Game Layout */}
+        <GameLayout 
+          // Game State
+          currentPhase={currentPhase}
                   currentJudge={currentJudge}
                   timeLeft={timeLeft}
                   formatTime={formatTime}
@@ -261,57 +152,25 @@ const App = () => {
                   isSubmitting={isSubmitting}
                   isConnected={isConnected}
                   joinRound={joinRound}
-                />
-              )}
-
-              {currentPhase === GAME_PHASES.JUDGING && (
-                <JudgingPhase 
-                  currentJudge={currentJudge}
-                  participants={participants}
-                />
-              )}
-
-              {currentPhase === GAME_PHASES.RESULTS && (
-                <ResultsPhase 
-                  currentJudge={currentJudge}
+          prizePool={prizePool}
                   winner={winner}
-                  prizePool={prizePool}
                   aiReasoning={aiReasoning}
                   roundNumber={roundNumber}
                   nextRoundCountdown={nextRoundCountdown}
-                />
-              )}
-            </div>
-
-            {/* Right Column - Voting Panel */}
-            <div className="right-column">
-              {/* Voting Panel for Next Judge - Live System */}
-              {(currentPhase === GAME_PHASES.WAITING || currentPhase === GAME_PHASES.WRITING) && (
-                <VotingPanel 
-                  // Live voting data from useGameState
+          userAddress={userAddress}
+          
+          // Voting State
                   votingStats={votingStats}
                   userVote={userVote}
                   votingLocked={votingLocked}
                   isVoting={isVoting}
                   votingError={votingError}
                   
-                  // Game state
-                  isConnected={isConnected}
-                  timeLeft={timeLeft}
-                  currentPhase={currentPhase}
-                  userAddress={userAddress}
-                  
-                  // Actions - Live System
-                  onVote={castVote} // Direct castVote from useGameState
-                  
-                  // Legacy props (for backward compatibility during transition)
-                  onVotingComplete={handleVotingComplete}
+          // Actions
+          setShowJudgeDetails={setShowJudgeDetails}
+          castVote={castVote}
+          handleVotingComplete={handleVotingComplete}
                 />
-              )}
-            </div>
-
-          </div>
-        </main>
 
         {/* Judge Details Modal */}
         <JudgeModal 
@@ -332,398 +191,11 @@ const App = () => {
         <Footer />
       </div>
 
-      <style jsx global>{`
-        /* Global scrollbar styles */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
+      {/* Global Styles */}
+      <style jsx global>{globalStyles}</style>
 
-        ::-webkit-scrollbar-track {
-          background: rgba(30, 30, 40, 0.8);
-          border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: rgba(60, 75, 95, 0.6);
-          border-radius: 4px;
-          border: 1px solid rgba(40, 50, 65, 0.8);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(80, 95, 115, 0.8);
-        }
-
-        ::-webkit-scrollbar-corner {
-          background: rgba(30, 30, 40, 0.8);
-        }
-
-        /* Firefox scrollbar */
-        * {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(60, 75, 95, 0.6) rgba(30, 30, 40, 0.8);
-        }
-
-        body {
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-            sans-serif;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-          background: linear-gradient(135deg, #0A0A0F 0%, #1A1A2E 50%, #16213E 100%);
-          color: #E6E6E6;
-          min-height: 100vh;
-        }
-      `}</style>
-
-      <style jsx>{`
-        .arena-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #0A0A0A, #1A0A1A, #0A1A0A);
-          color: #E6E6E6;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          position: relative;
-          overflow-x: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .arena-main {
-          padding: 30px 20px;
-          max-width: 1400px;
-          margin: 0 auto;
-          flex: 1;
-          position: relative;
-        }
-
-        .arena-layout {
-          display: grid;
-          grid-template-columns: 380px 1fr 380px;
-          grid-template-areas: 
-            "left center right";
-          gap: 50px;
-          align-items: start;
-        }
-
-        .left-column {
-          grid-area: left;
-        }
-
-        .center-column {
-          grid-area: center;
-          min-width: 0; /* Prevents overflow */
-        }
-
-        .right-column {
-          grid-area: right;
-        }
-
-        .error-message {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 20px;
-          background: rgba(255, 92, 92, 0.1);
-          border: 1px solid rgba(255, 92, 92, 0.3);
-          border-radius: 8px;
-          color: #FF5C5C;
-          margin: 20px;
-          font-size: 14px;
-        }
-
-        .error-message button {
-          background: none;
-          border: none;
-          color: #FF5C5C;
-          cursor: pointer;
-          font-size: 18px;
-          padding: 0 4px;
-        }
-
-        .error-message button:hover {
-          opacity: 0.7;
-        }
-
-        .waiting-phase {
-          text-align: center;
-          padding: 40px 20px;
-        }
-
-        .waiting-content h2 {
-          color: #FFD700;
-          margin-bottom: 16px;
-          font-size: 28px;
-        }
-
-        .waiting-content p {
-          color: #B0B0B0;
-          margin-bottom: 32px;
-          font-size: 16px;
-        }
-
-        .waiting-stats {
-          display: flex;
-          justify-content: center;
-          gap: 40px;
-          margin-bottom: 32px;
-        }
-
-        .stat {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .stat-label {
-          color: #888;
-          font-size: 14px;
-        }
-
-        .stat-value {
-          color: #FFD700;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
-        .connect-prompt {
-          padding: 20px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
-          border-radius: 12px;
-          color: #FFD700;
-        }
-
-        .roast-form {
-          margin-top: 32px;
-          max-width: 600px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .timer-section {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 24px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
-          border-radius: 12px;
-          margin-bottom: 24px;
-        }
-
-        .timer {
-          color: #FFD700;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
-        .participants-count {
-          color: #00D2E9;
-          font-size: 14px;
-        }
-
-        .roast-section h3 {
-          color: #FF6B6B;
-          text-align: center;
-          margin-bottom: 16px;
-          font-size: 24px;
-        }
-
-        .judge-style {
-          background: rgba(255, 107, 107, 0.1);
-          border: 1px solid rgba(255, 107, 107, 0.3);
-          border-radius: 8px;
-          padding: 12px;
-          margin-bottom: 20px;
-          color: #E6E6E6;
-          font-size: 14px;
-          line-height: 1.4;
-        }
-
-        .roast-input {
-          position: relative;
-          margin-bottom: 20px;
-        }
-
-        .roast-input textarea {
-          width: 100%;
-          min-height: 120px;
-          padding: 16px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 2px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          color: #E6E6E6;
-          font-size: 16px;
-          font-family: inherit;
-          resize: vertical;
-          transition: border-color 0.3s ease;
-        }
-
-        .roast-input textarea:focus {
-          outline: none;
-          border-color: #FFD700;
-        }
-
-        .roast-input textarea:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        /* Custom scrollbar dla textarea */
-        .roast-input textarea::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .roast-input textarea::-webkit-scrollbar-track {
-          background: rgba(30, 30, 40, 0.8);
-          border-radius: 4px;
-        }
-
-        .roast-input textarea::-webkit-scrollbar-thumb {
-          background: rgba(60, 75, 95, 0.6);
-          border-radius: 4px;
-          border: 1px solid rgba(40, 50, 65, 0.8);
-        }
-
-        .roast-input textarea::-webkit-scrollbar-thumb:hover {
-          background: rgba(80, 95, 115, 0.8);
-        }
-
-        .char-count {
-          position: absolute;
-          bottom: 8px;
-          right: 12px;
-          color: #888;
-          font-size: 12px;
-        }
-
-        .submit-button {
-          width: 100%;
-          padding: 16px;
-          background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-          border: none;
-          border-radius: 12px;
-          color: white;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          margin-bottom: 12px;
-        }
-
-        .submit-button:hover:not(:disabled) {
-          background: linear-gradient(135deg, #FF5252, #FF7979);
-          transform: translateY(-2px);
-        }
-
-        .submit-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .submitted-status {
-          text-align: center;
-          padding: 40px 20px;
-        }
-
-        .submitted-badge {
-          background: rgba(0, 184, 151, 0.1);
-          border: 2px solid #00B897;
-          border-radius: 20px;
-          padding: 30px;
-          max-width: 400px;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .trophy-icon {
-          font-size: 32px;
-          margin-bottom: 8px;
-        }
-
-        .submitted-badge h3 {
-          color: #00B897;
-          font-size: 24px;
-          font-weight: 700;
-          margin: 0;
-        }
-
-        .submitted-badge p {
-          color: #9999A5;
-          font-size: 14px;
-          line-height: 1.5;
-          margin: 0;
-        }
-
-        .entry-fee {
-          text-align: center;
-          color: #FFD700;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .inline-icon {
-          display: inline-block;
-          vertical-align: text-top;
-          margin-right: 8px;
-        }
-
-        .spinning {
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-          .arena-main {
-            padding: 20px 15px;
-            max-width: 100%;
-          }
-
-          .arena-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-areas: 
-              "center"
-              "right" 
-              "left";
-            gap: 20px;
-          }
-
-          .left-column, .right-column {
-            width: 100%;
-          }
-
-          .error-message {
-            margin: 15px;
-          }
-
-          .waiting-stats {
-            flex-direction: column;
-            gap: 20px;
-          }
-
-          .timer-section {
-            flex-direction: column;
-            gap: 8px;
-            text-align: center;
-          }
-
-          .roast-form {
-            margin-top: 24px;
-          }
-        }
-      `}</style>
+      {/* App Styles */}
+      <style jsx>{appStyles}</style>
     </>
   );
 };

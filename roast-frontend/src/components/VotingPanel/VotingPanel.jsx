@@ -159,7 +159,7 @@ const VotingPanel = ({
                 {/* User Vote Badge */}
                 {isUserVote && (
                   <div className="voted-badge">
-                    ✓ Your vote
+                    ✓
                   </div>
                 )}
               </div>
@@ -215,6 +215,14 @@ const VotingPanel = ({
           font-weight: 600;
           color: #FFD700;
           margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .voting-header h3 svg {
+          width: 22px;
+          height: 22px;
         }
 
         .voting-status {
@@ -371,7 +379,7 @@ const VotingPanel = ({
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          margin-left: 12px;
+          margin-left: 20px;
           gap: 2px;
         }
 
@@ -391,17 +399,18 @@ const VotingPanel = ({
           background: rgba(255, 92, 170, 0.1);
           border: 1px solid rgba(255, 92, 170, 0.3);
           color: #FF5CAA;
-          padding: 6px 16px;
+          padding: 4px 12px;
           border-radius: 8px;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           cursor: pointer;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           transition: all 0.2s ease;
-          min-width: 80px;
+          min-width: 65px;
           justify-content: center;
+          margin-left: 12px;
         }
 
         .vote-button:hover:not(:disabled) {
@@ -423,6 +432,7 @@ const VotingPanel = ({
           color: #00B897;
           font-size: 14px;
           font-weight: 600;
+          margin-left: 12px;
         }
 
         .voting-prompt {
@@ -513,6 +523,11 @@ const VotingPanel = ({
           .vote-button {
             width: 100%;
             justify-content: center;
+            padding: 6px 16px;
+            font-size: 14px;
+            min-width: unset;
+            margin-left: 0;
+            gap: 6px;
           }
         }
       `}</style>
