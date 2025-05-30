@@ -94,4 +94,23 @@ export const aiApi = {
   evaluate: (data) => api.post('/ai/evaluate', data),
 };
 
+// Voting API
+export const votingApi = {
+  // Cast vote for next judge
+  castVote: (roundId, characterId, voterAddress) => 
+    api.post('/voting/vote', { roundId, characterId, voterAddress }),
+  
+  // Get voting statistics for round
+  getVotingStats: (roundId) => 
+    api.get(`/voting/stats/${roundId}`),
+  
+  // Check user's vote for round
+  getUserVote: (roundId, address) => 
+    api.get(`/voting/user-vote/${roundId}/${address}`),
+  
+  // Voting service health check
+  getHealth: () => 
+    api.get('/voting/health'),
+};
+
 export default api; 

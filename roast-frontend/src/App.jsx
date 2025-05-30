@@ -17,6 +17,9 @@ import FireEffect from './components/FireEffect/FireEffect';
 import RecentWinners from './components/RecentWinners/RecentWinners';
 import VotingPanel from './components/VotingPanel/VotingPanel';
 
+// Lucide React Icons
+import { Target, Clock, Users, Flame, Loader, DollarSign, Trophy } from 'lucide-react';
+
 const App = () => {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -154,7 +157,7 @@ const App = () => {
               {currentPhase === GAME_PHASES.WAITING && (
                 <div className="waiting-phase">
                   <div className="waiting-content">
-                    <h2>🎯 Waiting for Players</h2>
+                    <h2><Target size={24} className="inline-icon" /> Waiting for Players</h2>
                     <p>A new round is starting soon! Get ready to roast the 0G team!</p>
                     <div className="waiting-stats">
                       <div className="stat">
@@ -171,13 +174,13 @@ const App = () => {
                     {isConnected && currentJudge && (
                       <div className="roast-form">
                         <div className="timer-section">
-                          <div className="timer">⏱️ Waiting for 2nd player</div>
-                          <div className="participants-count">👥 {participants.length} roasters joined</div>
+                          <div className="timer"><Clock size={18} className="inline-icon" /> Waiting for 2nd player</div>
+                          <div className="participants-count"><Users size={16} className="inline-icon" /> {participants.length} roasters joined</div>
                         </div>
                         
                         {!userSubmitted ? (
                           <div className="roast-section">
-                            <h3>🔥 Roast the 0G Team for {currentJudge.name}!</h3>
+                            <h3><Flame size={20} className="inline-icon" /> Roast the 0G Team for {currentJudge.name}!</h3>
                             
                             <div className="roast-input">
                               <textarea
@@ -195,15 +198,23 @@ const App = () => {
                               onClick={joinRound}
                               disabled={!roastText.trim() || userSubmitted || isSubmitting}
                             >
-                              {isSubmitting ? '⏳ Submitting...' : '🔥 Submit your roast!'}
+                              {isSubmitting ? (
+                                <>
+                                  <Loader size={16} className="inline-icon spinning" /> Submitting...
+                                </>
+                              ) : (
+                                <>
+                                  <Flame size={16} className="inline-icon" /> Submit your roast!
+                                </>
+                              )}
                             </button>
                             
-                            <div className="entry-fee">💰 0.025 0G entry</div>
+                            <div className="entry-fee"><DollarSign size={16} className="inline-icon" /> 0.025 0G entry</div>
                           </div>
                         ) : (
                           <div className="submitted-status">
                             <div className="submitted-badge">
-                              <div className="trophy-icon">🏆</div>
+                              <div className="trophy-icon"><Trophy size={32} /></div>
                               <h3>Roast Submitted!</h3>
                               <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
                             </div>
@@ -626,6 +637,21 @@ const App = () => {
           color: #FFD700;
           font-size: 14px;
           font-weight: 600;
+        }
+
+        .inline-icon {
+          display: inline-block;
+          vertical-align: text-top;
+          margin-right: 8px;
+        }
+
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         /* Responsive Design */

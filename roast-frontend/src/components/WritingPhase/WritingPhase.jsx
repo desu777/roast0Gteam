@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Users, Coins, Send, Zap, Trophy } from 'lucide-react';
+import { Timer, Users, Coins, Send, Zap, Trophy, Flame, Swords } from 'lucide-react';
 
 const WritingPhase = ({ 
   currentJudge,
@@ -34,9 +34,9 @@ const WritingPhase = ({
         <div className="writing-section">
           <div className="writing-prompt">
             <h3>
-              <span className="fire-emoji">🔥</span>
+              <Flame size={20} className="fire-icon" />
               Roast the 0G Team for {currentJudge.name}!
-              <span className="fire-emoji">🔥</span>
+              <Flame size={20} className="fire-icon" />
             </h3>
           </div>
 
@@ -55,7 +55,7 @@ const WritingPhase = ({
                   onChange={(e) => setRoastText(e.target.value)}
                   placeholder={`Unleash your hottest roast for ${currentJudge.name}...
 
-🔥 "${currentJudge.name}'s code is so optimized, even their coffee breaks are asynchronous..."`}
+"${currentJudge.name}'s code is so optimized, even their coffee breaks are asynchronous..."`}
                   maxLength={280}
                   className="roast-textarea"
                 />
@@ -67,9 +67,20 @@ const WritingPhase = ({
                     </span>/280
                   </span>
                   <div className="flame-indicator">
-                    {roastText.length > 0 && roastText.length <= 50 && '🔥'}
-                    {roastText.length > 50 && roastText.length <= 150 && '🔥🔥'}
-                    {roastText.length > 150 && '🔥🔥🔥'}
+                    {roastText.length > 0 && roastText.length <= 50 && <Flame size={14} />}
+                    {roastText.length > 50 && roastText.length <= 150 && (
+                      <>
+                        <Flame size={14} />
+                        <Flame size={14} />
+                      </>
+                    )}
+                    {roastText.length > 150 && (
+                      <>
+                        <Flame size={14} />
+                        <Flame size={14} />
+                        <Flame size={14} />
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -93,9 +104,9 @@ const WritingPhase = ({
                     </>
                   ) : (
                     <>
-                      <span className="fire-icon">🔥</span>
+                      <Flame size={20} className="fire-icon" />
                       <span>Drop the Roast!</span>
-                      <span className="fire-icon">🔥</span>
+                      <Flame size={20} className="fire-icon" />
                     </>
                   )}
                 </div>
@@ -119,7 +130,7 @@ const WritingPhase = ({
 
         {participants.length > 0 && (
           <div className="live-participants">
-            <h4>🥊 Roasters in Battle ({participants.length})</h4>
+            <h4><Swords size={18} className="inline-icon" /> Roasters in Battle ({participants.length})</h4>
             <div className="participants-grid">
               {participants.slice(0, 6).map((participant, index) => (
                 <div key={index} className={`participant-card ${participant.isUser ? 'user-participant' : ''}`}>
@@ -205,6 +216,33 @@ const WritingPhase = ({
           font-weight: 700;
           margin-bottom: 16px;
           color: #E6E6E6;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+        }
+
+        .fire-icon {
+          color: #FF6B6B;
+          animation: fireWiggle 1s ease-in-out infinite;
+        }
+
+        .inline-icon {
+          display: inline-block;
+          vertical-align: text-top;
+          margin-right: 8px;
+        }
+
+        .flame-indicator {
+          display: flex;
+          gap: 4px;
+          color: #FF6B6B;
+        }
+
+        @keyframes fireWiggle {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-5deg) scale(1.1); }
+          75% { transform: rotate(5deg) scale(1.1); }
         }
 
         /* Nowe style z efektami ognia */
@@ -268,13 +306,6 @@ const WritingPhase = ({
 
         .roast-textarea:focus ~ .flame-border .flame {
           opacity: 0.8;
-        }
-
-        .flame::before {
-          content: '🔥';
-          position: absolute;
-          font-size: 20px;
-          animation: flameDance 1s ease-in-out infinite;
         }
 
         .flame-1 {
@@ -363,16 +394,6 @@ const WritingPhase = ({
           font-weight: 600;
         }
 
-        .flame-indicator {
-          font-size: 16px;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 0.8; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-
         .submit-roast-btn {
           width: 100%;
           background: linear-gradient(135deg, #1A0A0A, #2A0A0A);
@@ -443,11 +464,6 @@ const WritingPhase = ({
         .submit-roast-btn:hover:not(:disabled) .btn-content {
           background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 215, 0, 0.2));
           transform: scale(1.02);
-        }
-
-        .fire-icon {
-          font-size: 20px;
-          animation: fireWiggle 0.8s ease-in-out infinite;
         }
 
         .submit-roast-btn:hover:not(:disabled) {

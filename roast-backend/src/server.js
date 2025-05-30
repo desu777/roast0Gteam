@@ -15,6 +15,7 @@ const { WebSocketService } = require('./modules/websocket');
 const { TreasuryService, TreasuryController, createTreasuryRoutes } = require('./modules/treasury');
 const { AIService, AIController, createAIRoutes } = require('./modules/ai');
 const { PlayersService, PlayersController, createPlayersRoutes } = require('./modules/players');
+const { VotingService, VotingController, createVotingRoutes } = require('./modules/voting');
 
 // Create Express app
 const app = express();
@@ -30,6 +31,8 @@ let aiService;
 let aiController;
 let playersService;
 let playersController;
+let votingService;
+let votingController;
 
 // Performance monitoring middleware
 app.use((req, res, next) => {
@@ -127,7 +130,8 @@ app.get('/api', (req, res) => {
       game: '/api/game',
       players: '/api/players',
       treasury: '/api/treasury',
-      ai: '/api/ai'
+      ai: '/api/ai',
+      voting: '/api/voting'
     }
   });
 });
@@ -164,6 +168,12 @@ const gracefulShutdown = async (signal) => {
   if (playersService) {
     playersService.cleanup();
     logger.info('Players service cleaned up');
+  }
+
+  // Cleanup Voting service
+  if (votingService) {
+    votingService.cleanup();
+    logger.info('Voting service cleaned up');
   }
 
   // Stop accepting new connections
@@ -242,12 +252,22 @@ const startServer = async () => {
     
     logger.info('Players module initialized successfully');
 
+    // Initialize Voting Module
+    votingService = new VotingService();
+    votingController = new VotingController(votingService);
+    
+    // Mount voting routes
+    app.use('/api/voting', createVotingRoutes(votingController));
+    
+    logger.info('Voting module initialized successfully');
+
     // Initialize Game Module with WebSocket emitter, AI service, and Treasury service
-    gameService = new GameService(wsService, aiService, treasuryService);
+    gameService = new GameService(wsService, aiService, treasuryService, votingService);
     gameController = new GameController(gameService);
     
     // Connect Game Service to WebSocket Service
-    wsService.setGameService(gameService);
+    wsService.setServices(gameService, votingService);
+    votingService.setWSEmitter(wsService);
     
     // Mount game routes
     app.use('/api/game', createGameRoutes(gameController));
@@ -304,4 +324,18 @@ const startServer = async () => {
 // Start the server
 startServer();
 
-module.exports = { app, server, gameService, gameController, wsService, treasuryService, treasuryController, aiService, aiController, playersService, playersController }; 
+module.exports = { 
+  app, 
+  server, 
+  gameService, 
+  gameController, 
+  wsService, 
+  treasuryService, 
+  treasuryController, 
+  aiService, 
+  aiController, 
+  playersService, 
+  playersController,
+  votingService,
+  votingController
+}; 

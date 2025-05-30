@@ -14,6 +14,7 @@ class WebSocketService {
   constructor(httpServer) {
     this.io = null;
     this.gameService = null;
+    this.votingService = null;
     this.connectedUsers = new Map(); // socketId -> userInfo
     this.userSockets = new Map(); // userAddress -> Set of socketIds
     
@@ -99,6 +100,11 @@ class WebSocketService {
       // Handle ping/pong
       socket.on(WS_EVENTS.PING, () => {
         socket.emit(WS_EVENTS.PONG, { timestamp: Date.now() });
+      });
+
+      // Handle voting events
+      socket.on('cast-vote', (data) => {
+        this.handleCastVote(socket, data);
       });
 
       // Handle disconnection
@@ -323,6 +329,70 @@ class WebSocketService {
     }
   }
 
+  async handleCastVote(socket, data) {
+    try {
+      const userInfo = this.connectedUsers.get(socket.id);
+      if (!userInfo) {
+        socket.emit(WS_EVENTS.ERROR, {
+          message: 'Please authenticate first',
+          code: ERROR_CODES.UNAUTHORIZED
+        });
+        return;
+      }
+
+      if (config.logging.testEnv) {
+        logger.debug('Vote cast request', { 
+          socketId: socket.id,
+          address: userInfo.address,
+          data 
+        });
+      }
+
+      // Validate input
+      if (!data || typeof data.roundId !== 'number' || !data.characterId) {
+        socket.emit(WS_EVENTS.ERROR, {
+          message: 'Invalid vote data',
+          code: ERROR_CODES.VALIDATION_ERROR
+        });
+        return;
+      }
+
+      // Forward to voting service if available
+      if (this.votingService) {
+        const result = await this.votingService.castVote(
+          data.roundId,
+          userInfo.address,
+          data.characterId
+        );
+
+        if (result.success) {
+          socket.emit('vote-cast-success', {
+            success: true,
+            voteId: result.voteId,
+            votingStats: result.votingStats
+          });
+        } else {
+          socket.emit(WS_EVENTS.ERROR, {
+            message: result.error,
+            code: result.error || ERROR_CODES.INTERNAL_ERROR
+          });
+        }
+      } else {
+        socket.emit(WS_EVENTS.ERROR, {
+          message: 'Voting service not available',
+          code: ERROR_CODES.INTERNAL_ERROR
+        });
+      }
+
+    } catch (error) {
+      wsLogger.error('Vote casting error', error, socket.id);
+      socket.emit(WS_EVENTS.ERROR, {
+        message: 'Failed to cast vote',
+        code: ERROR_CODES.INTERNAL_ERROR
+      });
+    }
+  }
+
   handleLeaveRound(socket, data) {
     try {
       const userInfo = this.connectedUsers.get(socket.id);
@@ -399,6 +469,25 @@ class WebSocketService {
     this.gameService = gameService;
     if (config.logging.testEnv) {
       logger.info('Game service connected to WebSocket');
+    }
+  }
+
+  setVotingService(votingService) {
+    this.votingService = votingService;
+    if (config.logging.testEnv) {
+      logger.info('Voting service connected to WebSocket');
+    }
+  }
+
+  setServices(gameService, votingService = null) {
+    this.gameService = gameService;
+    this.votingService = votingService;
+    
+    if (config.logging.testEnv) {
+      logger.info('Services connected to WebSocket', {
+        gameService: !!gameService,
+        votingService: !!votingService
+      });
     }
   }
 

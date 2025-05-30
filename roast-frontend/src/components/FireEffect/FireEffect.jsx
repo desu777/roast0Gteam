@@ -1,4 +1,5 @@
 import React from 'react';
+import { Flame } from 'lucide-react';
 
 const FireEffect = ({ show }) => {
   if (!show) return null;
@@ -7,21 +8,18 @@ const FireEffect = ({ show }) => {
     <>
       <div className="fire-effect">
         <div className="fire-base"></div>
-        {[...Array(30)].map((_, i) => (
-          <div 
-            key={i} 
-            className="fire-particle"
-            style={{
-              '--delay': `${Math.random() * 0.5}s`,
-              '--duration': `${0.8 + Math.random() * 0.5}s`,
-              '--x': `${Math.random() * 100 - 50}px`,
-              '--y': `${Math.random() * -100 - 50}px`,
-              '--rotation': `${Math.random() * 360}deg`,
-              '--size': `${15 + Math.random() * 25}px`
-            }}
-          />
-        ))}
-        <div className="fire-text">🔥 ROASTED! 🔥</div>
+        <div className="fire-particles">
+          {[...Array(15)].map((_, i) => (
+            <div key={i} className="fire-particle" style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }} />
+          ))}
+        </div>
+        <div className="fire-text">
+          <Flame size={24} /> ROASTED! <Flame size={24} />
+        </div>
       </div>
 
       <style jsx>{`
@@ -144,42 +142,43 @@ const FireEffect = ({ show }) => {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          font-size: 32px;
-          font-weight: 800;
           color: #FFD700;
+          font-size: 32px;
+          font-weight: 900;
           text-shadow: 
-            0 0 20px rgba(255, 215, 0, 0.8),
-            0 0 40px rgba(255, 107, 107, 0.6),
-            0 0 60px rgba(255, 92, 170, 0.4);
-          animation: 
-            fireTextAppear 0.5s ease-out 0.3s both,
-            fireTextGlow 1s ease-in-out 0.8s infinite;
+            0 0 10px rgba(255, 215, 0, 0.8),
+            0 0 20px rgba(255, 107, 107, 0.6),
+            0 0 30px rgba(255, 92, 170, 0.4);
+          animation: fireTextPulse 1s ease-in-out infinite;
           white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
-        @keyframes fireTextAppear {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.5);
-          }
-          100% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-          }
+        .fire-text svg {
+          color: #FF6B6B;
+          animation: fireWiggle 0.8s ease-in-out infinite;
         }
 
-        @keyframes fireTextGlow {
+        @keyframes fireWiggle {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-10deg) scale(1.2); }
+          75% { transform: rotate(10deg) scale(1.2); }
+        }
+
+        @keyframes fireTextPulse {
           0%, 100% {
             text-shadow: 
-              0 0 20px rgba(255, 215, 0, 0.8),
-              0 0 40px rgba(255, 107, 107, 0.6),
-              0 0 60px rgba(255, 92, 170, 0.4);
+              0 0 10px rgba(255, 215, 0, 0.8),
+              0 0 20px rgba(255, 107, 107, 0.6),
+              0 0 30px rgba(255, 92, 170, 0.4);
           }
           50% {
             text-shadow: 
-              0 0 30px rgba(255, 215, 0, 1),
-              0 0 60px rgba(255, 107, 107, 0.8),
-              0 0 80px rgba(255, 92, 170, 0.6);
+              0 0 15px rgba(255, 215, 0, 1),
+              0 0 30px rgba(255, 107, 107, 0.8),
+              0 0 45px rgba(255, 92, 170, 0.6);
           }
         }
       `}</style>

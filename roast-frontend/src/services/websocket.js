@@ -110,6 +110,37 @@ class WebSocketService {
     this.socket.on('roast-submitted', (data) => {
       this.emit('roast-submitted', data);
     });
+
+    // WebSocket error
+    this.socket.on('error', (error) => {
+      if (isVoting) {
+        setVotingError(error.message);
+        setIsVoting(false);
+        setAnimatingVote(null);
+      }
+    });
+
+    // Vote casting events
+    this.socket.on('vote-cast-success', (data) => {
+      this.emit('vote-cast-success', data);
+    });
+
+    this.socket.on('vote-update', (data) => {
+      this.emit('vote-update', data);
+    });
+
+    this.socket.on('voting-locked', (data) => {
+      this.emit('voting-locked', data);
+    });
+
+    this.socket.on('voting-reset', (data) => {
+      this.emit('voting-reset', data);
+    });
+
+    // Submission locking events
+    this.socket.on('submission-locked', (data) => {
+      this.emit('submission-locked', data);
+    });
   }
 
   // Obsługa ponownego łączenia
@@ -163,6 +194,19 @@ class WebSocketService {
     }
   }
 
+  // Cast vote for next judge
+  castVote(roundId, characterId) {
+    if (this.socket && this.isConnected) {
+      console.log('📤 Casting vote via WebSocket:', { roundId, characterId });
+      this.socket.emit('cast-vote', {
+        roundId,
+        characterId
+      });
+    } else {
+      console.error('❌ Cannot cast vote - WebSocket not connected');
+    }
+  }
+
   // Dodaj listener dla eventu
   on(event, callback) {
     if (!this.listeners.has(event)) {
@@ -195,6 +239,11 @@ class WebSocketService {
   disconnect() {
     if (this.socket) {
       // Usuń wszystkie event listenery socket.io
+      this.socket.off('vote-cast-success');
+      this.socket.off('vote-update');
+      this.socket.off('voting-locked');
+      this.socket.off('voting-reset');
+      this.socket.off('submission-locked');
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;

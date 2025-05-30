@@ -195,6 +195,48 @@ const migrations = [
       INSERT INTO results SELECT * FROM results_backup;
       DROP TABLE results_backup;
     `
+  },
+  {
+    version: 5,
+    name: 'add_voting_system',
+    up: `
+      -- Judge voting system
+      CREATE TABLE IF NOT EXISTS judge_votes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        round_id INTEGER NOT NULL,
+        voter_address TEXT NOT NULL,
+        character_id TEXT NOT NULL,
+        voted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (round_id) REFERENCES rounds(id),
+        UNIQUE(round_id, voter_address)
+      );
+
+      -- Voting statistics per round
+      CREATE TABLE IF NOT EXISTS voting_stats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        round_id INTEGER NOT NULL,
+        character_id TEXT NOT NULL,
+        vote_count INTEGER DEFAULT 0,
+        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (round_id) REFERENCES rounds(id),
+        UNIQUE(round_id, character_id)
+      );
+
+      -- Indexes for performance
+      CREATE INDEX IF NOT EXISTS idx_judge_votes_round ON judge_votes(round_id);
+      CREATE INDEX IF NOT EXISTS idx_judge_votes_voter ON judge_votes(voter_address);
+      CREATE INDEX IF NOT EXISTS idx_judge_votes_character ON judge_votes(character_id);
+      CREATE INDEX IF NOT EXISTS idx_voting_stats_round ON voting_stats(round_id);
+    `,
+    down: `
+      DROP INDEX IF EXISTS idx_voting_stats_round;
+      DROP INDEX IF EXISTS idx_judge_votes_character;
+      DROP INDEX IF EXISTS idx_judge_votes_voter;
+      DROP INDEX IF EXISTS idx_judge_votes_round;
+      
+      DROP TABLE IF EXISTS voting_stats;
+      DROP TABLE IF EXISTS judge_votes;
+    `
   }
 ];
 

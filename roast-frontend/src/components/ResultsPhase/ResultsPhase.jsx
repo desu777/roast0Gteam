@@ -1,5 +1,5 @@
-import React from 'react';
-import { Trophy, RefreshCw, ExternalLink } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Trophy, Clock, DollarSign, Flame, Sparkles, RefreshCw } from 'lucide-react';
 
 const ResultsPhase = ({ 
   currentJudge,
@@ -16,7 +16,13 @@ const ResultsPhase = ({
           <div className="winner-trophy">
             <Trophy size={64} />
           </div>
-          <h2>🔥 Round #{roundNumber} Winner! 🔥</h2>
+          <div className="results-header">
+            <h2>
+              <Flame size={24} className="fire-icon" />
+              Round #{roundNumber} Winner!
+              <Flame size={24} className="fire-icon" />
+            </h2>
+          </div>
           
           {winner && (
             <div className="winner-info">
@@ -25,7 +31,11 @@ const ResultsPhase = ({
                   `${winner.address.slice(0, 6)}...${winner.address.slice(-4)}` : 
                   'Anonymous'
                 }
-                {winner.isUser && <span className="winner-you">That's YOU! 🎉</span>}
+                {winner.isUser && (
+                  <span className="winner-you">
+                    That's YOU! <Sparkles size={16} className="party-icon" />
+                  </span>
+                )}
               </div>
               <div className="prize-amount">
                 Wins {(prizePool * 0.95).toFixed(3)} 0G
@@ -166,11 +176,18 @@ const ResultsPhase = ({
           font-size: 14px;
           font-weight: 700;
           animation: celebration 1s infinite alternate;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
-        @keyframes celebration {
-          0% { transform: scale(1); }
-          100% { transform: scale(1.05); }
+        .party-icon {
+          animation: partyBounce 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes partyBounce {
+          0% { transform: scale(1) rotate(0deg); }
+          100% { transform: scale(1.1) rotate(15deg); }
         }
 
         .prize-amount {
@@ -303,6 +320,30 @@ const ResultsPhase = ({
             flex-direction: column;
             gap: 8px;
           }
+        }
+
+        .results-phase h2 {
+          color: #FFD700;
+          margin-bottom: 24px;
+          font-size: 32px;
+          font-weight: 700;
+          text-align: center;
+          text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+        }
+
+        .fire-icon {
+          color: #FF6B6B;
+          animation: fireWiggle 1s ease-in-out infinite;
+        }
+
+        @keyframes fireWiggle {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-5deg) scale(1.1); }
+          75% { transform: rotate(5deg) scale(1.1); }
         }
       `}</style>
     </>

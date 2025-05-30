@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Lock, Trophy } from 'lucide-react';
+import { Heart, Lock, Trophy, Vote, Crown, Sparkles } from 'lucide-react';
 import { TEAM_MEMBERS } from '../../data/teamMembers';
 
 const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComplete, userAddress }) => {
@@ -96,7 +96,7 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
     <>
       <div className="voting-panel">
         <div className="voting-header">
-          <h3>🗳️ Vote for Next Judge</h3>
+          <h3><Vote size={18} /> Vote for Next Judge</h3>
           <div className="voting-status">
             {votingLocked && votingWinner && (
               <div className="voting-winner">
@@ -132,7 +132,11 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
                     style={{ background: member.color }}
                   >
                     <member.icon size={20} />
-                    {isWinner && <div className="winner-crown">👑</div>}
+                    {isWinner && (
+                      <div className="winner-crown">
+                        <Crown size={16} />
+                      </div>
+                    )}
                   </div>
                   <div className="voting-details">
                     <span className="voting-name">
@@ -183,7 +187,7 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
 
         {hasVoted && !votingLocked && (
           <div className="voting-thanks">
-            Thanks for voting! 🎉
+            Thanks for voting! <Sparkles size={16} className="inline-icon party-icon" />
           </div>
         )}
 
@@ -310,6 +314,13 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           top: -8px;
           right: -8px;
           font-size: 16px;
+          color: #FFD700;
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 50%;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .voting-details {
@@ -415,6 +426,22 @@ const VotingPanel = ({ isConnected, timeLeft, currentPhase, onVote, onVotingComp
           color: #9999A5;
           font-style: italic;
           margin-top: 16px;
+        }
+
+        .inline-icon {
+          display: inline-block;
+          vertical-align: text-top;
+          margin-left: 4px;
+        }
+
+        .party-icon {
+          color: #FF5CAA;
+          animation: partyBounce 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes partyBounce {
+          0% { transform: scale(1) rotate(0deg); }
+          100% { transform: scale(1.1) rotate(10deg); }
         }
 
         /* Responsive */
