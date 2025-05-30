@@ -3,6 +3,7 @@ import { GAME_PHASES } from '../../constants/gameConstants';
 import WritingPhase from '../WritingPhase/WritingPhase';
 import JudgingPhase from '../JudgingPhase/JudgingPhase';
 import ResultsPhase from '../ResultsPhase/ResultsPhase';
+import BurningRoastEffect from '../BurningRoastEffect/BurningRoastEffect';
 
 // Lucide React Icons
 import { Target, Clock, Users, Flame, Loader, DollarSign, Trophy } from 'lucide-react';
@@ -85,13 +86,10 @@ const PhaseContent = ({
                   <div className="entry-fee"><DollarSign size={16} className="inline-icon" /> 0.025 0G entry</div>
                 </div>
               ) : (
-                <div className="submitted-status">
-                  <div className="submitted-badge">
-                    <div className="trophy-icon"><Trophy size={32} /></div>
-                    <h3>Roast Submitted!</h3>
-                    <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
-                  </div>
-                </div>
+                <BurningRoastEffect 
+                  currentJudge={currentJudge}
+                  participants={participants}
+                />
               )}
             </div>
           )}

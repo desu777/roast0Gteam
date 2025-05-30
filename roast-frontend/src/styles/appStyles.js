@@ -28,6 +28,7 @@ export const globalStyles = `
   * {
     scrollbar-width: thin;
     scrollbar-color: rgba(60, 75, 95, 0.6) rgba(30, 30, 40, 0.8);
+    box-sizing: border-box;
   }
 
   body {
@@ -40,6 +41,28 @@ export const globalStyles = `
     background: linear-gradient(135deg, #0A0A0F 0%, #1A1A2E 50%, #16213E 100%);
     color: #E6E6E6;
     min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  html {
+    overflow-x: hidden;
+  }
+
+  /* Prevent horizontal overflow for all elements */
+  * {
+    max-width: 100%;
+  }
+
+  /* Ensure images and media don't overflow */
+  img, video, iframe, object, embed {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Prevent text overflow */
+  p, h1, h2, h3, h4, h5, h6, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 `;
 
@@ -61,6 +84,7 @@ export const appStyles = `
     margin: 0 auto;
     flex: 1;
     position: relative;
+    overflow-x: hidden;
   }
 
   .arena-layout {
@@ -70,19 +94,26 @@ export const appStyles = `
       "left center right";
     gap: 50px;
     align-items: start;
+    width: 100%;
+    max-width: 100%;
   }
 
   .left-column {
     grid-area: left;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .center-column {
     grid-area: center;
     min-width: 0; /* Prevents overflow */
+    overflow: hidden;
   }
 
   .right-column {
     grid-area: right;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .error-message {
@@ -387,10 +418,12 @@ export const appStyles = `
         "right" 
         "left";
       gap: 20px;
+      width: 100%;
     }
 
     .left-column, .right-column {
       width: 100%;
+      max-width: 100%;
     }
 
     .error-message {
@@ -425,6 +458,80 @@ export const appStyles = `
 
     .roast-form {
       margin-top: 20px;
+    }
+
+    .roast-input textarea {
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .submit-button {
+      padding: 12px;
+      font-size: 14px;
+    }
+  }
+
+  /* Extra small mobile screens */
+  @media (max-width: 480px) {
+    .arena-main {
+      padding: 10px 8px;
+    }
+
+    .error-message {
+      margin: 10px 8px;
+      padding: 10px 15px;
+      font-size: 13px;
+    }
+
+    .waiting-stats {
+      gap: 15px;
+    }
+
+    .stat-value {
+      font-size: 16px;
+    }
+
+    .timer-section {
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+
+    .timer {
+      font-size: 16px;
+    }
+
+    .participants-count {
+      font-size: 13px;
+    }
+  }
+
+  /* Very small screens */
+  @media (max-width: 360px) {
+    .arena-main {
+      padding: 8px 5px;
+    }
+
+    .arena-layout {
+      gap: 10px;
+    }
+
+    .roast-input textarea {
+      padding: 10px;
+      font-size: 13px;
+      min-height: 100px;
+    }
+
+    .submit-button {
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .timer-section {
+      padding: 10px 12px;
+    }
+
+    .char-count {
+      font-size: 11px;
     }
   }
 `; 

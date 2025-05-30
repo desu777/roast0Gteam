@@ -14,7 +14,11 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           </div>
           <div className="judge-display-main">
             <div className="judge-avatar-main" style={{ background: currentJudge.color }}>
-              <currentJudge.icon size={40} />
+              <img 
+                src={`/${currentJudge.id}.jpg`} 
+                alt={currentJudge.name}
+                className="judge-nft-image"
+              />
             </div>
             <div className="judge-info-main">
               <h2>{currentJudge.name}</h2>
@@ -88,8 +92,16 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #000;
+          overflow: hidden;
           box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+          border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .judge-nft-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
         .judge-info-main h2 {

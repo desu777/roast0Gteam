@@ -1,5 +1,6 @@
 import React from 'react';
-import { Timer, Users, Coins, Send, Zap, Trophy, Flame, Swords } from 'lucide-react';
+import { Clock, Users, Coins, Send, Zap, Trophy, Flame, Swords } from 'lucide-react';
+import BurningRoastEffect from '../BurningRoastEffect/BurningRoastEffect';
 
 const WritingPhase = ({ 
   currentJudge,
@@ -23,7 +24,7 @@ const WritingPhase = ({
         <div className="round-status">
           <div className="timer-section">
             <div className="timer-display">
-              <Timer size={24} />
+              <Clock size={24} />
               <span className={`timer-text ${isSubmissionDisabled ? 'timer-warning' : ''}`}>{formatTime(timeLeft)}</span>
             </div>
             <p className="timer-label">
@@ -110,7 +111,7 @@ const WritingPhase = ({
                     </>
                   ) : isSubmissionDisabled ? (
                     <>
-                      <Timer size={20} />
+                      <Clock size={20} />
                       <span>Time's Up!</span>
                     </>
                   ) : (
@@ -129,13 +130,10 @@ const WritingPhase = ({
               </div>
             </div>
           ) : (
-            <div className="submitted-status">
-              <div className="submitted-badge">
-                <Trophy size={24} />
-                <h3>Roast Submitted!</h3>
-                <p>Your roast is in the battle. {currentJudge.name} will judge when time runs out.</p>
-              </div>
-            </div>
+            <BurningRoastEffect 
+              currentJudge={currentJudge}
+              participants={participants}
+            />
           )}
         </div>
 

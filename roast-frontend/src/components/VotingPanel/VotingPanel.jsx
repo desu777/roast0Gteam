@@ -118,7 +118,11 @@ const VotingPanel = ({
                     className="voting-avatar" 
                     style={{ background: member.color }}
                   >
-                    <member.icon size={20} />
+                    <img 
+                      src={`/${member.id}.jpg`} 
+                      alt={member.name}
+                      className="voting-nft-image"
+                    />
                     {isWinner && (
                       <div className="winner-crown">
                         <Crown size={16} />
@@ -354,9 +358,17 @@ const VotingPanel = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #000;
+          overflow: visible;
           flex-shrink: 0;
           position: relative;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .voting-nft-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
         .winner-crown {
@@ -371,6 +383,8 @@ const VotingPanel = ({
           display: flex;
           align-items: center;
           justify-content: center;
+          z-index: 10;
+          border: 1px solid #FFD700;
         }
 
         .voting-details {

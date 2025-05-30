@@ -9,7 +9,12 @@ const JudgeModal = ({ judge, onClose }) => {
       <div className="modal-overlay" onClick={onClose}>
         <div className="judge-modal" onClick={e => e.stopPropagation()}>
           <div className="modal-header">
-            <judge.icon size={48} style={{ color: judge.color }} />
+            <img 
+              src={`/${judge.id}.jpg`} 
+              alt={judge.name}
+              className="modal-nft-image"
+              style={{ borderColor: judge.color }}
+            />
             <div>
               <h2>{judge.name}</h2>
               <p>{judge.role}</p>
@@ -88,6 +93,14 @@ const JudgeModal = ({ judge, onClose }) => {
           gap: 20px;
           margin-bottom: 24px;
           position: relative;
+        }
+
+        .modal-nft-image {
+          width: 48px;
+          height: 48px;
+          object-fit: cover;
+          border-radius: 50%;
+          border: 3px solid;
         }
 
         .modal-header h2 {

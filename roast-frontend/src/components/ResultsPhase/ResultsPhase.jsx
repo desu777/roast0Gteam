@@ -69,8 +69,13 @@ const ResultsPhase = ({
 
           <div className="ai-verdict">
             <div className="verdict-header">
-              {currentJudge && currentJudge.icon && (
-                <currentJudge.icon size={24} style={{ color: currentJudge.color }} />
+              {currentJudge && currentJudge.id && (
+                <img 
+                  src={`/${currentJudge.id}.jpg`} 
+                  alt={currentJudge.name}
+                  className="verdict-judge-image"
+                  style={{ borderColor: currentJudge.color }}
+                />
               )}
               <span>{currentJudge?.name || 'Judge'}'s Verdict:</span>
             </div>
@@ -276,6 +281,14 @@ const ResultsPhase = ({
           margin-bottom: 16px;
           font-weight: 700;
           color: #E6E6E6;
+        }
+
+        .verdict-judge-image {
+          width: 24px;
+          height: 24px;
+          object-fit: cover;
+          border-radius: 50%;
+          border: 2px solid;
         }
 
         .verdict-text {

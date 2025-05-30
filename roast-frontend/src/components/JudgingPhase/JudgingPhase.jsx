@@ -7,7 +7,11 @@ const JudgingPhase = ({ currentJudge, participants }) => {
         <div className="judging-display">
           <div className="judge-thinking">
             <div className="judge-avatar-thinking" style={{ background: currentJudge.color }}>
-              <currentJudge.icon size={48} />
+              <img 
+                src={`/${currentJudge.id}.jpg`} 
+                alt={currentJudge.name}
+                className="judge-thinking-image"
+              />
             </div>
             <div className="thinking-animation">
               <div className="thinking-dots">
@@ -47,9 +51,17 @@ const JudgingPhase = ({ currentJudge, participants }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #000;
+          overflow: hidden;
           margin-bottom: 20px;
           animation: judgeThinking 2s infinite;
+          border: 4px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .judge-thinking-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
         @keyframes judgeThinking {
