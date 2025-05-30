@@ -79,33 +79,6 @@ export const useGameCore = () => {
     }
   }, []);
 
-  // Sync with backend timer update
-  const syncWithBackendTimer = useCallback((backendTimeLeft) => {
-    // Sync in both writing and judging phases
-    if (currentPhase !== GAME_PHASES.WRITING && currentPhase !== GAME_PHASES.JUDGING) {
-      return;
-    }
-    
-    // Calculate how much time passed since last sync
-    const now = Date.now();
-    const timeSinceSync = Math.floor((now - lastSyncTimeRef.current) / 1000);
-    
-    // If backend time is significantly different from expected local time, resync
-    const expectedLocalTime = timeLeft - timeSinceSync;
-    const timeDiff = Math.abs(backendTimeLeft - expectedLocalTime);
-    
-    if (timeDiff > 2) { // Resync if difference > 2 seconds
-      if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log(`⏱️ Timer resync: backend=${backendTimeLeft}s, expected=${expectedLocalTime}s, diff=${timeDiff}s`);
-      }
-      setTimeLeft(backendTimeLeft);
-      startLocalTimer(backendTimeLeft);
-    } else {
-      // Just update the sync reference time
-      lastSyncTimeRef.current = now;
-    }
-  }, [currentPhase, timeLeft, startLocalTimer]);
-
   // Stop local timer
   const stopLocalTimer = useCallback(() => {
     if (localTimerRef.current) {
@@ -116,6 +89,44 @@ export const useGameCore = () => {
       }
     }
   }, []);
+
+  // Enhanced setTimeLeft that also manages local timer
+  const setTimeLeftWithTimer = useCallback((newTimeLeft, source = 'api') => {
+    // ✨ KLUCZOWE: Prevent API overriding fresh WebSocket data
+    if (source === 'api' && (Date.now() - lastSyncTimeRef.current) < 2000) {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log(`⏱️ Ignoring API timer update (${newTimeLeft}s) - recent WebSocket data available`);
+      }
+      return; // Skip API update if we have recent WebSocket data
+    }
+    
+    setTimeLeft(newTimeLeft);
+    
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`⏱️ Timer set from ${source}: ${newTimeLeft}s`);
+    }
+    
+    // Start local timer if we're in writing or judging phase and timer > 0
+    if ((currentPhase === GAME_PHASES.WRITING || currentPhase === GAME_PHASES.JUDGING) && newTimeLeft > 0) {
+      startLocalTimer(newTimeLeft);
+    }
+  }, [currentPhase, startLocalTimer]);
+
+  // Sync with backend timer update - SIMPLIFIED VERSION
+  const syncWithBackendTimer = useCallback((backendTimeLeft, serverTimestamp) => {
+    // ✨ KLUCZOWE: Pasywny frontend - zawsze akceptuj backend values!
+    // Usuń "smart" logic która może powodować desynchronizację
+    
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`⏱️ Backend timer update: ${backendTimeLeft}s`);
+    }
+    
+    // Zawsze ustaw czas z backendu - backend jest source of truth
+    setTimeLeftWithTimer(Math.max(0, backendTimeLeft), 'websocket');
+    
+    // Update sync time for reference
+    lastSyncTimeRef.current = Date.now();
+  }, [setTimeLeftWithTimer]);
 
   // Effect to manage timer based on phase changes
   useEffect(() => {
@@ -131,16 +142,6 @@ export const useGameCore = () => {
       stopLocalTimer();
     };
   }, [currentPhase, startLocalTimer, stopLocalTimer]); // Note: timeLeft not in dependency to avoid restart on every tick
-
-  // Enhanced setTimeLeft that also manages local timer
-  const setTimeLeftWithTimer = useCallback((newTimeLeft) => {
-    setTimeLeft(newTimeLeft);
-    
-    // Start local timer if we're in writing or judging phase and timer > 0
-    if ((currentPhase === GAME_PHASES.WRITING || currentPhase === GAME_PHASES.JUDGING) && newTimeLeft > 0) {
-      startLocalTimer(newTimeLeft);
-    }
-  }, [currentPhase, startLocalTimer]);
 
   // ================================
   // ORIGINAL CODE CONTINUES...
@@ -230,12 +231,12 @@ export const useGameCore = () => {
         // Ustaw czas pozostały - priorytet dla timeLeft z API
         if ((round.phase === 'active' || round.phase === 'judging') && (round.timeLeft !== undefined || round.time_left !== undefined)) {
           const apiTimeLeft = round.timeLeft !== undefined ? round.timeLeft : round.time_left;
-          setTimeLeftWithTimer(apiTimeLeft);
+          setTimeLeftWithTimer(apiTimeLeft, 'api');
           if (import.meta.env.VITE_TEST_ENV === 'true') {
             console.log(`⏱️ Timer set from API: ${apiTimeLeft}s (phase: ${round.phase})`);
           }
         } else {
-          setTimeLeftWithTimer(120); // Default timer duration
+          setTimeLeftWithTimer(120, 'api'); // Default timer duration
         }
         
         // Znajdź sędziego na podstawie character ID

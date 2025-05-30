@@ -417,17 +417,29 @@ const Header = ({
         }
 
         .disconnect-btn {
-          background: none;
-          border: none;
-          color: #888;
-          font-size: 18px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 6px;
+          color: #FFD700;
+          font-size: 22px;
           cursor: pointer;
-          padding: 0 4px;
-          transition: color 0.3s ease;
+          padding: 8px 10px;
+          transition: all 0.3s ease;
+          filter: drop-shadow(0 0 8px #FFD700);
+          animation: goldenGlow 2s ease-in-out infinite alternate;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
         }
 
         .disconnect-btn:hover {
-          color: #FF5C5C;
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+          color: #FFD700;
+          filter: drop-shadow(0 0 12px #FFD700) drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
         }
 
         .wallet-body {
@@ -517,13 +529,27 @@ const Header = ({
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 16px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 12px 20px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 8px;
           color: #E6E6E6;
           font-size: 14px;
           font-weight: 500;
+          transition: all 0.3s ease;
+          cursor: default;
+        }
+
+        .stat-card:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .stat-card svg {
+          color: #FFD700;
+          filter: drop-shadow(0 0 8px #FFD700);
+          animation: goldenGlow 2s ease-in-out infinite alternate;
         }
 
         /* Mobile responsiveness */

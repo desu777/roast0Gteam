@@ -27,30 +27,22 @@ class TimerManager {
     this.clearTimer(roundId);
 
     let timeLeft = durationSeconds;
-    let lastEmitTime = 0;
     
     const timer = setInterval(() => {
       timeLeft--;
 
-      // Emit timer update only every 5 seconds or on important milestones
-      const now = Date.now();
-      const shouldEmit = (
-        now - lastEmitTime >= 5000 || // Every 5 seconds
-        timeLeft <= 60 || // Every second in last minute
-        timeLeft === 30 || // Warning at 30 seconds
-        timeLeft === 10 || // Final countdown
-        timeLeft <= 0     // Time's up
-      );
-
-      if (shouldEmit && this.eventEmitter) {
+      // ✨ KLUCZOWE: Wysyłaj update CO SEKUNDĘ dla perfect sync!
+      // Usuń rate limiting - live streaming wymaga real-time updates
+      if (this.eventEmitter) {
         this.eventEmitter.emitToRoom(roundId, WS_EVENTS.TIMER_UPDATE, {
           roundId,
-          timeLeft
+          timeLeft,
+          serverTimestamp: Date.now(), // Dodaj server timestamp dla sync
+          phase: timeLeft > 0 ? 'active' : 'completing'
         });
-        lastEmitTime = now;
         
         if (config.logging.testEnv) {
-          console.log(`⏱️ Timer update sent: ${timeLeft}s (shouldEmit: ${timeLeft <= 60 ? 'last_minute' : 'periodic'})`);
+          console.log(`⏱️ Live timer update: ${timeLeft}s`);
         }
       }
 
@@ -74,16 +66,17 @@ class TimerManager {
 
     }, 1000);
 
-    // Store timer info
+    // Store timer info with server start timestamp
     this.activeTimers.set(roundId, {
       timer,
       startTime: Date.now(),
+      serverStartTime: Date.now(), // For precise sync calculations
       duration: durationSeconds,
       timeLeft
     });
 
     if (config.logging.testEnv) {
-      logger.debug('Timer started', { roundId, duration: durationSeconds });
+      logger.debug('Live timer started with 1s updates', { roundId, duration: durationSeconds });
     }
 
     return timer;
@@ -103,10 +96,27 @@ class TimerManager {
 
   getTimeLeft(roundId) {
     const timerInfo = this.activeTimers.get(roundId);
-    if (!timerInfo) return null;
+    if (!timerInfo) {
+      if (config.logging.testEnv) {
+        logger.debug('No active timer found for round', { roundId });
+      }
+      return null;
+    }
 
     const elapsed = Math.floor((Date.now() - timerInfo.startTime) / 1000);
-    return Math.max(0, timerInfo.duration - elapsed);
+    const calculatedTimeLeft = Math.max(0, timerInfo.duration - elapsed);
+    
+    if (config.logging.testEnv) {
+      logger.debug('Timer calculation', { 
+        roundId, 
+        duration: timerInfo.duration,
+        elapsed, 
+        calculatedTimeLeft,
+        serverStartTime: timerInfo.serverStartTime
+      });
+    }
+    
+    return calculatedTimeLeft;
   }
 
   isTimerActive(roundId) {

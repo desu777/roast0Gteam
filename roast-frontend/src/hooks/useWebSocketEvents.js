@@ -25,6 +25,10 @@ export const useWebSocketEvents = ({
   playSound,
   setTimeLeft,
   
+  // Additional setters for data reset
+  setPrizePool,
+  setParticipants,
+  
   // Timer sync methods
   syncWithBackendTimer,
   
@@ -76,7 +80,9 @@ export const useWebSocketEvents = ({
     handleVotingError,
     loadVotingStats,
     handleVotingResultAccepted,
-    addNotification
+    addNotification,
+    setPrizePool,
+    setParticipants
   };
   
   // Konfiguracja WebSocket event handlerów - TYLKO RAZ!
@@ -111,6 +117,18 @@ export const useWebSocketEvents = ({
         console.log('New round created:', data);
       }
       
+      // ✨ KLUCZOWE: NATYCHMIAST zresetuj wszystkie dane z poprzedniej rundy
+      // żeby nowa runda zaczynała się z czystym stanem
+      functionsRef.current.setPrizePool(0);
+      functionsRef.current.setParticipants([]);
+      functionsRef.current.setWinner(null);
+      functionsRef.current.setAiReasoning('');
+      functionsRef.current.setUserSubmitted(false);
+      functionsRef.current.setRoastText('');
+      functionsRef.current.setCurrentPhase(GAME_PHASES.WAITING);
+      functionsRef.current.setNextRoundCountdown(0);
+      functionsRef.current.setTimeLeft(0);
+      
       // NATYCHMIAST ustaw nowego sędziego - nie czekaj na loadCurrentRound
       if (data.judgeCharacter) {
         const newJudge = TEAM_MEMBERS.find(member => member.id === data.judgeCharacter);
@@ -122,14 +140,6 @@ export const useWebSocketEvents = ({
         }
       }
       
-      // Resetuj stan dla nowej rundy
-      functionsRef.current.setUserSubmitted(false);
-      functionsRef.current.setRoastText('');
-      functionsRef.current.setWinner(null);
-      functionsRef.current.setAiReasoning('');
-      functionsRef.current.setCurrentPhase(GAME_PHASES.WAITING);
-      functionsRef.current.setNextRoundCountdown(0);
-      
       // PEŁNY reset voting state dla nowej rundy
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🗳️ Resetting voting for new round');
@@ -139,16 +149,44 @@ export const useWebSocketEvents = ({
       // Załaduj nową rundę (powinno potwierdzić dane)
       functionsRef.current.loadCurrentRound();
       
-      // NATYCHMIAST załaduj voting stats używając roundId z WebSocket event
+      // ✨ IMPROVED: Załaduj voting stats TYLKO po potwierdzeniu że currentRound zostało zaktualizowane
       if (data.roundId && address && isAuthenticated) {
-        // Stwórz temporary round object dla loadVotingStats
-        const tempRound = { id: data.roundId };
-        setTimeout(() => {
-          if (import.meta.env.VITE_TEST_ENV === 'true') {
-            console.log('🗳️ Loading voting stats immediately for new round:', data.roundId);
+        // Poll dla zaktualizowanego currentRound używając dostępnego currentRound prop
+        let pollCount = 0;
+        const maxPolls = 20; // Zwiększamy max polls
+        
+        const pollForUpdatedRound = () => {
+          pollCount++;
+          
+          // Sprawdź czy currentRound prop ma już nowy roundId
+          if (currentRound?.id === data.roundId) {
+            if (import.meta.env.VITE_TEST_ENV === 'true') {
+              console.log(`🗳️ Round updated! Loading voting stats for round: ${data.roundId} (poll: ${pollCount})`);
+            }
+            functionsRef.current.loadVotingStats(currentRound, isAuthenticated, address, true);
+            return;
           }
-          functionsRef.current.loadVotingStats(tempRound, isAuthenticated, address, true);
-        }, 500); // Krótki delay żeby backend zdążył przygotować dane
+          
+          if (pollCount >= maxPolls) {
+            if (import.meta.env.VITE_TEST_ENV === 'true') {
+              console.log('🗳️ Max polls reached, loading voting stats anyway for round:', data.roundId);
+            }
+            const tempRound = { id: data.roundId };
+            functionsRef.current.loadVotingStats(tempRound, isAuthenticated, address, true);
+            return;
+          }
+          
+          // Krótki delay i sprawdź ponownie
+          setTimeout(() => {
+            if (import.meta.env.VITE_TEST_ENV === 'true') {
+              console.log(`🗳️ Polling for updated round (${pollCount}/${maxPolls}) - current: ${currentRound?.id}, target: ${data.roundId}`);
+            }
+            pollForUpdatedRound();
+          }, 100); // Krótkie 100ms intervals
+        };
+        
+        // Start polling po 300ms initial delay
+        setTimeout(pollForUpdatedRound, 300);
       }
       
       functionsRef.current.playSound('start');
@@ -163,10 +201,10 @@ export const useWebSocketEvents = ({
 
     const handleTimerUpdate = (data) => {
       if (data.roundId === currentRound?.id) {
-        // Use sync function for live timer management
+        // Use sync function for live timer management with server timestamp
         if (data.timeLeft !== undefined && data.timeLeft >= 0) {
           if (functionsRef.current.syncWithBackendTimer) {
-            functionsRef.current.syncWithBackendTimer(data.timeLeft);
+            functionsRef.current.syncWithBackendTimer(data.timeLeft, data.serverTimestamp);
           } else {
             // Fallback to direct update
             functionsRef.current.setTimeLeft(Math.max(0, data.timeLeft));
@@ -241,6 +279,20 @@ export const useWebSocketEvents = ({
       
       // Ustaw countdown do następnej rundy - zwiększamy czas
       functionsRef.current.setNextRoundCountdown(30);
+      
+      // ✨ KLUCZOWE: Po 3 sekundach wyników, zresetuj dane z poprzedniej rundy
+      // żeby uniknąć pokazywania starych danych podczas tworzenia nowej rundy
+      setTimeout(() => {
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🧹 Resetting stale data after results display');
+        }
+        // Reset danych które mogą mylić użytkownika
+        functionsRef.current.setPrizePool(0);
+        functionsRef.current.setParticipants([]);
+        functionsRef.current.setUserSubmitted(false);
+        functionsRef.current.setRoastText('');
+        functionsRef.current.setTimeLeft(0);
+      }, 3000); // 3 sekundy po wynikach
     };
 
     const handleRoastSubmitted = (data) => {

@@ -151,10 +151,12 @@ class GameOrchestrator {
         logger.info('Round transitioned to judging', { roundId });
       }
 
-      // Start judging timer (will trigger AI evaluation)
-      setTimeout(() => {
-        this.completeRound(roundId);
-      }, config.game.judgingDuration * 1000);
+      // ✨ KLUCZOWE: Użyj TimerManager zamiast setTimeout dla live judging timer!
+      this.timerManager.startTimer(
+        roundId, 
+        config.game.judgingDuration, 
+        (completedRoundId) => this.completeRound(completedRoundId)
+      );
 
       return { success: true };
 
@@ -299,26 +301,17 @@ class GameOrchestrator {
     const submissions = this.submissionManager.getRoundSubmissions(round.id, true);
     const playerCount = submissions.length;
 
-    // Calculate time left based on phase
+    // ✨ KLUCZOWE: Unifikacja kalkulacji czasu - używaj TimerManager dla wszystkich faz!
     let timeLeft = null;
-    if (round.phase === GAME_PHASES.ACTIVE) {
+    if (round.phase === GAME_PHASES.ACTIVE || round.phase === GAME_PHASES.JUDGING) {
+      // Single source of truth: TimerManager dla obu faz
       timeLeft = this.timerManager.getTimeLeft(round.id);
       
-      // Timer backend sam zarządza przejściem do judging - nie przejmuj kontroli tutaj
-      // Removed: automatic transition to judging from API call
-    } else if (round.phase === GAME_PHASES.JUDGING) {
-      // Calculate judging time left based on when judging started
-      const now = new Date();
-      const judgingStartedAt = new Date(round.judging_started_at || round.updated_at);
-      const elapsed = Math.floor((now - judgingStartedAt) / 1000);
-      timeLeft = Math.max(0, config.game.judgingDuration - elapsed);
-      
       if (config.logging.testEnv) {
-        logger.debug('Judging time calculated', { 
+        logger.debug('Unified time calculated from TimerManager', { 
           roundId: round.id, 
-          elapsed, 
-          timeLeft,
-          judgingDuration: config.game.judgingDuration
+          phase: round.phase,
+          timeLeft
         });
       }
     }

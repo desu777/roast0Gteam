@@ -49,6 +49,10 @@ export const useGameState = () => {
     playSound: gameCore.playSound,
     setTimeLeft: gameCore.setTimeLeft,
     
+    // Additional setters for data reset
+    setPrizePool: gameCore.setPrizePool,
+    setParticipants: gameCore.setParticipants,
+    
     // Timer sync methods
     syncWithBackendTimer: gameCore.syncWithBackendTimer,
     
@@ -121,6 +125,15 @@ export const useGameState = () => {
       return;
     }
     
+    // ✨ KLUCZOWE: Guard przeciwko race condition podczas transition
+    // Nie ładuj voting stats jeśli results są locked (round transition)
+    if (gameCore.resultsLocked) {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Skipping voting stats load - round transition in progress:', currentRound.id);
+      }
+      return;
+    }
+    
     if (import.meta.env.VITE_TEST_ENV === 'true') {
       console.log('🗳️ Loading voting stats for round:', currentRound.id, 'auth:', gameCore.isAuthenticated);
     }
@@ -133,7 +146,8 @@ export const useGameState = () => {
   }, [
     votingSystem.loadVotingStats,
     gameCore.isAuthenticated,
-    gameCore.userAddress
+    gameCore.userAddress,
+    gameCore.resultsLocked
   ]);
 
     // ================================

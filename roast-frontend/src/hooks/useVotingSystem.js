@@ -26,6 +26,15 @@ export const useVotingSystem = () => {
       return;
     }
 
+    // ✨ KLUCZOWE: Dodatkowy guard - nie ładuj jeśli to jest stara runda
+    // Sprawdź czy votingStats już ma nowszą rundę
+    if (votingStats.roundId && votingStats.roundId > currentRound.id) {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log(`🗳️ Skipping load for old round ${currentRound.id} - already have newer round ${votingStats.roundId}`);
+      }
+      return;
+    }
+
     // Debouncing - max 1 request per 5 seconds unless forced
     const now = Date.now();
     if (!force && (now - lastLoadVotingStatsTime.current) < 5000) {
@@ -111,7 +120,7 @@ export const useVotingSystem = () => {
       }
       // Don't set error for voting stats failure - it's not critical
     }
-  }, []);
+  }, [votingStats]);
 
   // Cast vote for next judge with rate limit protection
   const castVote = useCallback(async (characterId, currentRound, isAuthenticated, address, addNotification, playSound, wsService) => {
