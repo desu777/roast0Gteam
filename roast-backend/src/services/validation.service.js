@@ -60,7 +60,7 @@ const schemas = {
 
   createRound: Joi.object({
     judgeCharacter: Joi.string()
-      .valid('michael', 'ada', 'jc', 'elisha', 'ren', 'yon')
+      .valid('michael', 'ada', 'jc', 'elisha', 'ren', 'yon', 'zer0', 'dao_agent')
       .required()
   }),
 
@@ -106,7 +106,7 @@ const schemas = {
   evaluateRoasts: Joi.object({
     roundId: Joi.number().integer().positive().required(),
     character: Joi.string()
-      .valid('michael', 'ada', 'jc', 'elisha', 'ren', 'yon')
+      .valid('michael', 'ada', 'jc', 'elisha', 'ren', 'yon', 'zer0', 'dao_agent')
       .required()
   })
 };

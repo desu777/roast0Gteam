@@ -141,7 +141,7 @@ const config = {
   },
 
   // Team Characters (from frontend)
-  characters: ['michael', 'ada', 'jc', 'elisha', 'ren', 'yon']
+  characters: ['michael', 'ada', 'jc', 'elisha', 'ren', 'yon', 'zer0', 'dao_agent']
 };
 
 // Validation function

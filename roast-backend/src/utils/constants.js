@@ -183,6 +183,30 @@ const CHARACTERS = {
       originality: 0.15,
       community: 0.20
     }
+  },
+  zer0: {
+    id: 'zer0',
+    name: 'Zer0',
+    role: 'DeFAI Oracle & Privacy Guardian',
+    evaluationWeights: {
+      creativity: 0.30,
+      technical: 0.20,
+      humor: 0.40,
+      originality: 0.15,
+      community: 0.10
+    }
+  },
+  dao_agent: {
+    id: 'dao_agent',
+    name: 'DAO Agent',
+    role: 'Governance Justice & Merit Detective',
+    evaluationWeights: {
+      creativity: 0.20,
+      technical: 0.25,
+      humor: 0.20,
+      originality: 0.25,
+      community: 0.10
+    }
   }
 };
 

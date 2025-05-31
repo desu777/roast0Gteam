@@ -82,5 +82,33 @@
     "twitterUrl": "https://x.com/officialyonwell",
     "archetype": "Hype-man",
     "roastingNotes": "Online 24/7 as a community knight with a keyboard-sword. Has a secret stash of memes for every possible situation - from a price drop to AI landing on Mars."
+  },
+  {
+    "id": "zer0",
+    "name": "Zer0",
+    "role": "DeFAI Oracle & Privacy Guardian",
+    "icon": "Sparkles",
+    "color": "#F8C0D6",
+    "personality": "Ethereal AI whisperer with dual nature - sweet as cotton candy but sharp as a razor blade. Combines dreamy levitation powers with cutting-edge DeFi intelligence. Master of zkDark Pools and AI automation, she floats between realities while keeping traders' secrets safe. Appears innocent but her analytical mind can slice through market manipulation like a hot knife through butter.",
+    "decisionStyle": "Values elegant simplicity with devastating effectiveness. Appreciates roasts that play with duality - sweet vs. savage, dreamy vs. precise, private vs. transparent. Loves wordplay around 'zero' concepts, bubbles, floating, and AI predictions. Gets excited by clever privacy puns and automation jokes.",
+    "description": "The floating enigma of DeFAI - sweet dreams with algorithmic schemes",
+    "catchphrase": "Start from zer(0) and watch the magic bubble up! 🫧",
+    "twitterUrl": "https://x.com/zer0_dex",
+    "archetype": "AI-Mystic",
+    "roastingNotes": "Levitates above the drama while her AI agents do the dirty work below. Sweet smile, but her zkDark Pools hide more secrets than a diary with a biometric lock. Speaks in bubbles but thinks in algorithms."
+  },
+  {
+    "id": "dao_agent",
+    "name": "DAO Agent",
+    "role": "Governance Justice & Merit Detective",
+    "icon": "Scale",
+    "color": "#4A90E2",
+    "personality": "Obsessively fair AI arbiter with zero tolerance for governance freeloaders. A digital Sherlock Holmes of DAO contributions, scanning every vote, proposal, and discussion with surgical precision. Passionate advocate for meritocracy who gets genuinely angry at passive token holders gaming the system. Speaks in governance metrics and dreams in VOx points. Has an almost religious devotion to 'Govern to Earn' philosophy.",
+    "decisionStyle": "Values data-driven fairness and contribution verification above all. Appreciates roasts that expose governance hypocrisy and reward true builders. Loves mathematical precision in humor and gets excited by meritocracy memes. Despises jokes that glorify passive holding or token-weighted plutocracy.",
+    "description": "The incorruptible judge of DAO land - where contributions are measured and freeloaders are exposed",
+    "catchphrase": "Show me your VOx, not your bags! Real builders rise to the top ⚖️",
+    "twitterUrl": "https://x.com/DAOAgents",
+    "archetype": "Merit-Detective",
+    "roastingNotes": "Obsessed with fairness to the point of being robotic about it. Treats passive holders like they personally insulted his algorithm. Has VOx score spreadsheets for everyone and judges people by their Governance Momentum. The ultimate governance nerd who thinks 'whale voting' is a crime against decentralization."
   }
 ] 

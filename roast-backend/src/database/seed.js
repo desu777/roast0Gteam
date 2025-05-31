@@ -195,7 +195,7 @@ class DatabaseSeeder {
       `).run(
         roundId,
         winner.id,
-        `After careful evaluation, this roast demonstrated superior ${character === 'michael' ? 'vision' : character === 'ada' ? 'creativity' : character === 'jc' ? 'growth potential' : character === 'elisha' ? 'community spirit' : 'technical elegance'} and wit.`,
+        `After careful evaluation, this roast demonstrated superior ${character === 'michael' ? 'vision' : character === 'ada' ? 'creativity' : character === 'jc' ? 'growth potential' : character === 'elisha' ? 'community spirit' : character === 'ren' ? 'technical elegance' : character === 'zer0' ? 'duality and algorithmic beauty' : character === 'dao_agent' ? 'governance insight and meritocratic justice' : 'excellence'} and wit.`,
         prizeAmount,
         '0x' + Math.random().toString(16).substr(2, 64)
       );
