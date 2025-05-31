@@ -350,7 +350,7 @@ export const appStyles = `
   .submit-button {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+    background: linear-gradient(90deg, #FFD700, #FF6B6B, #FF5CAA);
     border: none;
     border-radius: 12px;
     color: white;
@@ -363,11 +363,14 @@ export const appStyles = `
     align-items: center;
     justify-content: center;
     gap: 8px;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
   }
 
   .submit-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #FF5252, #FF7979);
+    background: linear-gradient(90deg, #FFD700, #FF6B6B, #FF5CAA);
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+    filter: brightness(1.1);
   }
 
   .submit-button:disabled {

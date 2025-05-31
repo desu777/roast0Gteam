@@ -43,7 +43,7 @@ const WritingPhase = ({
           
           <div className="participants-count">
             <Users size={20} />
-            <span>{participants.length} roasters joined</span>
+            <span className="gradient-text">{participants.length} roasters joined</span>
           </div>
         </div>
 
@@ -225,7 +225,7 @@ const WritingPhase = ({
         .timer-text {
           font-size: 32px;
           font-weight: 700;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-family: 'Courier New', monospace;
         }
 
@@ -247,9 +247,25 @@ const WritingPhase = ({
         .participants-count {
           display: flex;
           align-items: center;
-          gap: 8px;
-          color: #00D2E9;
+          gap: 12px;
+          color: #E6E6E6;
+          font-size: 18px;
+          font-weight: 500;
+        }
+
+        .gradient-text {
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
           font-weight: 600;
+        }
+
+        @keyframes gradientFlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
         }
 
         .writing-section {
@@ -457,8 +473,8 @@ const WritingPhase = ({
 
         .submit-roast-btn {
           width: 100%;
-          background: linear-gradient(135deg, #1A0A0A, #2A0A0A);
-          border: 2px solid rgba(255, 215, 0, 0.3);
+          background: var(--theme-primary, #FFD700);
+          border: 2px solid var(--theme-primary, #FFD700);
           border-radius: 16px;
           padding: 0;
           font-size: 18px;
@@ -468,19 +484,25 @@ const WritingPhase = ({
           overflow: hidden;
           transition: all 0.3s ease;
           margin-bottom: 12px;
+          box-shadow: 
+            0 4px 15px var(--theme-primary-30, rgba(255, 215, 0, 0.3)),
+            0 0 20px var(--theme-primary-20, rgba(255, 215, 0, 0.2));
         }
 
         .submit-roast-btn.ready {
-          border-color: rgba(255, 215, 0, 0.6);
           animation: readyPulse 2s ease-in-out infinite;
         }
 
         @keyframes readyPulse {
           0%, 100% { 
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            box-shadow: 
+              0 4px 15px var(--theme-primary-30, rgba(255, 215, 0, 0.3)),
+              0 0 20px var(--theme-primary-20, rgba(255, 215, 0, 0.2));
           }
           50% { 
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            box-shadow: 
+              0 6px 25px var(--theme-primary-40, rgba(255, 215, 0, 0.4)),
+              0 0 40px var(--theme-primary-30, rgba(255, 215, 0, 0.3));
           }
         }
 
@@ -490,8 +512,8 @@ const WritingPhase = ({
           background: linear-gradient(
             135deg,
             transparent,
-            rgba(255, 215, 0, 0.2),
-            rgba(255, 92, 170, 0.2),
+            rgba(255, 255, 255, 0.1),
+            rgba(255, 255, 255, 0.2),
             transparent
           );
           opacity: 0;
@@ -516,22 +538,38 @@ const WritingPhase = ({
           justify-content: center;
           gap: 12px;
           padding: 20px;
-          color: #FFD700;
-          background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 215, 0, 0.1));
           border-radius: 14px;
           transition: all 0.3s ease;
         }
 
+        .btn-content span {
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
+          font-weight: 700;
+        }
+
+        .btn-content svg {
+          color: #1A1A1A;
+        }
+
+        @keyframes gradientFlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+
         .submit-roast-btn:hover:not(:disabled) .btn-content {
-          background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 215, 0, 0.2));
           transform: scale(1.02);
         }
 
         .submit-roast-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 
-            0 10px 30px rgba(255, 215, 0, 0.3),
-            0 0 60px rgba(255, 92, 170, 0.2);
+            0 8px 30px var(--theme-primary-40, rgba(255, 215, 0, 0.4)),
+            0 0 50px var(--theme-primary-30, rgba(255, 215, 0, 0.3));
         }
 
         .submit-roast-btn:disabled {
@@ -540,12 +578,20 @@ const WritingPhase = ({
         }
 
         .submit-roast-btn.disabled {
-          border-color: rgba(255, 92, 92, 0.3);
+          background: #666;
+          border-color: #666;
+          animation: none;
+          box-shadow: none;
+        }
+
+        .submit-roast-btn.disabled .btn-content span {
+          background: #FF5C5C;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
           animation: none;
         }
 
-        .submit-roast-btn.disabled .btn-content {
-          background: linear-gradient(135deg, rgba(255, 92, 92, 0.1), rgba(100, 100, 100, 0.1));
+        .submit-roast-btn.disabled .btn-content svg {
           color: #FF5C5C;
         }
 

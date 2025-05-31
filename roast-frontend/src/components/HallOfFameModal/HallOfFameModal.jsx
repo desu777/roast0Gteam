@@ -6,11 +6,28 @@ import StatsTab from './StatsTab';
 import MyStatsTab from './MyStatsTab';
 import RewardsDistributionTab from './RewardsDistributionTab';
 
-const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
+const HallOfFameModal = ({ isOpen, onClose, userAddress, currentJudge }) => {
   const [activeTab, setActiveTab] = useState('leaderboards');
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const hallOfFame = useHallOfFame();
+
+  // Get theme colors from current judge
+  const getJudgeThemeColors = () => {
+    const primaryColor = currentJudge?.color || '#FFD700';
+    const rgb = primaryColor.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16));
+    
+    return {
+      primary: primaryColor,
+      primaryRgb: rgb.join(', '),
+      primary10: `rgba(${rgb.join(', ')}, 0.1)`,
+      primary20: `rgba(${rgb.join(', ')}, 0.2)`,
+      primary30: `rgba(${rgb.join(', ')}, 0.3)`,
+      primary50: `rgba(${rgb.join(', ')}, 0.5)`,
+    };
+  };
+
+  const themeColors = getJudgeThemeColors();
 
   // Load data when modal opens
   useEffect(() => {
@@ -156,6 +173,7 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
                   formatCurrency={hallOfFame.formatCurrency}
                   formatPercentage={hallOfFame.formatPercentage}
                   formatTimeAgo={hallOfFame.formatTimeAgo}
+                  themeColors={themeColors}
                 />
               )}
               
@@ -165,12 +183,14 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
                   isLoading={hallOfFame.isLoading}
                   formatCurrency={hallOfFame.formatCurrency}
                   formatTimeAgo={hallOfFame.formatTimeAgo}
+                  themeColors={themeColors}
                 />
               )}
               
               {activeTab === 'my-stats' && (
                 <MyStatsTab 
                   userAddress={userAddress}
+                  themeColors={themeColors}
                 />
               )}
               
@@ -183,6 +203,7 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
                   formatCurrency={hallOfFame.formatCurrency}
                   formatTimeAgo={hallOfFame.formatTimeAgo}
                   isLoading={hallOfFame.isLoading}
+                  themeColors={themeColors}
                 />
               )}
             </div>
@@ -227,7 +248,7 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
           max-width: 1200px;
           width: 95%;
           max-height: 90vh;
-          border: 2px solid #FFD700;
+          border: 2px solid ${themeColors.primary};
           position: relative;
           display: flex;
           flex-direction: column;
@@ -302,20 +323,20 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
           justify-content: center;
           width: 48px;
           height: 48px;
-          background: rgba(255, 215, 0, 0.1);
+          background: ${themeColors.primary10};
           border-radius: 50%;
-          border: 2px solid #FFD700;
+          border: 2px solid ${themeColors.primary};
         }
 
         .crown-icon {
-          color: #FFD700;
-          background: linear-gradient(90deg, #FFD700, #FF5CAA, #00D2E9, #FFD700);
+          color: ${themeColors.primary};
+          background: linear-gradient(90deg, ${themeColors.primary}, #FF5CAA, #00D2E9, ${themeColors.primary});
           background-size: 200% 100%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           animation: crownIcon 3s linear infinite;
-          filter: drop-shadow(0 0 8px #FFD700);
+          filter: drop-shadow(0 0 8px ${themeColors.primary});
         }
 
         @keyframes crownIcon {
@@ -328,7 +349,7 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
           font-weight: 700;
           color: #E6E6E6;
           margin: 0;
-          background: linear-gradient(90deg, #FFD700, #FF6B6B);
+          background: linear-gradient(90deg, ${themeColors.primary}, #FF6B6B);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -427,7 +448,7 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+          background: linear-gradient(90deg, transparent, ${themeColors.primary10}, transparent);
           transition: left 0.5s ease;
         }
 
@@ -442,10 +463,10 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
         }
 
         .tab-button.active {
-          color: #FFD700;
-          border-bottom-color: #FFD700;
-          background: rgba(255, 215, 0, 0.05);
-          box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+          color: ${themeColors.primary};
+          border-bottom-color: ${themeColors.primary};
+          background: ${themeColors.primary10};
+          box-shadow: 0 2px 8px ${themeColors.primary20};
         }
 
         .tab-button.active::before {
@@ -522,20 +543,20 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
         }
 
         .tab-content::-webkit-scrollbar-thumb {
-          background: rgba(255, 215, 0, 0.4);
+          background: ${themeColors.primary50};
           border-radius: 4px;
-          border: 1px solid rgba(255, 215, 0, 0.2);
+          border: 1px solid ${themeColors.primary20};
           transition: background 0.3s ease;
         }
 
         .tab-content::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 215, 0, 0.6);
+          background: ${themeColors.primary};
         }
 
         /* Firefox scrollbar */
         .tab-content {
           scrollbar-width: thin;
-          scrollbar-color: rgba(255, 215, 0, 0.4) rgba(30, 30, 40, 0.8);
+          scrollbar-color: ${themeColors.primary50} rgba(30, 30, 40, 0.8);
         }
 
         .modal-footer {

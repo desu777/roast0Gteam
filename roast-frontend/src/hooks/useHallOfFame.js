@@ -376,14 +376,34 @@ export const useHallOfFame = () => {
   const formatTimeAgo = useCallback((timestamp) => {
     if (!timestamp) return 'Never';
     
-    const time = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now - time) / (1000 * 60));
+    // Sprawdź czy timestamp już ma 'Z' na końcu (format ISO)
+    let dateString = timestamp;
+    if (!timestamp.endsWith('Z') && !timestamp.includes('+')) {
+      // Jeśli nie ma 'Z' i nie ma timezone offset, dodaj 'Z' dla UTC
+      dateString = timestamp + 'Z';
+    }
     
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    const winTime = new Date(dateString);
+    const now = new Date();
+    
+    // Sprawdź czy data jest prawidłowa
+    if (isNaN(winTime.getTime())) {
+      return 'Invalid date';
+    }
+    
+    const diffInMinutes = Math.floor((now - winTime) / (1000 * 60));
+    
+    if (diffInMinutes < 1) {
+      return 'just now';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    } else if (diffInMinutes < 1440) { // 24 hours
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours}h ago`;
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return `${days}d ago`;
+    }
   }, []);
 
   // ================================

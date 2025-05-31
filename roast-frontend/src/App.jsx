@@ -241,6 +241,7 @@ const App = () => {
           isOpen={showHallOfFame}
           onClose={handleHallOfFameClose}
           userAddress={userAddress}
+          currentJudge={currentJudge}
         />
         
         {/* Transaction Notifications */}

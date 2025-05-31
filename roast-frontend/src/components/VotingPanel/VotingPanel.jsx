@@ -124,7 +124,13 @@ const VotingPanel = ({
                       className="voting-nft-image"
                     />
                     {isWinner && (
-                      <div className="winner-crown">
+                      <div 
+                        className="winner-crown"
+                        style={{ 
+                          color: member.color,
+                          borderColor: member.color
+                        }}
+                      >
                         <Crown size={16} />
                       </div>
                     )}
@@ -132,7 +138,7 @@ const VotingPanel = ({
                   <div className="voting-details">
                     <span className="voting-name">
                       {member.name}
-                      {isWinner && <span className="winner-text"> - Next Judge!</span>}
+                      {isWinner && <span className="winner-text" style={{ color: member.color }}> - Next Judge!</span>}
                     </span>
                     <div className="voting-bar">
                       <div 
@@ -399,7 +405,6 @@ const VotingPanel = ({
           top: -8px;
           right: -8px;
           font-size: 16px;
-          color: #FFD700;
           background: rgba(0, 0, 0, 0.7);
           border-radius: 50%;
           padding: 2px;
@@ -407,7 +412,7 @@ const VotingPanel = ({
           align-items: center;
           justify-content: center;
           z-index: 10;
-          border: 1px solid #FFD700;
+          border: 1px solid;
         }
 
         .voting-details {
@@ -424,7 +429,6 @@ const VotingPanel = ({
         }
 
         .winner-text {
-          color: #FFD700;
           font-weight: 700;
         }
 
