@@ -89,7 +89,7 @@ const Footer = () => {
         }
 
         .footer-flame {
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           animation: flamePulse 2s ease-in-out infinite;
         }
 
@@ -104,11 +104,11 @@ const Footer = () => {
         @keyframes flamePulse {
           0%, 100% { 
             transform: scale(1);
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+            filter: drop-shadow(0 0 10px var(--theme-primary-50, rgba(255, 215, 0, 0.5)));
           }
           50% { 
             transform: scale(1.1);
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+            filter: drop-shadow(0 0 20px rgba(var(--theme-primary-rgb, 255, 215, 0), 0.8));
           }
         }
 
@@ -139,7 +139,7 @@ const Footer = () => {
         }
 
         .powered-text {
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-size: 13px;
           font-weight: 500;
           letter-spacing: 0.5px;
@@ -156,24 +156,24 @@ const Footer = () => {
           justify-content: center;
           width: 28px;
           height: 28px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+          border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
           border-radius: 8px;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           transition: all 0.3s ease;
         }
 
         .social-link:hover {
-          background: rgba(255, 215, 0, 0.2);
-          border-color: #FFD700;
+          background: var(--theme-primary-20, rgba(255, 215, 0, 0.2));
+          border-color: var(--theme-primary, #FFD700);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+          box-shadow: 0 4px 12px var(--theme-primary-30, rgba(255, 215, 0, 0.3));
         }
 
         .footer-divider {
           width: 100px;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
+          background: linear-gradient(90deg, transparent, var(--theme-primary-50, rgba(255, 215, 0, 0.5)), transparent);
           margin: 20px auto;
         }
 

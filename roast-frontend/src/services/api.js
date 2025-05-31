@@ -80,6 +80,16 @@ export const playersApi = {
   // Pobierz statystyki serwisu
   getStats: () => 
     api.get('/players/stats'),
+  
+  // Daily Rewards API
+  getDailyRewards: (date = null) => {
+    const url = date ? `/players/daily-rewards?date=${date}` : '/players/daily-rewards';
+    return api.get(url);
+  },
+  
+  // Pobierz historię daily rewards
+  getDailyRewardsHistory: (limit = 14) => 
+    api.get(`/players/daily-rewards/history?limit=${limit}`),
 };
 
 // Treasury API

@@ -196,17 +196,17 @@ export const appStyles = `
   }
 
   .stat-value {
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
     font-size: 18px;
     font-weight: 600;
   }
 
   .connect-prompt {
     padding: 20px;
-    background: rgba(255, 215, 0, 0.1);
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+    border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
     border-radius: 12px;
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
   }
 
   .roast-form {
@@ -221,14 +221,14 @@ export const appStyles = `
     justify-content: space-between;
     align-items: center;
     padding: 16px 24px;
-    background: rgba(255, 215, 0, 0.1);
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+    border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
     border-radius: 12px;
     margin-bottom: 24px;
   }
 
   .timer {
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
     font-size: 18px;
     font-weight: 600;
     display: flex;
@@ -415,7 +415,7 @@ export const appStyles = `
 
   .entry-fee {
     text-align: center;
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
     font-size: 14px;
     font-weight: 600;
     display: flex;

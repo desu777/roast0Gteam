@@ -78,7 +78,7 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-weight: 600;
           margin-bottom: 20px;
           text-transform: uppercase;
@@ -159,15 +159,19 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
         }
 
         .judge-catchphrase-main {
-          color: #FFD700;
+          color: ${currentJudge?.color || '#FFD700'};
           font-style: italic;
           font-weight: 600;
           font-size: 18px;
           text-align: center;
           padding: 16px;
-          background: rgba(255, 215, 0, 0.05);
+          background: rgba(${currentJudge?.color ? 
+            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
+            '255, 215, 0'}, 0.05);
           border-radius: 12px;
-          border: 1px solid rgba(255, 215, 0, 0.2);
+          border: 1px solid rgba(${currentJudge?.color ? 
+            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
+            '255, 215, 0'}, 0.2);
         }
 
         .judge-twitter-handle {
@@ -183,7 +187,6 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
 
         .judge-twitter-handle:hover {
           opacity: 1;
-          text-decoration: underline;
           transform: translateX(2px);
         }
 
@@ -212,4 +215,4 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
   );
 };
 
-export default JudgeBanner; 
+export default JudgeBanner;

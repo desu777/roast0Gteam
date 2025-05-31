@@ -58,7 +58,9 @@ const RecentWinners = () => {
       'jc': 'JC',
       'elisha': 'Elisha',
       'ren': 'Ren',
-      'yon': 'Yon'
+      'yon': 'Yon',
+      'zer0': 'Zer0',
+      'dao_agent': 'DAO Agent'
     };
     return names[character] || character;
   };
@@ -185,7 +187,7 @@ const styles = `
     align-items: center;
     gap: 8px;
     margin-bottom: 20px;
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
   }
 
   .winners-header h3 {
@@ -236,7 +238,7 @@ const styles = `
   }
 
   .winner-amount {
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
     font-weight: 700;
     font-size: 16px;
   }
@@ -251,14 +253,14 @@ const styles = `
 
   .ai-reasoning {
     background: rgba(20, 25, 35, 0.6);
-    border-left: 3px solid rgba(255, 215, 0, 0.5);
+    border-left: 3px solid var(--theme-primary, rgba(255, 215, 0, 0.5));
     padding: 12px;
     margin-bottom: 12px;
     border-radius: 6px;
   }
 
   .ai-reasoning-label {
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -313,10 +315,10 @@ const styles = `
   .show-more-btn, .show-less-btn {
     width: 100%;
     padding: 12px;
-    background: rgba(255, 215, 0, 0.1);
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+    border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
     border-radius: 8px;
-    color: #FFD700;
+    color: var(--theme-primary, #FFD700);
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -325,7 +327,7 @@ const styles = `
   }
 
   .show-more-btn:hover, .show-less-btn:hover {
-    background: rgba(255, 215, 0, 0.2);
+    background: var(--theme-primary-20, rgba(255, 215, 0, 0.2));
     transform: translateY(-1px);
   }
 

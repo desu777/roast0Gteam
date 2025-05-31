@@ -47,6 +47,15 @@ export const useHallOfFame = () => {
     error: null
   });
 
+  // Daily Rewards data
+  const [dailyRewards, setDailyRewards] = useState({
+    currentDate: null,
+    data: null,
+    history: [],
+    isLoading: false,
+    error: null
+  });
+
   // ================================
   // ERROR HANDLING
   // ================================
@@ -378,6 +387,84 @@ export const useHallOfFame = () => {
   }, []);
 
   // ================================
+  // DAILY REWARDS FUNCTIONS
+  // ================================
+  const loadDailyRewards = useCallback(async (date = null) => {
+    try {
+      setDailyRewards(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🏆 Loading daily rewards...', { date });
+      }
+
+      const response = await playersApi.getDailyRewards(date);
+      
+      if (response.data.success) {
+        setDailyRewards(prev => ({
+          ...prev,
+          currentDate: response.data.meta.requestedDate || date || 'yesterday',
+          data: response.data.dailyRewards,
+          isLoading: false
+        }));
+        
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🏆 Daily rewards loaded successfully:', response.data.dailyRewards);
+        }
+      } else {
+        throw new Error(response.data.message || 'Failed to load daily rewards');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load daily rewards';
+      setDailyRewards(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage
+      }));
+      
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('🏆 Daily rewards error:', error);
+      }
+    }
+  }, []);
+
+  const loadDailyRewardsHistory = useCallback(async (limit = 14) => {
+    try {
+      setDailyRewards(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('📊 Loading daily rewards history...', { limit });
+      }
+
+      const response = await playersApi.getDailyRewardsHistory(limit);
+      
+      if (response.data.success) {
+        setDailyRewards(prev => ({
+          ...prev,
+          history: response.data.rewardsHistory,
+          isLoading: false
+        }));
+        
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('📊 Daily rewards history loaded successfully:', response.data.rewardsHistory);
+        }
+      } else {
+        throw new Error(response.data.message || 'Failed to load daily rewards history');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load daily rewards history';
+      setDailyRewards(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage
+      }));
+      
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('📊 Daily rewards history error:', error);
+      }
+    }
+  }, []);
+
+  // ================================
   // RETURN INTERFACE
   // ================================
   return {
@@ -411,6 +498,11 @@ export const useHallOfFame = () => {
     // Player Profile
     playerProfile,
     loadPlayerProfile,
-    recalculatePlayerRankings
+    recalculatePlayerRankings,
+
+    // Daily Rewards
+    dailyRewards,
+    loadDailyRewards,
+    loadDailyRewardsHistory
   };
 }; 

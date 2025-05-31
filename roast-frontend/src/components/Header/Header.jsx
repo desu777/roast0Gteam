@@ -224,8 +224,8 @@ const Header = ({
         }
 
         .control-toggle .active {
-          color: #FFD700;
-          filter: drop-shadow(0 0 8px #FFD700);
+          color: var(--theme-primary, #FFD700);
+          filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700));
           animation: goldenGlow 2s ease-in-out infinite alternate;
         }
 
@@ -235,8 +235,8 @@ const Header = ({
         }
 
         @keyframes goldenGlow {
-          0% { filter: drop-shadow(0 0 8px #FFD700); }
-          100% { filter: drop-shadow(0 0 12px #FFD700) drop-shadow(0 0 20px rgba(255, 215, 0, 0.3)); }
+          0% { filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700)); }
+          100% { filter: drop-shadow(0 0 12px var(--theme-primary, #FFD700)) drop-shadow(0 0 20px var(--theme-primary-30, rgba(255, 215, 0, 0.3))); }
         }
 
         .logo-section {
@@ -418,7 +418,7 @@ const Header = ({
         }
 
         .status-icon.warning {
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
         }
 
         .status-icon.spinning {
@@ -434,12 +434,12 @@ const Header = ({
           background: rgba(255, 255, 255, 0.1);
           border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 6px;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-size: 22px;
           cursor: pointer;
           padding: 8px 10px;
           transition: all 0.3s ease;
-          filter: drop-shadow(0 0 8px #FFD700);
+          filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700));
           animation: goldenGlow 2s ease-in-out infinite alternate;
           display: flex;
           align-items: center;
@@ -452,8 +452,8 @@ const Header = ({
           background: rgba(255, 255, 255, 0.15);
           border-color: rgba(255, 255, 255, 0.3);
           transform: translateY(-1px);
-          color: #FFD700;
-          filter: drop-shadow(0 0 12px #FFD700) drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
+          color: var(--theme-primary, #FFD700);
+          filter: drop-shadow(0 0 12px var(--theme-primary, #FFD700)) drop-shadow(0 0 20px var(--theme-primary-30, rgba(255, 215, 0, 0.3)));
         }
 
         .wallet-body {
@@ -506,17 +506,17 @@ const Header = ({
         .switch-network-btn {
           width: 100%;
           padding: 8px 16px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+          border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
           border-radius: 6px;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-size: 12px;
           cursor: pointer;
           transition: all 0.3s ease;
         }
 
         .switch-network-btn:hover {
-          background: rgba(255, 215, 0, 0.2);
+          background: var(--theme-primary-20, rgba(255, 215, 0, 0.2));
         }
 
         .error-banner {
@@ -561,23 +561,23 @@ const Header = ({
         }
 
         .stat-card svg {
-          color: #FFD700;
-          filter: drop-shadow(0 0 8px #FFD700);
+          color: var(--theme-primary, #FFD700);
+          filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700));
           animation: goldenGlow 2s ease-in-out infinite alternate;
         }
 
         /* Hall of Fame Button Styles */
         .hall-of-fame-btn {
           cursor: pointer;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+          border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
           position: relative;
           overflow: hidden;
         }
 
         .hall-of-fame-btn span {
           font-weight: 800;
-          background: linear-gradient(90deg, #FFD700, #FF5CAA, #00D2E9, #FFD700);
+          background: linear-gradient(90deg, var(--theme-primary, #FFD700), #FF5CAA, #00D2E9, var(--theme-primary, #FFD700));
           background-size: 200% 100%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -599,15 +599,15 @@ const Header = ({
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+          background: linear-gradient(90deg, transparent, var(--theme-primary-30, rgba(255, 215, 0, 0.3)), transparent);
           transition: left 0.5s;
         }
 
         .hall-of-fame-btn:hover {
-          background: rgba(255, 215, 0, 0.2);
-          border-color: rgba(255, 215, 0, 0.5);
+          background: var(--theme-primary-20, rgba(255, 215, 0, 0.2));
+          border-color: var(--theme-primary-50, rgba(255, 215, 0, 0.5));
           transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+          box-shadow: 0 4px 15px var(--theme-primary-30, rgba(255, 215, 0, 0.3));
         }
 
         .hall-of-fame-btn:hover span {
@@ -616,9 +616,9 @@ const Header = ({
 
         .hall-of-fame-btn:active {
           transform: translateY(0) scale(0.98);
-          box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-          background: rgba(255, 215, 0, 0.25);
-          border-color: rgba(255, 215, 0, 0.6);
+          box-shadow: 0 2px 8px var(--theme-primary-50, rgba(255, 215, 0, 0.4));
+          background: var(--theme-primary-30, rgba(255, 215, 0, 0.25));
+          border-color: rgba(var(--theme-primary-rgb, 255, 215, 0), 0.6);
           transition: all 0.1s ease;
         }
 
@@ -631,10 +631,10 @@ const Header = ({
         }
 
         .hall-of-fame-btn svg {
-          color: #FFD700;
-          filter: drop-shadow(0 0 10px #FFD700);
+          color: var(--theme-primary, #FFD700);
+          filter: drop-shadow(0 0 10px var(--theme-primary, #FFD700));
           transition: all 0.3s ease;
-          background: linear-gradient(90deg, #FFD700, #FF5CAA, #00D2E9, #FFD700);
+          background: linear-gradient(90deg, var(--theme-primary, #FFD700), #FF5CAA, #00D2E9, var(--theme-primary, #FFD700));
           background-size: 200% 100%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -649,7 +649,7 @@ const Header = ({
 
         .hall-of-fame-btn:hover svg {
           transform: scale(1.1);
-          filter: drop-shadow(0 0 15px #FFD700);
+          filter: drop-shadow(0 0 15px var(--theme-primary, #FFD700));
           animation-duration: 1.5s;
         }
 

@@ -148,9 +148,24 @@ const App = () => {
     setShowHallOfFame(false);
   };
 
+  // Dynamic theme colors based on current judge
+  const getThemeColors = () => {
+    const primaryColor = currentJudge?.color || '#FFD700';
+    const rgb = primaryColor.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16));
+    
+    return {
+      '--theme-primary': primaryColor,
+      '--theme-primary-rgb': rgb.join(', '),
+      '--theme-primary-10': `rgba(${rgb.join(', ')}, 0.1)`,
+      '--theme-primary-20': `rgba(${rgb.join(', ')}, 0.2)`,
+      '--theme-primary-30': `rgba(${rgb.join(', ')}, 0.3)`,
+      '--theme-primary-50': `rgba(${rgb.join(', ')}, 0.5)`,
+    };
+  };
+
   return (
     <>
-      <div className="arena-container" ref={containerRef}>
+      <div className="arena-container" ref={containerRef} style={getThemeColors()}>
         {/* Game Effects */}
         <GameEffects 
           showParticles={showParticles}

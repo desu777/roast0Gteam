@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, TrendingUp, Users, RefreshCw, X, User } from 'lucide-react';
+import { Crown, TrendingUp, Users, RefreshCw, X, User, Gift } from 'lucide-react';
 import { useHallOfFame } from '../../hooks/useHallOfFame';
 import LeaderboardTab from './LeaderboardTab';
 import StatsTab from './StatsTab';
 import MyStatsTab from './MyStatsTab';
+import RewardsDistributionTab from './RewardsDistributionTab';
 
 const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
   const [activeTab, setActiveTab] = useState('leaderboards');
@@ -127,6 +128,13 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
               <User size={16} />
               My Stats
             </button>
+            <button 
+              className={`tab-button ${activeTab === 'rewards-distribution' ? 'active' : ''}`}
+              onClick={() => handleTabChange('rewards-distribution')}
+            >
+              <Gift size={16} />
+              Rewards Distribution
+            </button>
           </div>
 
           {/* Error Display */}
@@ -163,6 +171,18 @@ const HallOfFameModal = ({ isOpen, onClose, userAddress }) => {
               {activeTab === 'my-stats' && (
                 <MyStatsTab 
                   userAddress={userAddress}
+                />
+              )}
+              
+              {activeTab === 'rewards-distribution' && (
+                <RewardsDistributionTab 
+                  dailyRewards={hallOfFame.dailyRewards}
+                  loadDailyRewards={hallOfFame.loadDailyRewards}
+                  loadDailyRewardsHistory={hallOfFame.loadDailyRewardsHistory}
+                  formatAddress={hallOfFame.formatAddress}
+                  formatCurrency={hallOfFame.formatCurrency}
+                  formatTimeAgo={hallOfFame.formatTimeAgo}
+                  isLoading={hallOfFame.isLoading}
                 />
               )}
             </div>

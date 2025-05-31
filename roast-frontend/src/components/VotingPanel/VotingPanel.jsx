@@ -226,7 +226,7 @@ const VotingPanel = ({
         .voting-header h3 {
           font-size: 18px;
           font-weight: 600;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           margin: 0;
           display: flex;
           align-items: center;
@@ -249,10 +249,10 @@ const VotingPanel = ({
           align-items: center;
           gap: 6px;
           padding: 6px 12px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+          border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
           border-radius: 8px;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-size: 12px;
           font-weight: 600;
         }
@@ -317,6 +317,28 @@ const VotingPanel = ({
           gap: 12px;
           flex: 1;
           min-height: 0;
+          max-height: 450px;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+
+        /* Scrollbar styling for voting list */
+        .voting-list::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .voting-list::-webkit-scrollbar-track {
+          background: rgba(30, 30, 40, 0.5);
+          border-radius: 3px;
+        }
+
+        .voting-list::-webkit-scrollbar-thumb {
+          background: var(--theme-primary-30, rgba(255, 215, 0, 0.3));
+          border-radius: 3px;
+        }
+
+        .voting-list::-webkit-scrollbar-thumb:hover {
+          background: var(--theme-primary-50, rgba(255, 215, 0, 0.5));
         }
 
         .voting-item {
@@ -483,10 +505,10 @@ const VotingPanel = ({
         .voting-prompt {
           text-align: center;
           padding: 16px;
-          background: rgba(255, 215, 0, 0.05);
-          border: 1px solid rgba(255, 215, 0, 0.2);
+          background: var(--theme-primary-10, rgba(255, 215, 0, 0.05));
+          border: 1px solid var(--theme-primary-20, rgba(255, 215, 0, 0.2));
           border-radius: 8px;
-          color: #FFD700;
+          color: var(--theme-primary, #FFD700);
           font-size: 14px;
           margin-top: auto;
           flex-shrink: 0;

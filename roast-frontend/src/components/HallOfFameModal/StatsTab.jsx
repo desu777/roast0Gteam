@@ -81,7 +81,9 @@ const StatsTab = ({
       'jc': 'JC',
       'elisha': 'Elisha',
       'ren': 'Ren',
-      'yon': 'Yon'
+      'yon': 'Yon',
+      'zer0': 'Zer0',
+      'dao_agent': 'DAO Agent'
     };
     return names[character] || character;
   };
@@ -93,7 +95,9 @@ const StatsTab = ({
       'jc': '#00D2E9', 
       'elisha': '#FF5CAA',
       'ren': '#00FF88',
-      'yon': '#9B59B6'
+      'yon': '#9B59B6',
+      'zer0': '#F8C0D6',
+      'dao_agent': '#4A90E2'
     };
     return colors[character] || '#9999A5';
   };

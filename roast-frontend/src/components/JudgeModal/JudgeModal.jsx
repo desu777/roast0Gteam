@@ -1,13 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExternalLink } from 'lucide-react';
 
 const JudgeModal = ({ judge, onClose }) => {
-  if (!judge) return null;
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Handle modal visibility animations
+  useEffect(() => {
+    if (judge) {
+      setIsVisible(true);
+      setIsClosing(false);
+    } else if (isVisible) {
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setIsClosing(false);
+      }, 300); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [judge, isVisible]);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
+  // Don't render if not visible
+  if (!judge || !isVisible) return null;
 
   return (
     <>
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="judge-modal" onClick={e => e.stopPropagation()}>
+      <div 
+        className={`modal-overlay ${isClosing ? 'closing' : ''}`} 
+        onClick={handleClose}
+      >
+        <div 
+          className={`judge-modal ${isClosing ? 'closing' : ''}`} 
+          onClick={e => e.stopPropagation()}
+        >
           <div className="modal-header">
             <img 
               src={`/${judge.id}.jpg`} 
@@ -21,7 +53,7 @@ const JudgeModal = ({ judge, onClose }) => {
             </div>
             <button 
               className="modal-close"
-              onClick={onClose}
+              onClick={handleClose}
             >
               ×
             </button>
@@ -61,6 +93,12 @@ const JudgeModal = ({ judge, onClose }) => {
           justify-content: center;
           z-index: 2000;
           backdrop-filter: blur(10px);
+          opacity: 0;
+          animation: modalFadeIn 0.3s ease-out forwards;
+        }
+
+        .modal-overlay.closing {
+          animation: modalFadeOut 0.3s ease-in forwards;
         }
 
         .judge-modal {
@@ -73,6 +111,13 @@ const JudgeModal = ({ judge, onClose }) => {
           position: relative;
           max-height: 80vh;
           overflow-y: auto;
+          transform: scale(0.9) translateY(20px);
+          opacity: 0;
+          animation: modalSlideIn 0.3s ease-out forwards;
+        }
+
+        .judge-modal.closing {
+          animation: modalSlideOut 0.3s ease-in forwards;
         }
 
         .modal-header {
@@ -153,7 +198,7 @@ const JudgeModal = ({ judge, onClose }) => {
         }
 
         .catchphrase {
-          color: #FFD700 !important;
+          color: ${judge?.color || '#FFD700'} !important;
           font-style: italic;
           font-weight: 600;
         }
@@ -168,6 +213,47 @@ const JudgeModal = ({ judge, onClose }) => {
           .judge-modal {
             padding: 20px;
             margin: 10px;
+          }
+        }
+
+        /* Modal Animations */
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalFadeOut {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
+
+        @keyframes modalSlideIn {
+          from {
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalSlideOut {
+          from {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+          }
+          to {
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
           }
         }
       `}</style>
