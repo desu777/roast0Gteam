@@ -40,18 +40,22 @@ const VotingPanel = ({
   // Handle vote casting
   const handleVote = (characterId) => {
     if (!isConnected || userVote || votingLocked || isVoting || isVotingDisabled) {
-      console.log('🗳️ Vote blocked:', {
-        connected: isConnected,
-        userVote: !!userVote,
-        votingLocked,
-        isVoting,
-        isVotingDisabled,
-        timeLeft
-      });
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🗳️ Vote blocked:', {
+          connected: isConnected,
+          userVote: !!userVote,
+          votingLocked,
+          isVoting,
+          isVotingDisabled,
+          timeLeft
+        });
+      }
       return;
     }
     
-    console.log('🗳️ Casting vote for:', characterId);
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('🗳️ Casting vote for:', characterId);
+    }
     onVote(characterId);
   };
 

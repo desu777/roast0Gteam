@@ -109,12 +109,16 @@ const App = () => {
 
   // Legacy voting complete handler (will be replaced by WebSocket events)
   const handleVotingComplete = async (winnerCharacterId, totalVotes = 0) => {
-    console.log('🗳️ Legacy voting complete handler:', { winnerCharacterId, totalVotes });
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('🗳️ Legacy voting complete handler:', { winnerCharacterId, totalVotes });
+    }
     
     // Note: This will now be handled by backend WebSocket events
     // Keeping for backward compatibility during transition
     try {
-      console.log('Voting completed:', { winnerCharacterId, totalVotes });
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Voting completed:', { winnerCharacterId, totalVotes });
+      }
       
       const response = await gameApi.submitVotingResult(winnerCharacterId, totalVotes);
       
@@ -129,7 +133,9 @@ const App = () => {
         playSound?.('success');
       }
     } catch (error) {
-      console.error('Failed to submit voting result:', error);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('Failed to submit voting result:', error);
+      }
       addNotification({
         type: 'error',
         title: 'Voting Failed',

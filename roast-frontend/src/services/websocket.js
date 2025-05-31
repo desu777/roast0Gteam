@@ -30,17 +30,23 @@ class WebSocketService {
   // Uwierzytelnienie użytkownika
   authenticate(address) {
     if (this.socket && this.isConnected) {
-      console.log('🔐 Authenticating WebSocket with address:', address);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🔐 Authenticating WebSocket with address:', address);
+      }
       this.socket.emit('authenticate', { address });
     } else {
-      console.warn('⚠️ Cannot authenticate - WebSocket not connected');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.warn('⚠️ Cannot authenticate - WebSocket not connected');
+      }
     }
   }
 
   // Konfiguracja podstawowych event handlerów
   setupEventHandlers() {
     this.socket.on('connect', () => {
-      console.log('WebSocket connected');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('WebSocket connected');
+      }
       this.isConnected = true;
       this.reconnectAttempts = 0;
       this.emit('connection-status', { connected: true });
@@ -51,7 +57,9 @@ class WebSocketService {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('WebSocket disconnected:', reason);
+      }
       this.isConnected = false;
       this.emit('connection-status', { connected: false, reason });
       
@@ -65,12 +73,16 @@ class WebSocketService {
     });
 
     this.socket.on('authenticated', (data) => {
-      console.log('WebSocket authenticated:', data);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('WebSocket authenticated:', data);
+      }
       this.emit('authenticated', data);
     });
 
     this.socket.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('WebSocket error:', error);
+      }
       this.emit('error', error);
     });
 
@@ -144,7 +156,9 @@ class WebSocketService {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
       
-      console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+      }
       
       setTimeout(() => {
         if (!this.isConnected) {
@@ -171,14 +185,18 @@ class WebSocketService {
   // Wyślij roast
   submitRoast(roundId, roastText, paymentTx) {
     if (this.socket && this.isConnected) {
-      console.log('📤 Submitting roast via WebSocket:', { roundId, roastText: roastText.substring(0, 50) + '...', paymentTx });
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('📤 Submitting roast via WebSocket:', { roundId, roastText: roastText.substring(0, 50) + '...', paymentTx });
+      }
       this.socket.emit('submit-roast', {
         roundId,
         roastText,
         paymentTx
       });
     } else {
-      console.error('❌ Cannot submit roast - WebSocket not connected');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('❌ Cannot submit roast - WebSocket not connected');
+      }
     }
   }
 
@@ -192,13 +210,17 @@ class WebSocketService {
   // Cast vote for next judge
   castVote(roundId, characterId) {
     if (this.socket && this.isConnected) {
-      console.log('📤 Casting vote via WebSocket:', { roundId, characterId });
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('📤 Casting vote via WebSocket:', { roundId, characterId });
+      }
       this.socket.emit('cast-vote', {
         roundId,
         characterId
       });
     } else {
-      console.error('❌ Cannot cast vote - WebSocket not connected');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('❌ Cannot cast vote - WebSocket not connected');
+      }
     }
   }
 
@@ -224,7 +246,9 @@ class WebSocketService {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Error in WebSocket listener for ${event}:`, error);
+          if (import.meta.env.VITE_TEST_ENV === 'true') {
+            console.error(`Error in WebSocket listener for ${event}:`, error);
+          }
         }
       });
     }
@@ -267,7 +291,9 @@ class WebSocketService {
       this.reconnectAttempts = 0;
       this.userAddress = null;
       
-      console.log('🔌 WebSocket disconnected and cleaned up');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🔌 WebSocket disconnected and cleaned up');
+      }
     }
   }
 

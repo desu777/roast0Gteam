@@ -72,8 +72,10 @@ export const useWallet = () => {
       const response = await playersApi.getProfile(userAddress);
       setUserProfile(response.data);
     } catch (err) {
-      console.error('Failed to load user profile:', err);
-      // Nie ustawiamy błędu, bo profil może nie istnieć dla nowego użytkownika
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('Failed to load user profile:', err);
+      }
+      setError('Failed to load user profile');
     }
   }, []);
 
@@ -81,7 +83,9 @@ export const useWallet = () => {
   const authenticate = useCallback(async () => {
     // Sprawdź czy już próbujemy autentykacji
     if (authAttemptRef.current) {
-      console.log('Authentication already in progress, skipping...');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('Authentication already in progress, skipping...');
+      }
       return false;
     }
 
@@ -101,7 +105,9 @@ export const useWallet = () => {
         setIsAuthenticated(true);
         setAuthToken(storedAuth.token);
         await loadUserProfile(address);
-        console.log('✅ Restored authentication from storage');
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('✅ Restored authentication from storage');
+        }
         return true;
       }
 
@@ -109,11 +115,15 @@ export const useWallet = () => {
       const timestamp = Math.floor(Date.now() / 1000);
       const message = createAuthMessage(address, timestamp);
 
-      console.log('🔐 Requesting signature for authentication...');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🔐 Requesting signature for authentication...');
+      }
       // Podpisz wiadomość
       const signature = await signMessageAsync({ message });
 
-      console.log('✅ Signature obtained, verifying with backend...');
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('✅ Signature obtained, verifying with backend...');
+      }
       // Wyślij do backendu w celu weryfikacji
       const response = await playersApi.verifySignature({
         address,
@@ -136,7 +146,9 @@ export const useWallet = () => {
           await loadUserProfile(address);
         }
         
-        console.log('✅ User authenticated successfully');
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('✅ User authenticated successfully');
+        }
         return true;
       } else {
         throw new Error(response.data.message || 'Authentication failed');
@@ -145,9 +157,13 @@ export const useWallet = () => {
     } catch (err) {
       // Ignoruj błąd jeśli użytkownik anulował podpis
       if (err.message?.includes('User rejected') || err.message?.includes('User denied')) {
-        console.log('User cancelled signature request');
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('User cancelled signature request');
+        }
       } else {
-        console.error('❌ Authentication error:', err);
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.error('❌ Authentication error:', err);
+        }
         setError(err.message || 'Failed to authenticate wallet');
       }
       setIsAuthenticated(false);
@@ -168,7 +184,9 @@ export const useWallet = () => {
       const response = await treasuryApi.getBalance(address);
       return response.data;
     } catch (err) {
-      console.error('Failed to get 0G balance:', err);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('Failed to get 0G balance:', err);
+      }
       return null;
     }
   }, [address]);
@@ -210,7 +228,9 @@ export const useWallet = () => {
     if (isConnected && address && isCorrectChain && !isAuthenticated) {
       const storedAuth = getAuthFromStorage();
       if (storedAuth && storedAuth.address === address) {
-        console.log('🔄 Restoring authentication from sessionStorage...');
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🔄 Restoring authentication from sessionStorage...');
+        }
         setIsAuthenticated(true);
         setAuthToken(storedAuth.token);
         loadUserProfile(address);
