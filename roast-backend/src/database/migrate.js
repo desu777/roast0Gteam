@@ -279,6 +279,102 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_rounds_phase ON rounds(phase);
       CREATE INDEX IF NOT EXISTS idx_rounds_created_at ON rounds(created_at);
     `
+  },
+  {
+    version: 7,
+    name: 'add_daily_hall_of_fame_system',
+    up: `
+      -- Daily player statistics (reset every day at midnight UTC)
+      CREATE TABLE IF NOT EXISTS daily_stats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,                    -- Format: YYYY-MM-DD
+        player_address TEXT NOT NULL,
+        total_games INTEGER DEFAULT 0,
+        total_wins INTEGER DEFAULT 0,
+        total_earned DECIMAL(10,8) DEFAULT 0,
+        total_spent DECIMAL(10,8) DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(date, player_address)
+      );
+
+      -- Daily reward distributions
+      CREATE TABLE IF NOT EXISTS daily_rewards (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,                    -- Format: YYYY-MM-DD
+        category TEXT NOT NULL,                -- 'top_earners', 'most_wins', 'best_win_rate', 'most_active'
+        position INTEGER NOT NULL,             -- 1, 2, 3
+        player_address TEXT NOT NULL,
+        reward_amount DECIMAL(10,8) NOT NULL,
+        total_pool DECIMAL(10,8) NOT NULL,     -- Total pool for the day
+        percentage DECIMAL(5,2) NOT NULL,      -- Percentage of total pool (e.g., 12.00 for 12%)
+        tx_hash TEXT,                          -- Transaction hash when paid
+        paid_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(date, category, position)
+      );
+
+      -- Treasury balance tracking (for fee accumulation)
+      CREATE TABLE IF NOT EXISTS treasury_balance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,                    -- Format: YYYY-MM-DD
+        total_fees_collected DECIMAL(10,8) DEFAULT 0,    -- 5% of total prize pools
+        treasury_amount DECIMAL(10,8) DEFAULT 0,         -- 20% of fees (1% total)
+        rewards_pool DECIMAL(10,8) DEFAULT 0,            -- 80% of fees (4% total)
+        rewards_distributed DECIMAL(10,8) DEFAULT 0,     -- Actually distributed
+        rewards_pending DECIMAL(10,8) DEFAULT 0,         -- Pending distribution
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(date)
+      );
+
+      -- Cron job tracking for daily reward calculations
+      CREATE TABLE IF NOT EXISTS cron_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_name TEXT NOT NULL,
+        last_run DATETIME,
+        next_run DATETIME,
+        status TEXT DEFAULT 'pending',         -- 'pending', 'running', 'completed', 'failed'
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(job_name)
+      );
+
+      -- Indexes for performance
+      CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_stats(date);
+      CREATE INDEX IF NOT EXISTS idx_daily_stats_player ON daily_stats(player_address);
+      CREATE INDEX IF NOT EXISTS idx_daily_stats_date_player ON daily_stats(date, player_address);
+      CREATE INDEX IF NOT EXISTS idx_daily_rewards_date ON daily_rewards(date);
+      CREATE INDEX IF NOT EXISTS idx_daily_rewards_player ON daily_rewards(player_address);
+      CREATE INDEX IF NOT EXISTS idx_daily_rewards_category ON daily_rewards(category);
+      CREATE INDEX IF NOT EXISTS idx_treasury_balance_date ON treasury_balance(date);
+      CREATE INDEX IF NOT EXISTS idx_cron_jobs_name ON cron_jobs(job_name);
+      CREATE INDEX IF NOT EXISTS idx_cron_jobs_next_run ON cron_jobs(next_run);
+
+      -- Insert initial cron job entries
+      INSERT OR IGNORE INTO cron_jobs (job_name, next_run) VALUES 
+        ('daily_stats_calculation', datetime('now', 'start of day', '+1 day', '-1 hour')),
+        ('daily_rewards_distribution', datetime('now', 'start of day', '+1 day'));
+    `,
+    down: `
+      -- Remove indexes
+      DROP INDEX IF EXISTS idx_cron_jobs_next_run;
+      DROP INDEX IF EXISTS idx_cron_jobs_name;
+      DROP INDEX IF EXISTS idx_treasury_balance_date;
+      DROP INDEX IF EXISTS idx_daily_rewards_category;
+      DROP INDEX IF EXISTS idx_daily_rewards_player;
+      DROP INDEX IF EXISTS idx_daily_rewards_date;
+      DROP INDEX IF EXISTS idx_daily_stats_date_player;
+      DROP INDEX IF EXISTS idx_daily_stats_player;
+      DROP INDEX IF EXISTS idx_daily_stats_date;
+      
+      -- Remove tables
+      DROP TABLE IF EXISTS cron_jobs;
+      DROP TABLE IF EXISTS treasury_balance;
+      DROP TABLE IF EXISTS daily_rewards;
+      DROP TABLE IF EXISTS daily_stats;
+    `
   }
 ];
 

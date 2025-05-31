@@ -358,6 +358,85 @@ class PlayersController {
       });
     }
   }
+
+  /**
+   * GET /api/players/daily-rewards - Get yesterday's daily Hall of Fame rewards
+   */
+  async getDailyRewards(req, res) {
+    try {
+      const { date } = req.query;
+
+      // Validate date format if provided
+      if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: true,
+          message: 'Invalid date format. Use YYYY-MM-DD',
+          code: ERROR_CODES.VALIDATION_ERROR
+        });
+      }
+
+      const dailyRewards = this.playersService.getDailyRewards(date);
+
+      res.json({
+        success: true,
+        dailyRewards,
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestedDate: date || 'yesterday',
+          categories: ['topEarners', 'mostWins', 'bestWinRate', 'mostActive']
+        }
+      });
+
+    } catch (error) {
+      logger.error('Failed to get daily rewards:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: true,
+        message: 'Failed to retrieve daily rewards',
+        code: ERROR_CODES.INTERNAL_ERROR
+      });
+    }
+  }
+
+  /**
+   * GET /api/players/daily-rewards/history - Get recent daily rewards history
+   */
+  async getDailyRewardsHistory(req, res) {
+    try {
+      const { 
+        limit = 7
+      } = req.query;
+
+      // Validate limit
+      const parsedLimit = parseInt(limit);
+      if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 30) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: true,
+          message: 'Limit must be between 1 and 30',
+          code: ERROR_CODES.VALIDATION_ERROR
+        });
+      }
+
+      const rewardsHistory = this.playersService.getDailyRewardsHistory(parsedLimit);
+
+      res.json({
+        success: true,
+        rewardsHistory,
+        meta: {
+          timestamp: new Date().toISOString(),
+          limit: parsedLimit,
+          totalDays: rewardsHistory.length
+        }
+      });
+
+    } catch (error) {
+      logger.error('Failed to get daily rewards history:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: true,
+        message: 'Failed to retrieve daily rewards history',
+        code: ERROR_CODES.INTERNAL_ERROR
+      });
+    }
+  }
 }
 
 module.exports = { PlayersController }; 

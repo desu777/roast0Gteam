@@ -169,6 +169,40 @@ function createPlayersRoutes(playersController) {
     await playersController.getAllTimeRoasted(req, res);
   });
 
+  /**
+   * @route GET /api/players/daily-rewards
+   * @desc Get yesterday's daily Hall of Fame rewards (or specific date)
+   * @access Public
+   */
+  router.get('/daily-rewards',
+    [
+      query('date')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage('Invalid date format. Use YYYY-MM-DD')
+    ],
+    async (req, res) => {
+      await playersController.getDailyRewards(req, res);
+    }
+  );
+
+  /**
+   * @route GET /api/players/daily-rewards/history
+   * @desc Get recent daily rewards history
+   * @access Public
+   */
+  router.get('/daily-rewards/history',
+    [
+      query('limit')
+        .optional()
+        .isInt({ min: 1, max: 30 })
+        .withMessage('Limit must be between 1 and 30')
+    ],
+    async (req, res) => {
+      await playersController.getDailyRewardsHistory(req, res);
+    }
+  );
+
   // Error handling middleware specific to Players routes
   router.use((error, req, res, next) => {
     if (error.type === 'entity.parse.failed') {

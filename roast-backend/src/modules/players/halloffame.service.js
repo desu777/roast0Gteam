@@ -267,6 +267,199 @@ class HallOfFameService {
       throw error;
     }
   }
+
+  /**
+   * Get Daily Hall of Fame Rewards
+   * @param {string} targetDate - Optional date (YYYY-MM-DD), defaults to yesterday
+   * @returns {Object} Daily rewards data with categories and winners
+   */
+  getDailyRewards(targetDate = null) {
+    try {
+      // If no date provided, use yesterday
+      let queryDate;
+      if (targetDate) {
+        queryDate = targetDate;
+      } else {
+        const yesterday = new Date();
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+        queryDate = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+
+      if (config.logging.testEnv) {
+        logger.debug('Getting daily rewards for date:', queryDate);
+      }
+
+      // Get daily rewards for the specified date
+      const dailyRewards = database.db.prepare(`
+        SELECT 
+          category,
+          position,
+          player_address,
+          reward_amount,
+          total_pool,
+          percentage,
+          tx_hash,
+          paid_at,
+          created_at
+        FROM daily_rewards 
+        WHERE date = ?
+        ORDER BY 
+          CASE category 
+            WHEN 'top_earners' THEN 1
+            WHEN 'most_wins' THEN 2  
+            WHEN 'best_win_rate' THEN 3
+            WHEN 'most_active' THEN 4
+            ELSE 5
+          END,
+          position ASC
+      `).all(queryDate);
+
+      // Get treasury balance for the day
+      const treasuryInfo = database.db.prepare(`
+        SELECT 
+          total_fees_collected,
+          treasury_amount,
+          rewards_pool,
+          rewards_distributed,
+          rewards_pending
+        FROM treasury_balance 
+        WHERE date = ?
+      `).get(queryDate);
+
+      // Get daily stats summary for context
+      const dailyStatsSummary = database.db.prepare(`
+        SELECT 
+          COUNT(*) as total_players,
+          SUM(total_games) as total_games_played,
+          SUM(total_wins) as total_wins,
+          SUM(total_earned) as total_earned,
+          SUM(total_spent) as total_spent,
+          COUNT(CASE WHEN total_games >= 3 THEN 1 END) as qualified_players
+        FROM daily_stats 
+        WHERE date = ?
+      `).get(queryDate);
+
+      // Format rewards by category
+      const rewardsByCategory = {
+        topEarners: [],
+        mostWins: [],
+        bestWinRate: [],
+        mostActive: []
+      };
+
+      const categoryMapping = {
+        'top_earners': 'topEarners',
+        'most_wins': 'mostWins',
+        'best_win_rate': 'bestWinRate',
+        'most_active': 'mostActive'
+      };
+
+      const positionLabels = {
+        1: '🥇',
+        2: '🥈', 
+        3: '🥉'
+      };
+
+      dailyRewards.forEach(reward => {
+        const categoryKey = categoryMapping[reward.category];
+        if (categoryKey) {
+          rewardsByCategory[categoryKey].push({
+            position: reward.position,
+            positionLabel: positionLabels[reward.position] || `#${reward.position}`,
+            playerAddress: reward.player_address,
+            rewardAmount: parseFloat(reward.reward_amount),
+            percentage: parseFloat(reward.percentage),
+            txHash: reward.tx_hash,
+            paidAt: reward.paid_at,
+            isPaid: !!reward.tx_hash,
+            createdAt: reward.created_at
+          });
+        }
+      });
+
+      // Calculate summary statistics
+      const totalRewardsDistributed = dailyRewards.reduce((sum, reward) => 
+        sum + parseFloat(reward.reward_amount), 0
+      );
+
+      const paidRewards = dailyRewards.filter(reward => reward.tx_hash);
+      const totalPaidOut = paidRewards.reduce((sum, reward) => 
+        sum + parseFloat(reward.reward_amount), 0
+      );
+
+      return {
+        date: queryDate,
+        summary: {
+          totalRewards: dailyRewards.length,
+          totalRewardsDistributed: totalRewardsDistributed,
+          totalPaidOut: totalPaidOut,
+          successfulPayments: paidRewards.length,
+          failedPayments: dailyRewards.length - paidRewards.length,
+          currency: config.zg.currencySymbol
+        },
+        treasury: treasuryInfo ? {
+          totalFeesCollected: parseFloat(treasuryInfo.total_fees_collected || 0),
+          treasuryAmount: parseFloat(treasuryInfo.treasury_amount || 0),
+          rewardsPool: parseFloat(treasuryInfo.rewards_pool || 0),
+          rewardsDistributed: parseFloat(treasuryInfo.rewards_distributed || 0),
+          rewardsPending: parseFloat(treasuryInfo.rewards_pending || 0)
+        } : null,
+        dailyStats: dailyStatsSummary ? {
+          totalPlayers: dailyStatsSummary.total_players || 0,
+          totalGamesPlayed: dailyStatsSummary.total_games_played || 0,
+          totalWins: dailyStatsSummary.total_wins || 0,
+          totalEarned: parseFloat(dailyStatsSummary.total_earned || 0),
+          totalSpent: parseFloat(dailyStatsSummary.total_spent || 0),
+          qualifiedPlayers: dailyStatsSummary.qualified_players || 0
+        } : null,
+        categories: rewardsByCategory
+      };
+
+    } catch (error) {
+      logger.error('Failed to get daily rewards', { 
+        error: error.message,
+        targetDate 
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get Daily Rewards History
+   * @param {number} limit - Number of days to return (default: 7)
+   * @returns {Array} Array of daily rewards for recent days
+   */
+  getDailyRewardsHistory(limit = 7) {
+    try {
+      if (config.logging.testEnv) {
+        logger.debug('Getting daily rewards history, limit:', limit);
+      }
+
+      // Get dates that have daily rewards
+      const rewardDates = database.db.prepare(`
+        SELECT DISTINCT date 
+        FROM daily_rewards 
+        ORDER BY date DESC 
+        LIMIT ?
+      `).all(limit);
+
+      const history = [];
+
+      for (const dateRow of rewardDates) {
+        const dayData = this.getDailyRewards(dateRow.date);
+        history.push(dayData);
+      }
+
+      return history;
+
+    } catch (error) {
+      logger.error('Failed to get daily rewards history', { 
+        error: error.message,
+        limit 
+      });
+      throw error;
+    }
+  }
 }
 
 module.exports = { HallOfFameService }; 

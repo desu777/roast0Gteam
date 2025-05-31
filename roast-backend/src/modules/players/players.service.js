@@ -351,6 +351,24 @@ class PlayersService {
   getAllTimeRoasted() {
     return this.hallOfFameService.getAllTimeRoasted();
   }
+
+  /**
+   * Get Daily Hall of Fame Rewards
+   * @param {string} targetDate - Optional date (YYYY-MM-DD), defaults to yesterday
+   * @returns {Object} Daily rewards data with categories and winners
+   */
+  getDailyRewards(targetDate = null) {
+    return this.hallOfFameService.getDailyRewards(targetDate);
+  }
+
+  /**
+   * Get Daily Rewards History
+   * @param {number} limit - Number of days to return (default: 7)
+   * @returns {Array} Array of daily rewards for recent days
+   */
+  getDailyRewardsHistory(limit = 7) {
+    return this.hallOfFameService.getDailyRewardsHistory(limit);
+  }
 }
 
 module.exports = { PlayersService }; 
