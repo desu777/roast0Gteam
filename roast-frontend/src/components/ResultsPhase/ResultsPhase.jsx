@@ -162,26 +162,25 @@ const ResultsPhase = ({
 
         /* Main Card */
         .winner-card {
-          background: linear-gradient(135deg, 
-            rgba(18, 18, 24, 0.95) 0%,
-            rgba(26, 26, 32, 0.95) 100%
-          );
-          border: 2px solid var(--theme-primary, #FFD700);
+          background: rgba(18, 18, 24, 0.95);
+          border: 2px solid var(--theme-primary-20, rgba(255, 215, 0, 0.2));
           border-radius: 20px;
-          padding: 40px;
-          backdrop-filter: blur(20px);
+          padding: 32px;
           box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.5),
-            0 0 0 1px var(--theme-primary-20, rgba(255, 215, 0, 0.2)),
-            0 0 40px var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+            0 10px 40px rgba(0, 0, 0, 0.5),
+            0 0 30px var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+          transform: scale(0.8);
           opacity: 0;
-          transform: translateY(20px);
-          transition: all 0.6s ease;
+          transition: all 0.5s ease;
+          backdrop-filter: blur(15px);
+          max-width: 900px;
+          width: 100%;
+          margin: 0 auto;
         }
 
         .winner-card.visible {
+          transform: scale(1);
           opacity: 1;
-          transform: translateY(0);
         }
 
         /* Header */
@@ -231,17 +230,19 @@ const ResultsPhase = ({
 
         .winner-identity {
           display: flex;
-          justify-content: space-between;
+          justify-content: center;
           align-items: flex-start;
-          gap: 32px;
+          gap: 80px;
           padding: 24px;
           background: var(--theme-primary-5, rgba(255, 215, 0, 0.05));
           border: 1px solid var(--theme-primary-15, rgba(255, 215, 0, 0.15));
           border-radius: 12px;
+          max-width: 100%;
         }
 
         .address-section, .prize-section {
           flex: 1;
+          max-width: 300px;
           text-align: center;
         }
 

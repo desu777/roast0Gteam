@@ -186,6 +186,7 @@ const App = () => {
           currentPlayerCount={participants.length}
           prizePool={prizePool}
           onHallOfFameClick={handleHallOfFameOpen}
+          currentJudge={currentJudge}
         />
 
         {/* Error Display */}
