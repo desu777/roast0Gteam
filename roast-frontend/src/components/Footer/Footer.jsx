@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Github, Heart } from 'lucide-react';
+import { Flame, Github, Heart, BookOpen } from 'lucide-react';
 
 // Custom X (Twitter) icon component
 const XIcon = ({ size = 16 }) => (
@@ -44,6 +44,15 @@ const Footer = () => {
                       title="View on GitHub"
                     >
                       <Github size={14} />
+                    </a>
+                    <a 
+                      href="https://roastarena-ai.gitbook.io/0g-roast-arena" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="social-link"
+                      title="Documentation"
+                    >
+                      <BookOpen size={14} />
                     </a>
                   </div>
                 </div>

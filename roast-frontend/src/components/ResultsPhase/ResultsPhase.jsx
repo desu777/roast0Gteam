@@ -154,7 +154,7 @@ const ResultsPhase = ({
         .results-container {
           position: relative;
           width: 100%;
-          max-width: 700px;
+          max-width: 1200px;
           max-height: 90vh;
           overflow-y: auto;
           z-index: 1001;
@@ -230,19 +230,18 @@ const ResultsPhase = ({
 
         .winner-identity {
           display: flex;
-          justify-content: center;
-          align-items: flex-start;
-          gap: 80px;
+          justify-content: space-between;
+          align-items: stretch;
+          gap: 40px;
           padding: 24px;
           background: var(--theme-primary-5, rgba(255, 215, 0, 0.05));
           border: 1px solid var(--theme-primary-15, rgba(255, 215, 0, 0.15));
           border-radius: 12px;
-          max-width: 100%;
+          width: 100%;
         }
 
         .address-section, .prize-section {
           flex: 1;
-          max-width: 300px;
           text-align: center;
         }
 
