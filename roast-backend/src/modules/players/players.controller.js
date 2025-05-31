@@ -26,7 +26,26 @@ class PlayersController {
         });
       }
 
-      const profile = this.playersService.getPlayerProfile(address);
+      // Normalize address to lowercase for database consistency
+      const normalizedAddress = address.toLowerCase();
+
+      if (config.logging.testEnv) {
+        logger.info('🔍 Getting player profile', { 
+          originalAddress: address,
+          normalizedAddress,
+          isChecksum: address !== address.toLowerCase()
+        });
+      }
+
+      const profile = this.playersService.getPlayerProfile(normalizedAddress);
+
+      if (config.logging.testEnv) {
+        logger.info('👤 Profile retrieved successfully', {
+          address: normalizedAddress,
+          hasStats: !!profile.stats,
+          totalGames: profile.stats?.totalGames
+        });
+      }
 
       res.json({
         success: true,
@@ -269,6 +288,73 @@ class PlayersController {
         status: 'unhealthy',
         error: error.message,
         timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  /**
+   * GET /api/players/hall-of-fame - Get Hall of Fame leaderboards
+   */
+  async getHallOfFame(req, res) {
+    try {
+      const { 
+        limit = 10
+      } = req.query;
+
+      // Validate limit
+      const parsedLimit = parseInt(limit);
+      if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 50) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: true,
+          message: 'Limit must be between 1 and 50',
+          code: ERROR_CODES.VALIDATION_ERROR
+        });
+      }
+
+      const hallOfFame = this.playersService.getHallOfFame(parsedLimit);
+
+      res.json({
+        success: true,
+        hallOfFame,
+        meta: {
+          limit: parsedLimit,
+          timestamp: new Date().toISOString(),
+          categories: ['topEarners', 'mostWins', 'bestWinRate', 'mostActive']
+        }
+      });
+
+    } catch (error) {
+      logger.error('Failed to get Hall of Fame:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: true,
+        message: 'Failed to retrieve Hall of Fame',
+        code: ERROR_CODES.INTERNAL_ERROR
+      });
+    }
+  }
+
+  /**
+   * GET /api/players/all-time-roasted - Get comprehensive roasting statistics
+   */
+  async getAllTimeRoasted(req, res) {
+    try {
+      const allTimeStats = this.playersService.getAllTimeRoasted();
+
+      res.json({
+        success: true,
+        allTimeRoasted: allTimeStats,
+        meta: {
+          timestamp: new Date().toISOString(),
+          dataCategories: ['global', 'judges', 'dailyActivity', 'winStreaks']
+        }
+      });
+
+    } catch (error) {
+      logger.error('Failed to get All Time Roasted stats:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: true,
+        message: 'Failed to retrieve All Time Roasted statistics',
+        code: ERROR_CODES.INTERNAL_ERROR
       });
     }
   }

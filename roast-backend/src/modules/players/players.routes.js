@@ -143,6 +143,32 @@ function createPlayersRoutes(playersController) {
     await playersController.getServiceStats(req, res);
   });
 
+  /**
+   * @route GET /api/players/hall-of-fame
+   * @desc Get Hall of Fame with multiple leaderboard categories
+   * @access Public
+   */
+  router.get('/hall-of-fame',
+    [
+      query('limit')
+        .optional()
+        .isInt({ min: 1, max: 50 })
+        .withMessage('Limit must be between 1 and 50')
+    ],
+    async (req, res) => {
+      await playersController.getHallOfFame(req, res);
+    }
+  );
+
+  /**
+   * @route GET /api/players/all-time-roasted
+   * @desc Get comprehensive all-time roasting statistics
+   * @access Public
+   */
+  router.get('/all-time-roasted', async (req, res) => {
+    await playersController.getAllTimeRoasted(req, res);
+  });
+
   // Error handling middleware specific to Players routes
   router.use((error, req, res, next) => {
     if (error.type === 'entity.parse.failed') {

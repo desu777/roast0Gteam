@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader, Sparkles, SparklesIcon 
+  Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader, Sparkles, SparklesIcon, Crown 
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 
@@ -11,7 +11,8 @@ const Header = ({
   setSparksEnabled,
   roundNumber, 
   currentPlayerCount,
-  prizePool 
+  prizePool,
+  onHallOfFameClick
 }) => {
   const { 
     address, 
@@ -152,6 +153,19 @@ const Header = ({
             <Users size={16} />
             <span>{currentPlayerCount} Players in Round</span>
           </div>
+          
+          {/* Hall of Fame Button */}
+          {onHallOfFameClick && (
+            <button 
+              className="stat-card hall-of-fame-btn"
+              onClick={onHallOfFameClick}
+              title="View Hall of Fame"
+            >
+              <Crown size={16} />
+              <span>Hall of Fame</span>
+            </button>
+          )}
+          
           <div className="stat-card">
             <Coins size={16} />
             <span>{prizePool.toFixed(3)} {chainInfo.symbol} Pool</span>
@@ -550,6 +564,98 @@ const Header = ({
           color: #FFD700;
           filter: drop-shadow(0 0 8px #FFD700);
           animation: goldenGlow 2s ease-in-out infinite alternate;
+        }
+
+        /* Hall of Fame Button Styles */
+        .hall-of-fame-btn {
+          cursor: pointer;
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .hall-of-fame-btn span {
+          font-weight: 800;
+          background: linear-gradient(90deg, #FFD700, #FF5CAA, #00D2E9, #FFD700);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: hallOfFameText 3s linear infinite;
+          position: relative;
+          z-index: 2;
+        }
+
+        @keyframes hallOfFameText {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+
+        .hall-of-fame-btn::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+          transition: left 0.5s;
+        }
+
+        .hall-of-fame-btn:hover {
+          background: rgba(255, 215, 0, 0.2);
+          border-color: rgba(255, 215, 0, 0.5);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .hall-of-fame-btn:hover span {
+          animation-duration: 1.5s;
+        }
+
+        .hall-of-fame-btn:active {
+          transform: translateY(0) scale(0.98);
+          box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+          background: rgba(255, 215, 0, 0.25);
+          border-color: rgba(255, 215, 0, 0.6);
+          transition: all 0.1s ease;
+        }
+
+        .hall-of-fame-btn:active span {
+          animation-duration: 1s;
+        }
+
+        .hall-of-fame-btn:hover::before {
+          left: 100%;
+        }
+
+        .hall-of-fame-btn svg {
+          color: #FFD700;
+          filter: drop-shadow(0 0 10px #FFD700);
+          transition: all 0.3s ease;
+          background: linear-gradient(90deg, #FFD700, #FF5CAA, #00D2E9, #FFD700);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: hallOfFameIcon 3s linear infinite;
+        }
+
+        @keyframes hallOfFameIcon {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+
+        .hall-of-fame-btn:hover svg {
+          transform: scale(1.1);
+          filter: drop-shadow(0 0 15px #FFD700);
+          animation-duration: 1.5s;
+        }
+
+        .hall-of-fame-btn:active svg {
+          transform: scale(1.05);
+          animation-duration: 1s;
         }
 
         /* Mobile responsiveness */

@@ -8,6 +8,7 @@ import GameEffects from './components/GameEffects/GameEffects';
 import Header from './components/Header/Header';
 import GameLayout from './components/GameLayout/GameLayout';
 import JudgeModal from './components/JudgeModal/JudgeModal';
+import HallOfFameModal from './components/HallOfFameModal/HallOfFameModal';
 import TransactionNotification from './components/TransactionNotification/TransactionNotification';
 import Footer from './components/Footer/Footer';
 
@@ -18,6 +19,7 @@ const App = () => {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
   const [sparksEnabled, setSparksEnabled] = useState(true);
+  const [showHallOfFame, setShowHallOfFame] = useState(false);
 
   // Hook do sprawdzania szerokości ekranu
   useEffect(() => {
@@ -137,6 +139,15 @@ const App = () => {
     }
   };
 
+  // Hall of Fame modal handlers
+  const handleHallOfFameOpen = () => {
+    setShowHallOfFame(true);
+  };
+
+  const handleHallOfFameClose = () => {
+    setShowHallOfFame(false);
+  };
+
   return (
     <>
       <div className="arena-container" ref={containerRef}>
@@ -159,6 +170,7 @@ const App = () => {
           roundNumber={roundNumber}
           currentPlayerCount={participants.length}
           prizePool={prizePool}
+          onHallOfFameClick={handleHallOfFameOpen}
         />
 
         {/* Error Display */}
@@ -207,6 +219,13 @@ const App = () => {
         <JudgeModal 
           judge={showJudgeDetails}
           onClose={() => setShowJudgeDetails(null)}
+        />
+
+        {/* Hall of Fame Modal */}
+        <HallOfFameModal 
+          isOpen={showHallOfFame}
+          onClose={handleHallOfFameClose}
+          userAddress={userAddress}
         />
         
         {/* Transaction Notifications */}

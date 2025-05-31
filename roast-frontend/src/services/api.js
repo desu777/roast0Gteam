@@ -68,6 +68,18 @@ export const playersApi = {
   // Pobierz ranking
   getLeaderboard: (limit = 10, sortBy = 'earnings') => 
     api.get(`/players/leaderboard?limit=${limit}&sortBy=${sortBy}`),
+  
+  // Pobierz Hall of Fame z wieloma kategoriami leaderboardów
+  getHallOfFame: (limit = 10) => 
+    api.get(`/players/hall-of-fame?limit=${limit}`),
+  
+  // Pobierz kompletne statystyki All Time Roasted
+  getAllTimeRoasted: () => 
+    api.get('/players/all-time-roasted'),
+  
+  // Pobierz statystyki serwisu
+  getStats: () => 
+    api.get('/players/stats'),
 };
 
 // Treasury API

@@ -2,9 +2,11 @@ const { config } = require('../../config/app.config');
 const { logger } = require('../../services/logger.service');
 const database = require('../../database/database.service');
 const { ethers } = require('ethers');
+const { HallOfFameService } = require('./halloffame.service');
 
 class PlayersService {
   constructor() {
+    this.hallOfFameService = new HallOfFameService();
     if (config.logging.testEnv) {
       logger.info('Players service initialized');
     }
@@ -331,6 +333,23 @@ class PlayersService {
       logger.error('Failed to get service stats', { error: error.message });
       throw error;
     }
+  }
+
+  /**
+   * Get Hall of Fame - comprehensive leaderboard with multiple categories
+   * @param {number} limit - Number of top players per category
+   * @returns {Object} Hall of Fame data with multiple leaderboards
+   */
+  getHallOfFame(limit = 10) {
+    return this.hallOfFameService.getHallOfFame(limit);
+  }
+
+  /**
+   * Get All Time 0G Roasted statistics
+   * @returns {Object} Comprehensive roasting statistics
+   */
+  getAllTimeRoasted() {
+    return this.hallOfFameService.getAllTimeRoasted();
   }
 }
 
