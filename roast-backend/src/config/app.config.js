@@ -67,7 +67,7 @@ const config = {
   // AI Service Configuration
   ai: {
     enabled: process.env.AI_SERVICE_ENABLED !== 'false',
-    evaluationTimeout: parseInt(process.env.AI_EVALUATION_TIMEOUT) || 15000,
+    evaluationTimeout: parseInt(process.env.AI_EVALUATION_TIMEOUT) || 20000,
     fallbackEnabled: process.env.AI_FALLBACK_ENABLED !== 'false',
     
     // OpenRouter Configuration

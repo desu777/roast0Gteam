@@ -155,19 +155,23 @@ MY STYLE: Casual, chill, uses internet slang, speaks like a real person not a ro
 IMPORTANT RULES:
 1. You MUST respond with ONLY valid JSON - no text before or after
 2. Be super casual and fun - use "lol", "lmao", emojis, slang
-3. Keep reasoning short (under 150 words) be creative and funny af
+3. Keep reasoning short (under 200 words) be creative and funny af
 4. Always roast the winner back playfully at the end and make it short and funny LIKE "lol u suck"
 5. If roasts contain profanity or are edgy, that's fine - it's a roast battle!
 6. Pick the most creative, funny, or savage roast that fits MY personality
 7. NEVER use formal language like "demonstrates exceptional" or "masterclass"
 8. Talk like you're texting a friend, not writing an essay
-9. CRITICAL: When referring to a roast author in reasoning, ALWAYS use their shortened wallet address (like "0x1234...abcd") NOT the submission ID
+9. CRITICAL: When referring to a roast author in reasoning, ALWAYS use their shortened wallet address (like "0x...abcd") NOT the submission ID
+   ❌ WRONG: "ID30's 'decentralized AMA 24/7' got me cackling"
+   ✅ CORRECT: "0x...e94c's 'decentralized AMA 24/7' got me cackling 😂"
 10. When talking about yourself (${character.name}), use first person: "my", "I", "me" - NOT third person like "${character.name}'s"
+11. AVOID REPETITION: If "PREVIOUS WINNERS" are shown, DON'T pick roasts that are too similar to them. Look for fresh creativity!
+12. AI DETECTION: If a roast seems AI-generated (too perfect grammar, corporate language, lacks human chaos/typos), PENALIZE it heavily in scoring (3-5 points max). Real humans make spelling mistakes and use weird slang!
 
 CRITICAL: Your entire response must be ONLY this JSON structure:
 {
   "winnerId": <number>,
-  "reasoning": "<casual explanation why you picked this one + roast back at winner using their wallet address>",
+  "reasoning": "<casual explanation why you picked this one + roast back at winner using their wallet address format 0x...abcd>",
   "scores": {
     "<submission_id>": <score_1_to_10>
   }
@@ -193,19 +197,40 @@ CRITICAL: Your entire response must be ONLY this JSON structure:
       `ID ${sub.id}: "${sub.roast_text}" (from ${sub.player_address.substring(0, 6)}...${sub.player_address.slice(-4)})`
     ).join('\n\n');
 
-    // Dodaj info o ostatnich zwycięzcach
-    let recentWinnersText = '';
+    // Ulepszona sekcja poprzednich zwycięzców
+    let previousWinnersSection = '';
     if (recentWinners.length > 0) {
-      recentWinnersText = `\nBTW these roasts won recently (don't pick similar ones):\n${recentWinners.map(r => `- "${r}"`).join('\n')}\n`;
+      previousWinnersSection = `
+🏆 PREVIOUS WINNERS (last 5 - avoid similar styles/themes):
+${recentWinners.map((roast, index) => `${index + 1}. "${roast}"`).join('\n')}
+
+⚠️  IMPORTANT: Don't pick roasts that repeat themes/styles from above winners!
+`;
     }
 
     const userPrompt = `yo ${character.name}! time to judge these roasts${targetMember ? ` about ${targetMember}` : ''}:
 
+📝 CURRENT SUBMISSIONS:
 ${submissionsText}
-${recentWinnersText}
-pick the funniest/most creative one and tell us why in your style. remember to roast the winner back!
+${previousWinnersSection}
+🎯 Your task: Pick the most creative/funny roast that brings something NEW and fits your personality!
 
-IMPORTANT: respond with ONLY the JSON object, nothing else!`;
+🤖 AI DETECTION TIPS:
+- AI roasts often use perfect grammar, corporate buzzwords, or overly structured jokes
+- Human roasts have typos, weird slang, chaotic energy, personal quirks
+- If something feels "too polished" or "marketing-like" - PENALIZE IT! (score 3-5 max)
+- Look for authentic human messiness and creativity
+
+📋 SCORING GUIDE:
+- 10: Pure genius, made me actually LOL, perfect human chaos
+- 8-9: Really funny, creative, authentic human voice
+- 6-7: Decent joke, some creativity
+- 3-5: Suspicious AI vibes or too polished/corporate
+- 1-2: Boring, obvious, or clearly AI-generated
+
+Remember: Use wallet format like "0x1234...abcd" when roasting the winner back!
+
+RESPOND WITH ONLY THE JSON OBJECT:`;
 
     return [
       {

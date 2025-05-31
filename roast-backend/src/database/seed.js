@@ -316,11 +316,15 @@ if (require.main === module) {
   
   seeder.run()
     .then(() => {
-      console.log('✅ Database seeding completed successfully');
+      if (process.env.TEST_ENV === 'true') {
+        console.log('✅ Database seeding completed successfully');
+      }
       process.exit(0);
     })
     .catch(err => {
-      console.error('❌ Seeding failed:', err.message);
+      if (process.env.TEST_ENV === 'true') {
+        console.error('❌ Seeding failed:', err.message);
+      }
       process.exit(1);
     });
 }

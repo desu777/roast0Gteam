@@ -69,7 +69,7 @@ function createAIRoutes(aiController) {
 
   // Error handling middleware specific to AI routes
   router.use((error, req, res, next) => {
-    if (config.logging.testEnv) {
+    if (process.env.TEST_ENV === 'true') {
       console.error('AI Routes Error:', error);
     }
 

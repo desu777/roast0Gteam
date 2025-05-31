@@ -128,7 +128,8 @@ class OpenRouterService {
         'X-Title': config.ai.siteName,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal: this.createTimeoutSignal(config.ai.evaluationTimeout - 2000)
     };
 
     try {
@@ -213,6 +214,30 @@ class OpenRouterService {
     if (config.logging.testEnv) {
       logger.info('OpenRouter service cleanup completed');
     }
+  }
+
+  /**
+   * Tworzy AbortSignal z timeoutem (z fallback dla starszych wersji Node.js)
+   * @param {number} timeoutMs - Timeout w milisekundach
+   * @returns {AbortSignal} Signal z timeoutem
+   */
+  createTimeoutSignal(timeoutMs) {
+    try {
+      // Użyj natywnej implementacji jeśli dostępna (Node.js 17.3.0+)
+      if (typeof AbortSignal.timeout === 'function') {
+        return AbortSignal.timeout(timeoutMs);
+      }
+    } catch (error) {
+      // Fallback dla starszych wersji
+    }
+
+    // Fallback implementacja
+    const controller = new AbortController();
+    setTimeout(() => {
+      controller.abort(new Error(`Timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+    
+    return controller.signal;
   }
 }
 

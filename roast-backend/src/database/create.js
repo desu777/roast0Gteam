@@ -5,6 +5,7 @@ const { config } = require('../config/app.config');
 
 async function createDatabase() {
   try {
+    // CLI feedback - always show for user experience
     console.log('🚀 Creating 0G Roast Arena database...\n');
 
     // Run migrations
@@ -27,8 +28,13 @@ async function createDatabase() {
       }
     }
 
+    // Essential completion feedback - always show
     console.log('🎉 Database setup completed successfully!');
-    console.log(`📁 Database location: ${config.database.path}`);
+    
+    // Detailed info - conditional on TEST_ENV for debug purposes
+    if (process.env.TEST_ENV === 'true') {
+      console.log(`📁 Database location: ${config.database.path}`);
+    }
     
     if (config.server.env !== 'production') {
       console.log('\n📋 Next steps:');
@@ -38,6 +44,7 @@ async function createDatabase() {
     }
 
   } catch (error) {
+    // Critical errors always show
     console.error('\n❌ Database setup failed:', error.message);
     logger.error('Database creation failed', { error: error.message, stack: error.stack });
     process.exit(1);

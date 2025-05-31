@@ -279,6 +279,9 @@ class AIService {
     const randomIndex = Math.floor(Math.random() * submissions.length);
     const winner = submissions[randomIndex];
 
+    // Dodaj zwycięski roast do historii (tak jak w normalnej evaluacji)
+    this.characterService.addWinningRoast(characterId, winner.roast_text);
+
     const character = this.characterService.getCharacter(characterId);
 
     return {

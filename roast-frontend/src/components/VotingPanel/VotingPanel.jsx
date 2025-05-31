@@ -166,6 +166,11 @@ const VotingPanel = ({
                     className={`vote-button ${isVoting ? 'loading' : ''}`}
                     onClick={() => handleVote(member.id)}
                     disabled={isVoting || isVotingDisabled}
+                    style={{
+                      background: `rgba(${parseInt(member.color.slice(1, 3), 16)}, ${parseInt(member.color.slice(3, 5), 16)}, ${parseInt(member.color.slice(5, 7), 16)}, 0.1)`,
+                      borderColor: `rgba(${parseInt(member.color.slice(1, 3), 16)}, ${parseInt(member.color.slice(3, 5), 16)}, ${parseInt(member.color.slice(5, 7), 16)}, 0.3)`,
+                      color: member.color
+                    }}
                   >
                     {isVoting ? (
                       <>
@@ -471,9 +476,6 @@ const VotingPanel = ({
         }
 
         .vote-button {
-          background: rgba(255, 92, 170, 0.1);
-          border: 1px solid rgba(255, 92, 170, 0.3);
-          color: #FF5CAA;
           padding: 4px 12px;
           border-radius: 8px;
           font-size: 13px;
@@ -486,11 +488,12 @@ const VotingPanel = ({
           min-width: 65px;
           justify-content: center;
           margin-left: 12px;
+          border: 1px solid;
         }
 
         .vote-button:hover:not(:disabled) {
-          background: rgba(255, 92, 170, 0.2);
           transform: translateY(-1px);
+          opacity: 0.9;
         }
 
         .vote-button:disabled {
@@ -500,7 +503,7 @@ const VotingPanel = ({
         }
 
         .vote-button.loading {
-          background: rgba(255, 92, 170, 0.15);
+          opacity: 0.8;
         }
 
         .voted-badge {

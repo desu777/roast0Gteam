@@ -551,14 +551,18 @@ if (require.main === module) {
     runner.rollback(targetVersion)
       .then(() => process.exit(0))
       .catch(err => {
-        console.error('Rollback failed:', err.message);
+        if (process.env.TEST_ENV === 'true') {
+          console.error('Rollback failed:', err.message);
+        }
         process.exit(1);
       });
   } else {
     runner.run()
       .then(() => process.exit(0))
       .catch(err => {
-        console.error('Migration failed:', err.message);
+        if (process.env.TEST_ENV === 'true') {
+          console.error('Migration failed:', err.message);
+        }
         process.exit(1);
       });
   }
