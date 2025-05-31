@@ -6,7 +6,7 @@ const TransactionNotification = ({
   message, 
   txHash, 
   onClose, 
-  duration = 8000 
+  duration = 5000 
 }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -114,6 +114,18 @@ const TransactionNotification = ({
           margin: 0 0 8px 0;
           font-size: 14px;
           line-height: 1.4;
+          font-weight: 600;
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: rainbowText 3s linear infinite;
+        }
+
+        @keyframes rainbowText {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
         }
 
         .notification-link {
