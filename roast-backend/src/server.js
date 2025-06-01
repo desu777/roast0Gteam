@@ -141,37 +141,37 @@ const gracefulShutdown = async (signal) => {
   logger.info(`${signal} received, starting graceful shutdown...`);
 
   // Cleanup game service timers
-  if (gameService) {
+  if (gameService && typeof gameService.cleanup === 'function') {
     gameService.cleanup();
     logger.info('Game service cleaned up');
   }
 
   // Cleanup WebSocket service
-  if (wsService) {
+  if (wsService && typeof wsService.cleanup === 'function') {
     wsService.cleanup();
     logger.info('WebSocket service cleaned up');
   }
 
   // Cleanup Treasury service
-  if (treasuryService) {
+  if (treasuryService && typeof treasuryService.cleanup === 'function') {
     treasuryService.cleanup();
     logger.info('Treasury service cleaned up');
   }
 
   // Cleanup AI service
-  if (aiService) {
+  if (aiService && typeof aiService.cleanup === 'function') {
     aiService.cleanup();
     logger.info('AI service cleaned up');
   }
 
-  // Cleanup Players service
-  if (playersService) {
+  // Cleanup Players service (only if cleanup method exists)
+  if (playersService && typeof playersService.cleanup === 'function') {
     playersService.cleanup();
     logger.info('Players service cleaned up');
   }
 
   // Cleanup Voting service
-  if (votingService) {
+  if (votingService && typeof votingService.cleanup === 'function') {
     votingService.cleanup();
     logger.info('Voting service cleaned up');
   }

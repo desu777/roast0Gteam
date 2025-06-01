@@ -1,0 +1,174 @@
+/* RainbowKit Modal Positioning Fix */
+/* CSS Variables for controlling modal size */
+:root {
+  --rk-modal-max-width: 460px;
+  --rk-modal-max-height: 85vh;
+}
+
+/* Fix modal backdrop to ensure it covers entire viewport */
+[data-rk-modal-backdrop] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9998 !important;
+}
+
+/* Main modal positioning fix - Desktop centering */
+[data-rk-modal-container] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+/* Modal content box - Desktop */
+[data-rk-modal-content] {
+  position: relative !important;
+  max-width: var(--rk-modal-max-width) !important;
+  max-height: var(--rk-modal-max-height) !important;
+  margin: 16px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Ensure scrollable content inside modal */
+[data-rk-wallet-options] {
+  max-height: calc(var(--rk-modal-max-height) - 120px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Mobile specific fixes - Bottom sheet style */
+@media (max-width: 768px) {
+  :root {
+    --rk-modal-max-width: 100vw;
+    --rk-modal-max-height: 90vh;
+  }
+  
+  /* Modal container for mobile - bottom alignment */
+  [data-rk-modal-container] {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+  
+  /* Modal content for mobile - bottom sheet */
+  [data-rk-modal-content] {
+    margin: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: var(--rk-modal-max-height) !important;
+    border-radius: 16px 16px 0 0 !important;
+    animation: slideUpFromBottom 0.3s ease-out !important;
+  }
+  
+  /* Fix wallet options container on mobile */
+  [data-rk-wallet-options] {
+    max-height: calc(var(--rk-modal-max-height) - 100px) !important;
+  }
+  
+  /* Add slide up animation for mobile */
+  @keyframes slideUpFromBottom {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* Large screens - ensure centering */
+@media (min-width: 1200px) {
+  [data-rk-modal-content] {
+    margin: auto !important;
+  }
+}
+
+/* Prevent body scroll when modal is open */
+body:has([data-rk-modal-open="true"]) {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  /* Preserve scroll position */
+  top: var(--body-scroll-top, 0) !important;
+}
+
+/* Additional fixes for edge cases */
+/* Fix any absolutely positioned elements inside modal */
+[data-rk-modal-content] * {
+  max-width: 100% !important;
+}
+
+/* Ensure modal header and footer stay in place */
+[data-rk-modal-title-container] {
+  flex-shrink: 0 !important;
+}
+
+/* Custom scrollbar for modal content */
+[data-rk-wallet-options]::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-rk-wallet-options]::-webkit-scrollbar-track {
+  background: rgba(30, 30, 40, 0.8);
+  border-radius: 4px;
+}
+
+[data-rk-wallet-options]::-webkit-scrollbar-thumb {
+  background: rgba(60, 75, 95, 0.6);
+  border-radius: 4px;
+}
+
+[data-rk-wallet-options]::-webkit-scrollbar-thumb:hover {
+  background: rgba(80, 95, 115, 0.8);
+}
+
+/* Fallback positioning for older RainbowKit versions */
+[role="dialog"][data-rk] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-width: var(--rk-modal-max-width) !important;
+  max-height: var(--rk-modal-max-height) !important;
+  margin: 0 !important;
+}
+
+/* Mobile fallback for older RainbowKit versions */
+@media (max-width: 768px) {
+  [role="dialog"][data-rk] {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+}
+
+/* Fix z-index stacking issues */
+[data-rk] {
+  z-index: 9999 !important;
+}
+
+/* Ensure proper stacking context */
+.arena-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fix for any overflow issues */
+#root {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+} 
