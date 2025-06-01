@@ -3,14 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
-
+import './styles/rainbowKitFix.css'
 import App from './App.jsx'
 import { wagmiConfig } from './config/wagmi.js'
 
 // Import RainbowKit styles
 import '@rainbow-me/rainbowkit/styles.css'
-// Import custom RainbowKit overrides to fix modal positioning
-import './styles/rainbowKitOverrides.css'
 
 // Create a client for React Query
 const queryClient = new QueryClient()
