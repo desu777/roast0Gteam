@@ -130,6 +130,7 @@ const HeaderStyles = `
     font-weight: 500;
   }
 
+  /* Connect Wallet Button - Gradient with flowing animation */
   .connect-wallet-btn {
     position: relative;
     padding: 14px 28px;
@@ -182,9 +183,91 @@ const HeaderStyles = `
     box-shadow: none;
   }
 
+  .connect-wallet-btn.error {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+    animation: pulse 1s infinite;
+  }
+
   @keyframes connectButtonFlow {
     0% { background-position: 0% 50%; }
     100% { background-position: 200% 50%; }
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  /* Wallet Connected Button - Clean design like on screenshots */
+  .wallet-connected-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    color: #E6E6E6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 14px;
+    backdrop-filter: blur(10px);
+  }
+
+  .wallet-connected-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(var(--judge-color-rgb, 0, 210, 233), 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(var(--judge-color-rgb, 0, 210, 233), 0.3);
+  }
+
+  .wallet-connected-btn:active {
+    transform: translateY(-1px);
+    background: rgba(var(--judge-color-rgb, 0, 210, 233), 0.1);
+    border-color: var(--judge-color, #00D2E9);
+    box-shadow: 0 4px 15px rgba(var(--judge-color-rgb, 0, 210, 233), 0.4);
+  }
+
+  .wallet-avatar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  .avatar-gradient {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+    background-size: 200% 100%;
+    animation: avatarRainbowFlow 3s linear infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  @keyframes avatarRainbowFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .avatar-gradient::after {
+    content: '';
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #1A1A1A;
+    position: absolute;
+  }
+
+  .wallet-balance {
+    font-weight: 700;
+    font-size: 13px;
+    /* Color is set via inline style from currentJudge.color */
   }
 
   .wallet-container {
@@ -530,6 +613,16 @@ const HeaderStyles = `
       font-size: 13px;
       padding: 6px 12px;
     }
+
+    .wallet-connected-btn {
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    .connect-wallet-btn {
+      padding: 12px 20px;
+      font-size: 14px;
+    }
   }
 
   @media (max-width: 480px) {
@@ -545,6 +638,22 @@ const HeaderStyles = `
     .connect-wallet-btn {
       padding: 10px 16px;
       font-size: 13px;
+    }
+
+    .wallet-connected-btn {
+      padding: 8px 12px;
+      font-size: 12px;
+      gap: 8px;
+    }
+
+    .avatar-gradient {
+      width: 20px;
+      height: 20px;
+    }
+
+    .avatar-gradient::after {
+      width: 14px;
+      height: 14px;
     }
   }
 `;

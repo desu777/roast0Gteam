@@ -392,10 +392,13 @@ class DailyRewardsScript {
       const percentage = positionPercentages[winner.position];
       const rewardAmount = totalPool * percentage;
       
+      // ✨ FIX: Round reward amounts to 18 decimal places to avoid precision issues
+      const roundedRewardAmount = parseFloat(rewardAmount.toFixed(18));
+      
       distribution.push({
         ...winner,
-        reward_amount: rewardAmount,
-        total_pool: totalPool,
+        reward_amount: roundedRewardAmount,
+        total_pool: parseFloat(totalPool.toFixed(18)),
         percentage: percentage * 100  // Convert to percentage for storage
       });
     }
@@ -422,7 +425,7 @@ class DailyRewardsScript {
     // Check hot wallet balance
     const hotWalletBalance = await this.provider.getBalance(this.hotWallet.address);
     const totalToDistribute = rewardDistribution.reduce((sum, r) => sum + r.reward_amount, 0);
-    const totalToDistributeWei = ethers.parseEther(totalToDistribute.toString());
+    const totalToDistributeWei = ethers.parseEther(totalToDistribute.toFixed(18));
     
     if (hotWalletBalance < totalToDistributeWei) {
       throw new Error(`Insufficient hot wallet balance. Need: ${totalToDistribute.toFixed(6)} 0G, Have: ${ethers.formatEther(hotWalletBalance)} 0G`);
@@ -441,7 +444,9 @@ class DailyRewardsScript {
       try {
         logger.info(`💸 Sending reward to ${reward.player_address.slice(0, 10)}... (${reward.category} #${reward.position}): ${reward.reward_amount.toFixed(6)} 0G`);
         
-        const rewardAmountWei = ethers.parseEther(reward.reward_amount.toString());
+        // ✨ FIX: Round to 18 decimal places to avoid ethers precision issues
+        const roundedAmount = parseFloat(reward.reward_amount.toFixed(18));
+        const rewardAmountWei = ethers.parseEther(roundedAmount.toString());
         
         // Estimate gas
         const gasEstimate = await this.provider.estimateGas({
@@ -465,7 +470,7 @@ class DailyRewardsScript {
           throw new Error('Transaction failed');
         }
         
-        // Record in database
+        // Record in database - use the rounded amount
         const rewardStmt = this.db.prepare(`
           INSERT INTO daily_rewards (
             date, category, position, player_address, 
@@ -479,16 +484,16 @@ class DailyRewardsScript {
           reward.category,
           reward.position,
           reward.player_address,
-          reward.reward_amount,
+          roundedAmount, // Use rounded amount in database
           reward.total_pool,
           reward.percentage,
           tx.hash
         );
         
         successfulDistributions++;
-        totalDistributed += reward.reward_amount;
+        totalDistributed += roundedAmount; // Use rounded amount for totals
         
-        logger.info(`✅ Reward distributed successfully: ${reward.reward_amount.toFixed(6)} 0G to ${reward.player_address.slice(0, 10)}...`);
+        logger.info(`✅ Reward distributed successfully: ${roundedAmount.toFixed(6)} 0G to ${reward.player_address.slice(0, 10)}...`);
         
         // Small delay between transactions
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -496,7 +501,8 @@ class DailyRewardsScript {
       } catch (error) {
         logger.error(`❌ Failed to distribute reward to ${reward.player_address}:`, error);
         
-        // Record failed attempt (without tx_hash)
+        // Record failed attempt (without tx_hash) - use rounded amount
+        const roundedAmount = parseFloat(reward.reward_amount.toFixed(18));
         const rewardStmt = this.db.prepare(`
           INSERT INTO daily_rewards (
             date, category, position, player_address, 
@@ -509,7 +515,7 @@ class DailyRewardsScript {
           reward.category,
           reward.position,
           reward.player_address,
-          reward.reward_amount,
+          roundedAmount, // Use rounded amount in database
           reward.total_pool,
           reward.percentage
         );

@@ -1,8 +1,10 @@
 import React from 'react';
 import { 
-  Volume2, VolumeX, Zap, Target, Users, Coins, RefreshCw, AlertTriangle, CheckCircle, Loader, Sparkles, SparklesIcon, Crown 
+  Volume2, VolumeX, Target, Users, Coins, RefreshCw, Crown, Sparkles 
 } from 'lucide-react';
-import { useWallet } from '../../hooks/useWallet';
+import { useAccount, useBalance } from 'wagmi';
+import ConnectWallet from '../ConnectWallet/ConnectWallet';
+import { zgGalileoTestnet } from '../../config/wagmi';
 import HeaderStyles from '../../styles/HeaderStyles';
 
 const Header = ({ 
@@ -16,20 +18,21 @@ const Header = ({
   onHallOfFameClick,
   currentJudge
 }) => {
-  const { 
+  // Use wagmi hooks directly for basic wallet info
+  const { address, isConnected, chainId } = useAccount();
+  const { data: balance } = useBalance({ 
     address, 
-    isConnected, 
-    isCorrectChain, 
-    isAuthenticated,
-    balance, 
-    connectWallet, 
-    disconnectWallet,
-    formatAddress,
-    chainInfo,
-    error: walletError,
-    isLoading,
-    isAuthenticating
-  } = useWallet();
+    chainId: zgGalileoTestnet.id 
+  });
+
+  // Check if on correct chain
+  const isCorrectChain = chainId === zgGalileoTestnet.id;
+
+  // Format balance for display
+  const formatBalance = (balance) => {
+    if (!balance) return '0.000';
+    return parseFloat(balance.formatted).toFixed(3);
+  };
 
   return (
     <>
@@ -69,81 +72,10 @@ const Header = ({
               </button>
             </div>
             
-            {!isConnected ? (
-              <button 
-                className="connect-wallet-btn" 
-                onClick={connectWallet}
-                disabled={isLoading}
-              >
-                <Zap size={20} />
-                {isLoading ? 'Connecting...' : 'Connect Wallet'}
-              </button>
-            ) : (
-              <div className="wallet-container">
-                {!isCorrectChain && (
-                  <div className="chain-warning">
-                    <AlertTriangle size={16} />
-                    <span>Wrong Network</span>
-                  </div>
-                )}
-                
-                <div className="wallet-card">
-                  <div className="wallet-header">
-                    <div className="wallet-status">
-                      {isAuthenticating ? (
-                        <Loader size={16} className="status-icon spinning" />
-                      ) : isAuthenticated ? (
-                        <CheckCircle size={16} className="status-icon authenticated" />
-                      ) : (
-                        <AlertTriangle size={16} className="status-icon warning" />
-                      )}
-                      <span className="status-text">
-                        {isAuthenticating ? 'Authenticating...' : isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
-                      </span>
-                    </div>
-                    <button 
-                      className="disconnect-btn"
-                      onClick={disconnectWallet}
-                      title="Disconnect wallet"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  
-                  <div className="wallet-body">
-                    <div className="wallet-address" style={{ color: currentJudge?.color || '#00D2E9' }}>{formatAddress(address)}</div>
-                    <div className="wallet-info">
-                      <div className="balance-info">
-                        <Coins size={14} />
-                        <span>{balance} {chainInfo.symbol}</span>
-                      </div>
-                      <div className="network-info">
-                        <div className={`network-dot ${isCorrectChain ? 'correct' : 'wrong'}`}></div>
-                        <span>{isCorrectChain ? chainInfo.name : 'Wrong Network'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {!isCorrectChain && (
-                    <div className="wallet-footer">
-                      <button className="switch-network-btn">
-                        Switch to {chainInfo.name}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Custom ConnectWallet Component */}
+            <ConnectWallet currentJudge={currentJudge} />
           </div>
         </div>
-
-        {/* Error Display */}
-        {walletError && (
-          <div className="error-banner">
-            <AlertTriangle size={16} />
-            <span>{walletError}</span>
-          </div>
-        )}
 
         {/* Stats Bar */}
         <div className="stats-bar">
@@ -170,7 +102,7 @@ const Header = ({
           
           <div className="stat-card">
             <Coins size={16} />
-            <span>{prizePool.toFixed(3)} {chainInfo.symbol} Pool</span>
+            <span>{prizePool.toFixed(3)} {zgGalileoTestnet.nativeCurrency.symbol} Pool</span>
           </div>
           <div className="stat-card">
             <RefreshCw size={16} />

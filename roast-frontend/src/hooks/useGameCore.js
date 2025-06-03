@@ -2,13 +2,17 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { GAME_PHASES } from '../constants/gameConstants';
 import { TEAM_MEMBERS } from '../data/teamMembers';
 import { gameApi } from '../services/api';
-import { useWallet } from './useWallet';
+import { useAccount } from 'wagmi';
 import { useSendTransaction } from 'wagmi';
 import { parseEther } from 'viem';
 
 export const useGameCore = () => {
-  const { address, isAuthenticated, isConnected } = useWallet();
+  const { address, isConnected } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
+
+  // For now, we'll consider connected users as authenticated
+  // This can be enhanced later with proper authentication
+  const isAuthenticated = isConnected;
 
   // Refs for debouncing
   const loadRoundTimeoutRef = useRef(null);
@@ -34,7 +38,7 @@ export const useGameCore = () => {
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   
   // UI State
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [showJudgeDetails, setShowJudgeDetails] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
@@ -48,6 +52,84 @@ export const useGameCore = () => {
   // Results lock state
   const [resultsLocked, setResultsLocked] = useState(false);
   const [resultsLockTimer, setResultsLockTimer] = useState(null);
+
+  // ================================
+  // SOUND EFFECTS
+  // ================================
+  
+  // Sound effects
+  const playSound = useCallback((type) => {
+    if (!soundEnabled) return;
+    
+    // Sprawdź zmienną środowiskową dla logowania
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`Playing sound: ${type}`);
+    }
+
+    try {
+      // Create audio context for sound effects
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Different sounds for different game events
+      const frequencies = {
+        // Game phase sounds
+        start: [523, 659, 784], // C5, E5, G5 - ascending major chord (optimistic)
+        judging: [440, 554, 659, 784], // A4, C#5, E5, G5 - suspenseful progression
+        winner: [784, 988, 1175, 1397], // G5, B5, D6, F6 - victorious fanfare
+        
+        // User action sounds
+        join: [659, 784, 988], // E5, G5, B5 - joining chord
+        submit: [880, 1108, 1318], // A5, C#6, E6 - submission confirmation
+        vote: [523, 698, 880], // C5, F5, A5 - voting chord
+        
+        // Notification sounds
+        success: [659, 830, 988, 1175], // E5, G#5, B5, D6 - success progression
+        error: [349, 293, 261], // F4, D4, C4 - descending error tone
+        notification: [880, 1108], // A5, C#6 - attention sound
+        
+        // Special effects
+        countdown: [440, 440, 440, 523], // A4 x3, C5 - countdown beeps
+        timeout: [220, 185, 165], // A3, F#3, E3 - time's up descending
+      };
+      
+      const freq = frequencies[type] || frequencies.notification;
+      
+      freq.forEach((f, i) => {
+        setTimeout(() => {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
+          osc.frequency.value = f;
+          
+          // Different wave types for different event categories
+          if (type === 'winner' || type === 'success') {
+            osc.type = 'triangle'; // Warmer sound for positive events
+          } else if (type === 'error' || type === 'timeout') {
+            osc.type = 'sawtooth'; // Harsher sound for negative events
+          } else if (type === 'judging' || type === 'countdown') {
+            osc.type = 'square'; // Sharp sound for suspense
+          } else {
+            osc.type = 'sine'; // Default smooth sound
+          }
+          
+          // Volume based on event importance
+          const volume = type === 'winner' ? 0.15 : 
+                        type === 'error' ? 0.12 :
+                        type === 'start' || type === 'judging' ? 0.1 : 0.08;
+          
+          gain.gain.setValueAtTime(volume, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+          osc.start();
+          osc.stop(audioContext.currentTime + 0.6);
+        }, i * 120); // Slightly longer delay between notes for clarity
+      });
+    } catch (error) {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.warn('Audio context error:', error);
+      }
+    }
+  }, [soundEnabled]);
 
   // ================================
   // LOCAL TIMER MANAGEMENT
@@ -67,6 +149,16 @@ export const useGameCore = () => {
       currentTime--;
       setTimeLeft(Math.max(0, currentTime));
       
+      // Play countdown sound when 10 seconds left
+      if (currentTime === 10) {
+        playSound('countdown');
+      }
+      
+      // Play timeout sound when timer reaches 0
+      if (currentTime === 0) {
+        playSound('timeout');
+      }
+      
       // Stop timer when it reaches 0
       if (currentTime <= 0) {
         clearInterval(localTimerRef.current);
@@ -77,7 +169,7 @@ export const useGameCore = () => {
     if (import.meta.env.VITE_TEST_ENV === 'true') {
       console.log(`⏱️ Local timer started: ${initialTime}s`);
     }
-  }, []);
+  }, [playSound]);
 
   // Stop local timer
   const stopLocalTimer = useCallback(() => {
@@ -146,16 +238,6 @@ export const useGameCore = () => {
   // ================================
   // ORIGINAL CODE CONTINUES...
   // ================================
-
-  // Sound effects
-  const playSound = (type) => {
-    if (!soundEnabled) return;
-    
-    // Sprawdź zmienną środowiskową dla logowania
-    if (import.meta.env.VITE_TEST_ENV === 'true') {
-      console.log(`Playing sound: ${type}`);
-    }
-  };
 
   // Debounced załaduj aktualną rundę z backendu
   const loadCurrentRound = useCallback(async (force = false) => {

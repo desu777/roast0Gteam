@@ -69,19 +69,24 @@ const PhaseContent = ({
                     </div>
                     
                     <button
-                      className="submit-button"
+                      className={`submit-roast-btn ${roastText.trim() ? 'ready' : ''}`}
                       onClick={joinRound}
                       disabled={!roastText.trim() || userSubmitted || isSubmitting}
                     >
-                      {isSubmitting ? (
-                        <>
-                          <Loader size={16} className="inline-icon spinning" /> Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <Flame size={16} className="inline-icon" /> Submit your roast!
-                        </>
-                      )}
+                      <div className="btn-flame-bg"></div>
+                      <div className="btn-content">
+                        {isSubmitting ? (
+                          <>
+                            <div className="spinner" />
+                            <span>Igniting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Flame size={16} className="inline-icon" />
+                            <span>Submit your roast!</span>
+                          </>
+                        )}
+                      </div>
                     </button>
                   </div>
                 ) : (
@@ -256,32 +261,109 @@ const PhaseContent = ({
             font-size: 12px;
           }
 
-          .submit-button {
+          .submit-roast-btn {
+            position: relative;
             width: 100%;
-            padding: 16px;
-            background: var(--theme-primary, #FFD700);
-            border: none;
-            border-radius: 12px;
-            color: #1A1A1A;
+            max-width: 400px;
+            margin: 0 auto 20px auto;
+            padding: 0;
+            background: linear-gradient(135deg, #FFD700, #FF6B6B);
+            border: 2px solid #FFD700;
+            border-radius: 16px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: block;
             font-size: 18px;
             font-weight: 600;
-            cursor: pointer;
+            animation: goldGlow 2s ease-in-out infinite alternate;
+          }
+
+          .submit-roast-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            animation: intensePulse 0.5s ease-in-out infinite alternate;
+          }
+
+          .submit-roast-btn:active:not(:disabled) {
+            transform: translateY(0);
+          }
+
+          @keyframes goldGlow {
+            0% { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+            100% { box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6); }
+          }
+
+          @keyframes intensePulse {
+            0% { transform: translateY(-2px) scale(1); }
+            100% { transform: translateY(-2px) scale(1.02); }
+          }
+
+          .btn-flame-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, 
+              rgba(255, 215, 0, 0.8), 
+              rgba(255, 107, 107, 0.8), 
+              rgba(255, 92, 170, 0.8),
+              rgba(255, 215, 0, 0.8)
+            );
+            background-size: 300% 300%;
+            animation: flameShift 3s ease infinite;
+            opacity: 0.9;
+          }
+
+          @keyframes flameShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+
+          .btn-content {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin-bottom: 16px;
-            transition: all 0.3s ease;
+            gap: 12px;
           }
 
-          .submit-button:disabled {
-            opacity: 0.6;
+          .btn-content span {
+            background: linear-gradient(90deg, #FFFFFF, #FFD700, #FFFFFF);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 2s linear infinite;
+          }
+
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+
+          .btn-content svg {
+            color: #FFFFFF;
+            filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+          }
+
+          .submit-roast-btn:disabled {
+            background: #666;
+            border-color: #666;
+            animation: none;
+            box-shadow: none;
             cursor: not-allowed;
           }
 
-          .submit-button:not(:disabled):hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
+          .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: #FFD700;
+            animation: spin 1s linear infinite;
           }
 
           .connect-prompt {
@@ -294,10 +376,6 @@ const PhaseContent = ({
           .inline-icon {
             display: inline;
             vertical-align: middle;
-          }
-
-          .spinning {
-            animation: spin 1s linear infinite;
           }
 
           @keyframes spin {

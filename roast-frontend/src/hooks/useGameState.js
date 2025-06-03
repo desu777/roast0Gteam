@@ -331,7 +331,7 @@ export const useGameState = () => {
     showFireEffect: gameCore.showFireEffect,
     
     // Actions (from gameCore)
-    connectWallet: () => {}, // Będzie obsługiwane przez useWallet
+    connectWallet: () => {}, // Now handled by Custom ConnectButton component
     joinRound,
     formatTime: gameCore.formatTime,
     playSound: gameCore.playSound,

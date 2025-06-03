@@ -18,7 +18,7 @@ import { globalStyles, appStyles } from './styles/appStyles';
 const App = () => {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [sparksEnabled, setSparksEnabled] = useState(true);
+  const [sparksEnabled, setSparksEnabled] = useState(false);
   const [showHallOfFame, setShowHallOfFame] = useState(false);
 
   // Hook do sprawdzania szerokości ekranu

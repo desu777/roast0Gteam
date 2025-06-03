@@ -10,23 +10,28 @@ const { config } = require('../../config/app.config');
 function createVotingRoutes(votingController) {
   const router = express.Router();
 
-  // Rate limiting for voting endpoints
+  // Rate limiting for voting endpoints - increased for production
   const votingRateLimit = rateLimit({
     windowMs: 60000, // 1 minute
-    max: 10, // 10 requests per minute per IP
+    max: config.server.env === 'production' ? 50 : 10, // 50 requests per minute in production, 10 in dev
     message: {
       error: true,
       message: 'Too many voting requests, please try again later',
       code: 'VOTING_RATE_LIMIT'
     },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => {
+      // Skip rate limiting for health checks and stats endpoints in production
+      return config.server.env === 'production' && 
+             (req.path.includes('/health') || req.path.includes('/stats/'));
+    }
   });
 
-  // Rate limiting for vote casting (more restrictive)
+  // Rate limiting for vote casting - more lenient for production
   const voteRateLimit = rateLimit({
     windowMs: 60000, // 1 minute
-    max: 2, // 2 votes per minute per IP (prevents spam)
+    max: config.server.env === 'production' ? 5 : 2, // 5 votes per minute in production, 2 in dev
     message: {
       error: true,
       message: 'Too many vote attempts, please try again later',

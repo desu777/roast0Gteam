@@ -40,7 +40,7 @@ const config = {
   // Rate Limiting
   rateLimiting: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
-    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || (process.env.NODE_ENV === 'production' ? 300 : 100),
     submissionRateLimit: parseInt(process.env.SUBMISSION_RATE_LIMIT) || 1
   },
 
