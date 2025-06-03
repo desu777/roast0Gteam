@@ -5,14 +5,12 @@ import { gameApi } from '../services/api';
 import { useAccount } from 'wagmi';
 import { useSendTransaction } from 'wagmi';
 import { parseEther } from 'viem';
+import { useWalletAuth } from './useWalletAuth';
 
 export const useGameCore = () => {
   const { address, isConnected } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
-
-  // For now, we'll consider connected users as authenticated
-  // This can be enhanced later with proper authentication
-  const isAuthenticated = isConnected;
+  const { isAuthenticated, isAuthenticating, authError } = useWalletAuth();
 
   // Refs for debouncing
   const loadRoundTimeoutRef = useRef(null);
@@ -621,6 +619,8 @@ export const useGameCore = () => {
     // Wallet state
     isConnected: isConnected && wsConnected,
     userAddress: address,
-    isAuthenticated
+    isAuthenticated,
+    isAuthenticating,
+    authError
   };
 }; 
