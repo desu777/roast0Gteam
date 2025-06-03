@@ -252,10 +252,12 @@ const App = () => {
         />
         
         {/* Transaction Notifications */}
-        {notifications.map(notification => (
+        {notifications.map((notification, index) => (
           <TransactionNotification
             key={notification.id}
             {...notification}
+            index={index}
+            currentJudge={currentJudge}
             onClose={() => removeNotification(notification.id)}
           />
         ))}

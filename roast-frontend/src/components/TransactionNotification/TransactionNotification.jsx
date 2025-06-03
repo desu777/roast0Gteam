@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
-import { ExternalLink, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { ExternalLink, CheckCircle, AlertCircle, X, Info } from 'lucide-react';
 
 const TransactionNotification = ({ 
   type, 
   message, 
   txHash, 
   onClose, 
-  duration = 5000 
+  duration = 5000,
+  index = 0,
+  currentJudge = null
 }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -22,6 +24,10 @@ const TransactionNotification = ({
         return <CheckCircle size={20} />;
       case 'error':
         return <AlertCircle size={20} />;
+      case 'warning':
+        return <AlertCircle size={20} />;
+      case 'info':
+        return <Info size={20} />;
       default:
         return <CheckCircle size={20} />;
     }
@@ -31,9 +37,50 @@ const TransactionNotification = ({
     return `https://chainscan-galileo.0g.ai/tx/${hash}`;
   };
 
+  const getNotificationColors = () => {
+    const judgeColor = currentJudge?.color || '#FFD700';
+    
+    switch (type) {
+      case 'success':
+        return {
+          borderColor: judgeColor,
+          iconColor: judgeColor
+        };
+      case 'error':
+        return {
+          borderColor: '#FF5C5C',
+          iconColor: '#FF5C5C'
+        };
+      case 'warning':
+        return {
+          borderColor: '#FFA500',
+          iconColor: '#FFA500'
+        };
+      case 'info':
+        return {
+          borderColor: judgeColor,
+          iconColor: judgeColor
+        };
+      default:
+        return {
+          borderColor: judgeColor,
+          iconColor: judgeColor
+        };
+    }
+  };
+
+  const colors = getNotificationColors();
+
   return (
     <>
-      <div className={`notification ${type}`}>
+      <div 
+        className={`notification ${type}`}
+        style={{
+          transform: `translateY(-${index * 80}px)`,
+          borderColor: `rgba(${hexToRgb(colors.borderColor)}, 0.3)`,
+          '--icon-color': colors.iconColor
+        }}
+      >
         <div className="notification-icon">
           {getIcon()}
         </div>
@@ -71,38 +118,25 @@ const TransactionNotification = ({
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           animation: slideIn 0.3s ease-out;
           z-index: 1000;
+          border: 1px solid;
+          transition: transform 0.3s ease-out;
         }
 
         @keyframes slideIn {
           from {
-            transform: translateX(100%);
+            transform: translateX(100%) translateY(-${index * 80}px);
             opacity: 0;
           }
           to {
-            transform: translateX(0);
+            transform: translateX(0) translateY(-${index * 80}px);
             opacity: 1;
           }
-        }
-
-        .notification.success {
-          border: 1px solid rgba(0, 210, 233, 0.3);
-        }
-
-        .notification.error {
-          border: 1px solid rgba(255, 92, 92, 0.3);
         }
 
         .notification-icon {
           flex-shrink: 0;
           margin-top: 2px;
-        }
-
-        .notification.success .notification-icon {
-          color: #00D2E9;
-        }
-
-        .notification.error .notification-icon {
-          color: #FF5C5C;
+          color: var(--icon-color);
         }
 
         .notification-content {
@@ -132,7 +166,7 @@ const TransactionNotification = ({
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          color: #00D2E9;
+          color: var(--icon-color);
           text-decoration: none;
           font-size: 13px;
           transition: opacity 0.2s;
@@ -168,6 +202,13 @@ const TransactionNotification = ({
       `}</style>
     </>
   );
+};
+
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result 
+    ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+    : '255, 215, 0';
 };
 
 export default TransactionNotification; 
