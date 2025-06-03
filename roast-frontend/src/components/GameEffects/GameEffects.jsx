@@ -33,7 +33,7 @@ const GameEffects = ({
       />
 
       {/* Fire Effect */}
-      <FireEffect show={showFireEffect} />
+      <FireEffect show={showFireEffect} currentJudge={currentJudge} />
     </>
   );
 };

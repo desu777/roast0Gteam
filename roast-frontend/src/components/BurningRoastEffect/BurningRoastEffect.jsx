@@ -22,6 +22,20 @@ const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
     });
   }
 
+  // Uzyskaj kolor sędziego lub użyj domyślnego
+  const judgeColor = currentJudge?.color || '#FFD700';
+  
+  // Konwertuj hex na rgba dla efektów
+  const hexToRgba = (hex, alpha = 1) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return `rgba(255, 215, 0, ${alpha})`; // fallback
+    
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   return (
     <>
       <div className="burning-roast-container">
@@ -53,7 +67,13 @@ const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
           <div className="fireplace__light"></div>
         </div>
         
-        <div className="roast-submitted-text">
+        <div 
+          className="roast-submitted-text"
+          style={{
+            '--judge-color': judgeColor,
+            '--judge-color-glow': hexToRgba(judgeColor, 0.5)
+          }}
+        >
           <h2>Roast Submitted!</h2>
           <p>Your roast is burning in the arena. {currentJudge?.name || 'The judge'} will decide when time runs out.</p>
         </div>
@@ -214,7 +234,7 @@ const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
           font-size: 28px;
           font-weight: 700;
           margin-bottom: 16px;
-          background: linear-gradient(90deg, #FFD700, #FF6B6B, #FF5CAA);
+          background: linear-gradient(90deg, var(--judge-color, #FFD700), #FF6B6B, #FF5CAA);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           animation: fireGlow 2s ease-in-out infinite alternate;
@@ -235,7 +255,7 @@ const BurningRoastEffect = ({ currentJudge, participants = [] }) => {
 
         @keyframes fireGlow {
           0% { filter: brightness(1); }
-          100% { filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 107, 107, 0.5)); }
+          100% { filter: brightness(1.2) drop-shadow(0 0 10px var(--judge-color-glow, rgba(255, 107, 107, 0.5))); }
         }
 
         /* Fire animations */
