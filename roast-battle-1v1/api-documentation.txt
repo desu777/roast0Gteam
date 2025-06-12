@@ -1,0 +1,529 @@
+openapi: 3.0.0
+info:
+  title: 0G Roast Battle 1v1 API
+  description: |
+    API for the 0G Roast Arena - AI-powered 1v1 roast battles with real-time betting.
+    
+    ## Features
+    - Real-time WebSocket events for live battle updates
+    - Betting system with automatic payouts
+    - AI-generated dialog using GPT-4
+    - Player statistics and leaderboards
+    
+    ## WebSocket Events
+    Connect to `/socket.io` for real-time updates.
+  version: 1.0.0
+  contact:
+    name: 0G Roast Team
+    email: support@0g.ai
+
+servers:
+  - url: http://localhost:3002
+    description: Development server
+  - url: https://roast-api.0g.ai
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the service is running and get system status
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    type: string
+                  version:
+                    type: string
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: number
+                  connectedUsers:
+                    type: integer
+                  battle:
+                    type: object
+                    properties:
+                      active:
+                        type: boolean
+                      status:
+                        type: string
+                      battleId:
+                        type: string
+                  treasury:
+                    type: object
+                    properties:
+                      initialized:
+                        type: boolean
+                      address:
+                        type: string
+                      network:
+                        type: string
+
+  /api/characters/og:
+    get:
+      summary: Get 0G team characters
+      description: Returns all available 0G team members
+      tags:
+        - Characters
+      responses:
+        '200':
+          description: List of 0G characters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Character'
+
+  /api/characters/roasters:
+    get:
+      summary: Get roaster characters
+      description: Returns all available crypto roaster archetypes
+      tags:
+        - Characters
+      responses:
+        '200':
+          description: List of roaster characters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Character'
+
+  /api/battle/current:
+    get:
+      summary: Get current battle
+      description: Returns the current active battle state
+      tags:
+        - Battle
+      responses:
+        '200':
+          description: Current battle state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BattleState'
+
+  /api/battle/bet:
+    post:
+      summary: Place a bet
+      description: Place a bet on the current battle
+      tags:
+        - Battle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerAddress
+                - betSide
+                - betAmount
+                - txHash
+              properties:
+                playerAddress:
+                  type: string
+                  pattern: '^0x[a-fA-F0-9]{40}$'
+                  example: '0x1234567890123456789012345678901234567890'
+                betSide:
+                  type: string
+                  enum: [og, roaster]
+                  example: 'og'
+                betAmount:
+                  type: number
+                  minimum: 0.1
+                  example: 0.5
+                txHash:
+                  type: string
+                  pattern: '^0x[a-fA-F0-9]{64}$'
+                  example: '0x0000000000000000000000000000000000000000000000000000000000000000'
+      responses:
+        '200':
+          description: Bet placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BattleState'
+                  message:
+                    type: string
+        '400':
+          description: Invalid bet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/battle/history:
+    get:
+      summary: Get battle history
+      description: Returns completed battles
+      tags:
+        - Battle
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Battle history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BattleHistory'
+                  pagination:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                      count:
+                        type: integer
+
+  /api/battle/stats/{address}:
+    get:
+      summary: Get player statistics
+      description: Returns statistics for a specific player
+      tags:
+        - Stats
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^0x[a-fA-F0-9]{40}$'
+      responses:
+        '200':
+          description: Player statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PlayerStats'
+
+  /api/battle/leaderboard:
+    get:
+      summary: Get leaderboard
+      description: Returns top players by winnings
+      tags:
+        - Stats
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+                  limit:
+                    type: integer
+
+  /api/battle/treasury:
+    get:
+      summary: Get treasury statistics
+      description: Returns treasury balance and payout information
+      tags:
+        - Treasury
+      responses:
+        '200':
+          description: Treasury statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/TreasuryStats'
+
+components:
+  schemas:
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+        personality:
+          type: string
+        catchphrase:
+          type: string
+        description:
+          type: string
+        archetype:
+          type: string
+        twitterUrl:
+          type: string
+
+    BattleState:
+      type: object
+      properties:
+        battleId:
+          type: string
+        status:
+          type: string
+          enum: [waiting_bets, countdown, generating, dialog, completed]
+        ogCharacter:
+          $ref: '#/components/schemas/Character'
+        roasterCharacter:
+          $ref: '#/components/schemas/Character'
+        bets:
+          type: object
+          properties:
+            og:
+              type: object
+              properties:
+                count:
+                  type: integer
+                total:
+                  type: number
+                players:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      amount:
+                        type: number
+            roaster:
+              type: object
+              properties:
+                count:
+                  type: integer
+                total:
+                  type: number
+                players:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      amount:
+                        type: number
+        totalPot:
+          type: number
+        countdownRemaining:
+          type: integer
+          nullable: true
+        countdownEnd:
+          type: string
+          format: date-time
+          nullable: true
+        dialog:
+          type: array
+          items:
+            type: object
+            properties:
+              speaker:
+                type: string
+                enum: [og, roaster]
+              message:
+                type: string
+              tone:
+                type: string
+              impact:
+                type: integer
+        winner:
+          type: string
+          enum: [og, roaster]
+          nullable: true
+        winnerReasoning:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        canStart:
+          type: boolean
+
+    BattleHistory:
+      type: object
+      properties:
+        battle_id:
+          type: string
+        og_character_id:
+          type: string
+        roaster_character_id:
+          type: string
+        winner_side:
+          type: string
+        winner_reasoning:
+          type: string
+        total_pot:
+          type: number
+        house_fee:
+          type: number
+        winners_count:
+          type: integer
+        losers_count:
+          type: integer
+        per_winner_amount:
+          type: number
+        dialog:
+          type: array
+        completed_at:
+          type: string
+          format: date-time
+
+    PlayerStats:
+      type: object
+      properties:
+        player_address:
+          type: string
+        total_battles:
+          type: integer
+        total_wins:
+          type: integer
+        total_losses:
+          type: integer
+        total_bet:
+          type: number
+        total_winnings:
+          type: number
+        win_rate:
+          type: number
+        favorite_side:
+          type: string
+        og_bets:
+          type: integer
+        roaster_bets:
+          type: integer
+        og_wins:
+          type: integer
+        roaster_wins:
+          type: integer
+        last_battle_at:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        player_address:
+          type: string
+        total_battles:
+          type: integer
+        total_wins:
+          type: integer
+        total_losses:
+          type: integer
+        win_rate:
+          type: number
+        total_winnings:
+          type: number
+        favorite_side:
+          type: string
+
+    TreasuryStats:
+      type: object
+      properties:
+        address:
+          type: string
+        balance:
+          type: string
+        currency:
+          type: string
+        network:
+          type: string
+        queuedPayouts:
+          type: integer
+        isProcessing:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        message:
+          type: string
+
+  securitySchemes:
+    AdminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key

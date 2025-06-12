@@ -32,23 +32,43 @@ const config = {
   // Treasury Configuration
   treasury: {
     privateKey: process.env.TREASURY_PRIVATE_KEY,
-    address: process.env.TREASURY_ADDRESS
+    address: process.env.TREASURY_ADDRESS,
+    payoutInterval: parseInt(process.env.TREASURY_PAYOUT_INTERVAL) || 5000,
+    gasLimit: parseInt(process.env.TREASURY_GAS_LIMIT) || 21000,
+    payoutBatchSize: parseInt(process.env.TREASURY_PAYOUT_BATCH_SIZE) || 10,
+    maxRetryAttempts: parseInt(process.env.TREASURY_MAX_RETRY_ATTEMPTS) || 3
   },
 
   // OpenAI Configuration
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
     model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    temperature: 0.8,
-    maxTokens: 1500
+    temperature: parseFloat(process.env.OPENAI_TEMPERATURE) || 0.8,
+    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS) || 1500,
+    streaming: process.env.OPENAI_STREAMING === 'true'
+  },
+
+  // AI Dialog Configuration
+  ai: {
+    maxDialogExchanges: parseInt(process.env.AI_MAX_DIALOG_EXCHANGES) || 8,
+    exchangeBaseDelay: parseInt(process.env.AI_EXCHANGE_BASE_DELAY) || 2000,
+    exchangeCharDelay: parseInt(process.env.AI_EXCHANGE_CHAR_DELAY) || 20,
+    exchangeMaxDelay: parseInt(process.env.AI_EXCHANGE_MAX_DELAY) || 5000,
+    impactMin: parseInt(process.env.AI_IMPACT_MIN) || 1,
+    impactMax: parseInt(process.env.AI_IMPACT_MAX) || 10,
+    scoreMin: parseInt(process.env.AI_SCORE_MIN) || 0,
+    scoreMax: parseInt(process.env.AI_SCORE_MAX) || 100
   },
 
   // Battle Configuration
   battle: {
     betAmount: parseFloat(process.env.BET_AMOUNT) || 0.5,
     countdownDuration: parseInt(process.env.COUNTDOWN_DURATION) || 90,
+    countdownTimerInterval: parseInt(process.env.COUNTDOWN_TIMER_INTERVAL) || 1000,
+    battleEndDelay: parseInt(process.env.BATTLE_END_DELAY) || 10000,
     houseFeePercent: parseFloat(process.env.HOUSE_FEE_PERCENT) || 5,
-    maxDialogExchanges: parseInt(process.env.MAX_DIALOG_EXCHANGES) || 6,
+    historyDefaultLimit: parseInt(process.env.BATTLE_HISTORY_DEFAULT_LIMIT) || 20,
+    leaderboardDefaultLimit: parseInt(process.env.LEADERBOARD_DEFAULT_LIMIT) || 10,
     minBetsToStart: {
       og: 1,
       roaster: 1
@@ -59,6 +79,12 @@ const config = {
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100
+  },
+
+  // WebSocket Configuration
+  websocket: {
+    connectionTimeout: parseInt(process.env.WS_CONNECTION_TIMEOUT) || 10000,
+    reconnectMaxDelay: parseInt(process.env.WS_RECONNECT_MAX_DELAY) || 30000
   },
 
   // Logging Configuration
@@ -72,6 +98,11 @@ const config = {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true
+  },
+
+  // Admin Configuration
+  admin: {
+    key: process.env.ADMIN_KEY
   }
 };
 

@@ -14,7 +14,7 @@ Phase 3 - Blockchain Integration (1-2 dni)
 ❌ Treasury Service - ethers.js payouts
 ❌ Payment Verification - transaction checking
 ❌ Betting Logic - complete flow
-Phase 4 - API & Polish (1 dzień)
+Phase 4 - API & (1 dzień)
 ❌ Battle Routes - REST API
 ❌ Error Handling - comprehensive
 ❌ Testing & Debug - end-to-end

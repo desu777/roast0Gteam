@@ -12,9 +12,13 @@ const { config } = require('./config/app.config');
 const { logger } = require('./services/logger.service');
 const MigrationRunner = require('./database/migrate');
 
-// Import routes and controllers (will create these next)
-// const battleRoutes = require('./routes/battle.routes');
-// const { setupWebSocketEvents } = require('./websocket/battle.events');
+// Import services
+const battleService = require('./services/battle.service');
+const treasuryService = require('./services/treasury.service');
+
+// Import routes and WebSocket events
+const battleRoutes = require('./routes/battle.routes');
+const { setupWebSocketEvents } = require('./websocket/battle.events');
 
 class BattleServer {
   constructor() {
@@ -38,6 +42,9 @@ class BattleServer {
 
       // Run database migrations
       await this.runMigrations();
+
+      // Initialize services
+      await this.initializeServices();
 
       // Setup Express middleware
       this.setupMiddleware();
@@ -69,6 +76,24 @@ class BattleServer {
       logger.info('✅ Database migrations completed');
     } catch (error) {
       logger.error('❌ Database migration failed', { error: error.message });
+      throw error;
+    }
+  }
+
+  async initializeServices() {
+    try {
+      logger.info('🔧 Initializing services...');
+      
+      // Initialize treasury service
+      await treasuryService.initialize();
+      logger.info('✅ Treasury service initialized');
+      
+      // Initialize battle service and create first battle
+      await battleService.initializeBattle();
+      logger.info('✅ Battle service initialized');
+      
+    } catch (error) {
+      logger.error('❌ Service initialization failed', { error: error.message });
       throw error;
     }
   }
@@ -132,7 +157,10 @@ class BattleServer {
     logger.info('🛤️  Setting up routes...');
 
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', async (req, res) => {
+      const battleState = battleService.getBattleState();
+      const treasuryStats = await treasuryService.getTreasuryStats();
+      
       res.json({
         success: true,
         service: 'roast-battle-1v1',
@@ -140,23 +168,22 @@ class BattleServer {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        connectedUsers: this.connectedUsers.size
-      });
-    });
-
-    // API routes
-    this.app.use('/api/battle', (req, res) => {
-      res.json({
-        success: true,
-        message: 'Battle 1v1 API - Routes will be implemented next',
-        endpoints: {
-          'GET /api/battle/current': 'Get current battle',
-          'POST /api/battle/bet': 'Place a bet',
-          'GET /api/battle/history': 'Get battle history',
-          'GET /api/battle/stats/:address': 'Get player stats'
+        connectedUsers: this.connectedUsers.size,
+        battle: {
+          active: !!battleState,
+          status: battleState?.status || 'no_battle',
+          battleId: battleState?.battleId || null
+        },
+        treasury: {
+          initialized: treasuryService.isInitialized,
+          address: config.treasury.address,
+          network: config.network.networkName
         }
       });
     });
+
+    // Battle API routes
+    this.app.use('/api/battle', battleRoutes);
 
     // Character data endpoints (for frontend)
     this.app.get('/api/characters/og', (req, res) => {
@@ -207,10 +234,11 @@ class BattleServer {
   setupWebSocket() {
     logger.info('🔌 Setting up WebSocket events...');
 
-    this.io.on('connection', (socket) => {
-      logger.ws.connection(socket.id, socket.handshake.headers['user-agent']);
+    // Setup proper WebSocket events
+    this.wsEvents = setupWebSocketEvents(this.io);
 
-      // Store user connection
+    // Track connected users for health endpoint
+    this.io.on('connection', (socket) => {
       this.connectedUsers.set(socket.id, {
         id: socket.id,
         connectedAt: new Date(),
@@ -218,32 +246,7 @@ class BattleServer {
         userAgent: socket.handshake.headers['user-agent']
       });
 
-      // Basic event handlers (will expand these)
-      socket.on('join_battle_room', (data) => {
-        logger.ws.event(socket.id, 'join_battle_room', data);
-        socket.join('battle_room');
-        socket.emit('joined_battle_room', {
-          success: true,
-          message: 'Joined battle room successfully',
-          connectedUsers: this.connectedUsers.size
-        });
-      });
-
-      socket.on('get_battle_status', () => {
-        logger.ws.event(socket.id, 'get_battle_status', {});
-        // TODO: Implement battle status logic
-        socket.emit('battle_state', {
-          status: 'waiting_bets',
-          message: 'Battle system is initializing...',
-          ogCharacter: null,
-          roasterCharacter: null,
-          bets: { og: 0, roaster: 0 },
-          countdown: null
-        });
-      });
-
-      socket.on('disconnect', (reason) => {
-        logger.ws.disconnection(socket.id, reason);
+      socket.on('disconnect', () => {
         this.connectedUsers.delete(socket.id);
       });
 
@@ -256,14 +259,14 @@ class BattleServer {
       });
     });
 
-    // Broadcast connected users count every 30 seconds
+    // Broadcast connected users count periodically
     if (config.logging.testEnv) {
       setInterval(() => {
         this.io.emit('user_count_update', {
           connectedUsers: this.connectedUsers.size,
           timestamp: new Date().toISOString()
         });
-      }, 30000);
+      }, config.websocket.reconnectMaxDelay);
     }
   }
 
