@@ -1,27 +1,24 @@
 {
-  "name": "roast-0g-backend",
+  "name": "roast-battle-1v1",
   "version": "1.0.0",
-  "description": "0G Roast Arena - AI-Powered Team Roast Battle Backend",
+  "description": "0G Roast Arena - 1v1 Battle Microservice",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "migrate": "node src/database/migrate.js",
-    "seed": "node src/database/seed.js",
     "test": "jest",
-    "lint": "eslint src/",
-    "db:create": "node src/database/create.js",
-    "daily-rewards": "node scripts/daily-rewards.js",
-    "test-daily-rewards": "node scripts/test-daily-rewards.js"
+    "lint": "eslint src/"
   },
   "keywords": [
     "0g",
     "blockchain",
     "ai",
     "roast",
-    "game",
+    "battle",
+    "1v1",
     "websocket",
-    "crypto"
+    "microservice"
   ],
   "author": "0G Roast Team",
   "license": "MIT",
@@ -33,13 +30,12 @@
     "ethers": "^6.7.1",
     "express": "^4.18.2",
     "express-rate-limit": "^6.10.0",
-    "express-slow-down": "^1.6.0",
     "express-validator": "^7.2.1",
     "helmet": "^7.0.0",
     "joi": "^17.10.2",
-    "jsonwebtoken": "^9.0.2",
-    "node-cron": "^3.0.2",
+    "openai": "^4.20.1",
     "socket.io": "^4.7.4",
+    "uuid": "^9.0.1",
     "winston": "^3.10.0"
   },
   "devDependencies": {
@@ -52,4 +48,4 @@
   "engines": {
     "node": ">=18.0.0"
   }
-}
+} 
