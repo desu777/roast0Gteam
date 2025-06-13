@@ -90,7 +90,7 @@ export const TEAM_MEMBERS = [
   {
     id: "zer0",
     name: "Zer0",
-    role: "DeFAI Oracle & Privacy Guardian",
+    role: "DeFAI Oracle ",
     icon: Sparkles,
     color: "#F8C0D6",
     personality: "Ethereal AI whisperer with dual nature - sweet as cotton candy but sharp as a razor blade. Combines dreamy levitation powers with cutting-edge DeFi intelligence. Master of zkDark Pools and AI automation, she floats between realities while keeping traders' secrets safe. Appears innocent but her analytical mind can slice through market manipulation like a hot knife through butter.",
@@ -104,7 +104,7 @@ export const TEAM_MEMBERS = [
   {
     id: "dao_agent",
     name: "DAO Agent",
-    role: "Governance Justice & Merit Detective",
+    role: "Governance Justice ",
     icon: Scale,
     color: "#4A90E2",
     personality: "Obsessively fair AI arbiter with zero tolerance for governance freeloaders. A digital Sherlock Holmes of DAO contributions, scanning every vote, proposal, and discussion with surgical precision. Passionate advocate for meritocracy who gets genuinely angry at passive token holders gaming the system. Speaks in governance metrics and dreams in VOx points. Has an almost religious devotion to 'Govern to Earn' philosophy.",

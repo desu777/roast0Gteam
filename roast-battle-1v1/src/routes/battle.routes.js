@@ -406,4 +406,31 @@ router.get('/gas-estimate', async (req, res) => {
   }
 });
 
+// Get battle configuration
+router.get('/config', async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        betAmount: config.battle.betAmount,
+        countdownDuration: config.battle.countdownDuration,
+        houseFeePercent: config.battle.houseFeePercent,
+        minBetsToStart: config.battle.minBetsToStart,
+        network: {
+          chainId: config.network.chainId,
+          networkName: config.network.networkName,
+          currencySymbol: config.network.currencySymbol
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to get battle config', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'CONFIG_FETCH_FAILED',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -9,7 +9,8 @@ const OneVSoneLayout = ({
   userAddress, 
   formatTime, 
   addNotification,
-  playSound 
+  playSound,
+  currentJudge
 }) => {
   const {
     // Battle state
@@ -27,6 +28,9 @@ const OneVSoneLayout = ({
     totalPot,
     userBet,
     isLoadingBet,
+    
+    // Configuration
+    battleConfig,
     
     // History
     battleHistory,
@@ -91,6 +95,8 @@ const OneVSoneLayout = ({
               battleStatus={battleStatus}
               placeBet={placeBet}
               currentBattle={currentBattle}
+              currentJudge={currentJudge}
+              battleConfig={battleConfig}
             />
           </div>
 

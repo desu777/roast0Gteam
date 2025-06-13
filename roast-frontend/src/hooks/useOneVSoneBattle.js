@@ -58,6 +58,9 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
   const [userBet, setUserBet] = useState(null);
   const [isLoadingBet, setIsLoadingBet] = useState(false);
 
+  // Configuration state
+  const [battleConfig, setBattleConfig] = useState(null);
+
   // History
   const [battleHistory, setBattleHistory] = useState([]);
   const [playerStats, setPlayerStats] = useState(null);
@@ -67,6 +70,19 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     baseURL: BATTLE_API_URL,
     timeout: 10000,
   });
+
+  // Load battle configuration
+  const loadBattleConfig = useCallback(async () => {
+    try {
+      const response = await battleApi.get('/battle/config');
+      
+      if (response.data.success) {
+        setBattleConfig(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load battle config:', error);
+    }
+  }, []);
 
   // Load current battle
   const loadCurrentBattle = useCallback(async () => {
@@ -199,6 +215,16 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     }
   }, [userAddress, loadCurrentBattle, addNotification, playSound]);
 
+  // Initial data loading
+  useEffect(() => {
+    loadBattleConfig();
+    loadCurrentBattle();
+    loadBattleHistory();
+    if (userAddress) {
+      loadPlayerStats(userAddress);
+    }
+  }, [loadBattleConfig, loadCurrentBattle, loadBattleHistory, loadPlayerStats, userAddress]);
+
   // Setup WebSocket listeners
   useEffect(() => {
     // Join battle room
@@ -314,6 +340,9 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     totalPot,
     userBet,
     isLoadingBet,
+    
+    // Configuration
+    battleConfig,
     
     // History
     battleHistory,

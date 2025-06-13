@@ -263,6 +263,7 @@ const App = () => {
             formatTime={formatTime}
             addNotification={addNotification}
             playSound={playSound}
+            currentJudge={currentJudge}
           />
         )}
 

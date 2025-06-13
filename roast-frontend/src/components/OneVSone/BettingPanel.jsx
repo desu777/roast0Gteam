@@ -10,22 +10,22 @@ const BettingPanel = ({
   isLoadingBet,
   battleStatus,
   placeBet,
-  currentBattle
+  currentBattle,
+  currentJudge,
+  battleConfig
 }) => {
-  const [betAmount, setBetAmount] = useState('0.1');
   const [selectedSide, setSelectedSide] = useState(null);
 
-  const MIN_BET = 0.1;
-  const MAX_BET = 10;
+  // Get bet amount from config or use default
+  const BET_AMOUNT = battleConfig?.betAmount || 0.5;
 
   const handlePlaceBet = async () => {
-    if (!selectedSide || !betAmount || parseFloat(betAmount) < MIN_BET) {
+    if (!selectedSide) {
       return;
     }
 
     try {
-      await placeBet(selectedSide, parseFloat(betAmount));
-      setBetAmount('0.1');
+      await placeBet(selectedSide, BET_AMOUNT);
       setSelectedSide(null);
     } catch (error) {
       console.error('Failed to place bet:', error);
@@ -36,9 +36,7 @@ const BettingPanel = ({
     return isConnected && 
            battleStatus === 'waiting_bets' && 
            !userBet && 
-           selectedSide && 
-           parseFloat(betAmount) >= MIN_BET &&
-           parseFloat(betAmount) <= MAX_BET;
+           selectedSide;
   };
 
   const getOdds = (side) => {
@@ -47,7 +45,6 @@ const BettingPanel = ({
     if (total === 0) return '1.00';
     
     const sideTotal = side === 'og' ? bets.og.total : bets.roaster.total;
-    const otherSideTotal = side === 'og' ? bets.roaster.total : bets.og.total;
     
     if (sideTotal === 0) return '∞';
     const odds = (total / sideTotal).toFixed(2);
@@ -58,87 +55,95 @@ const BettingPanel = ({
     <>
       <div className="betting-panel">
         <div className="panel-header">
-          <h3>
-            <Coins size={20} className="inline-icon" />
-            Betting System
+          <h3 className="betting-title">
+            <Coins size={20} className="betting-icon" style={{ color: currentJudge?.color || '#FFD700' }} />
+            <span className="gradient-text">Betting System</span>
           </h3>
-          <div className="total-pot">
-            <span className="pot-label">Total Pot:</span>
-            <span className="pot-value">{totalPot.toFixed(3)} 0G</span>
+        </div>
+
+        <div className="total-pot-section">
+          <div className="total-pot-card">
+            <span className="pot-label">Total Pot</span>
+            <span className="pot-value gradient-text">{totalPot.toFixed(3)} 0G</span>
           </div>
         </div>
 
-
-
-        {/* Betting Form */}
         {isConnected ? (
           <>
             {battleStatus === 'waiting_bets' && !userBet ? (
               <div className="betting-form">
                 <h4>Place Your Bet</h4>
                 
-                {/* Side Selection */}
                 <div className="side-selection">
                   <button 
                     className={`side-btn og-btn ${selectedSide === 'og' ? 'selected' : ''}`}
                     onClick={() => setSelectedSide('og')}
+                    style={selectedSide === 'og' ? {
+                      borderColor: currentJudge?.color || '#FFD700',
+                      background: `rgba(${parseInt((currentJudge?.color || '#FFD700').slice(1, 3), 16)}, ${parseInt((currentJudge?.color || '#FFD700').slice(3, 5), 16)}, ${parseInt((currentJudge?.color || '#FFD700').slice(5, 7), 16)}, 0.1)`,
+                      color: currentJudge?.color || '#FFD700'
+                    } : {}}
                   >
                     0G Team
                   </button>
                   <button 
                     className={`side-btn roaster-btn ${selectedSide === 'roaster' ? 'selected' : ''}`}
                     onClick={() => setSelectedSide('roaster')}
+                    style={selectedSide === 'roaster' ? {
+                      borderColor: currentJudge?.color || '#FFD700',
+                      background: `rgba(${parseInt((currentJudge?.color || '#FFD700').slice(1, 3), 16)}, ${parseInt((currentJudge?.color || '#FFD700').slice(3, 5), 16)}, ${parseInt((currentJudge?.color || '#FFD700').slice(5, 7), 16)}, 0.1)`,
+                      color: currentJudge?.color || '#FFD700'
+                    } : {}}
                   >
                     Roaster
                   </button>
                 </div>
 
-                {/* Amount Input */}
-                <div className="amount-input">
+                <div className="bet-amount-display">
                   <label>Bet Amount (0G)</label>
-                  <input 
-                    type="number"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                    min={MIN_BET}
-                    max={MAX_BET}
-                    step="0.1"
-                    placeholder="Enter amount"
-                  />
-                  <div className="amount-hints">
-                    <span>Min: {MIN_BET} 0G</span>
-                    <span>Max: {MAX_BET} 0G</span>
+                  <div className="fixed-amount">
+                    <span className="entry-label">ENTRY:</span>
+                    <span className="amount-value gradient-text">
+                      {BET_AMOUNT.toFixed(3)} 0G
+                    </span>
                   </div>
                 </div>
 
-                {/* Potential Win */}
-                {selectedSide && parseFloat(betAmount) >= MIN_BET && (
-                  <div className="potential-win">
+                {selectedSide && (
+                  <div className="potential-win" style={{
+                    background: `rgba(${parseInt((currentJudge?.color || '#FFD700').slice(1, 3), 16)}, ${parseInt((currentJudge?.color || '#FFD700').slice(3, 5), 16)}, ${parseInt((currentJudge?.color || '#FFD700').slice(5, 7), 16)}, 0.1)`,
+                    borderColor: currentJudge?.color || '#FFD700'
+                  }}>
                     <span>Potential Win:</span>
                     <span className="win-amount">
-                      {(parseFloat(betAmount) * parseFloat(getOdds(selectedSide))).toFixed(3)} 0G
+                      {(BET_AMOUNT * parseFloat(getOdds(selectedSide))).toFixed(3)} 0G
                     </span>
                   </div>
                 )}
 
-                {/* Place Bet Button */}
-                <button 
-                  className="place-bet-btn"
-                  onClick={handlePlaceBet}
-                  disabled={!canPlaceBet() || isLoadingBet}
-                >
-                  {isLoadingBet ? (
-                    <>
-                      <div className="spinner" />
-                      <span>Placing Bet...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Coins size={16} />
-                      <span>Place Bet</span>
-                    </>
-                  )}
-                </button>
+                <div className="voltage-button">
+                  <button 
+                    className="place-bet-btn"
+                    onClick={handlePlaceBet}
+                    disabled={!canPlaceBet() || isLoadingBet}
+                    style={{
+                      borderColor: currentJudge?.color || '#FFD700',
+                      '--judge-color': currentJudge?.color || '#FFD700'
+                    }}
+                  >
+                    {isLoadingBet ? (
+                      <>
+                        <div className="spinner" />
+                        <span>Placing Bet...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Coins size={16} />
+                        <span>Place Bet</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             ) : userBet ? (
               <div className="user-bet-info">
@@ -181,7 +186,6 @@ const BettingPanel = ({
           </div>
         )}
 
-        {/* Minimum Bets Info */}
         <div className="min-bets-info">
           <p>Battle starts when minimum 2 bets are placed on each side</p>
         </div>
@@ -201,39 +205,69 @@ const BettingPanel = ({
 
         .panel-header {
           display: flex;
-          justify-content: space-between;
+          justify-content: center;
           align-items: center;
           padding-bottom: 16px;
           border-bottom: 1px solid rgba(60, 75, 95, 0.3);
         }
 
-        .panel-header h3 {
-          color: #E6E6E6;
-          font-size: 20px;
+        .betting-title {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
           margin: 0;
+          font-size: 20px;
+          font-weight: 700;
         }
 
-        .total-pot {
+        .betting-icon {
+          transition: all 0.3s ease;
+          filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        .gradient-text {
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
+          font-weight: 700;
+        }
+
+        @keyframes gradientFlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+
+        .total-pot-section {
+          margin-bottom: 4px;
+        }
+
+        .total-pot-card {
           display: flex;
           flex-direction: column;
-          align-items: flex-end;
+          align-items: center;
+          padding: 16px;
+          background: rgba(30, 30, 40, 0.6);
+          border: 1px solid rgba(60, 75, 95, 0.3);
+          border-radius: 12px;
+          text-align: center;
         }
 
         .pot-label {
           color: #9999A5;
-          font-size: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .pot-value {
-          color: #FFD700;
-          font-size: 18px;
-          font-weight: 600;
+          font-size: 24px;
+          font-weight: 700;
         }
-
-
 
         .betting-form {
           flex: 1;
@@ -271,62 +305,52 @@ const BettingPanel = ({
         }
 
         .side-btn.selected {
-          color: #FFD700;
-          border-color: #FFD700;
-          background: rgba(255, 215, 0, 0.1);
+          /* Dynamic colors applied via inline styles */
+          transition: all 0.3s ease;
+          text-shadow: 0 0 8px currentColor;
         }
 
-        .side-btn.og-btn.selected {
-          border-color: #00D2E9;
-          background: rgba(0, 210, 233, 0.1);
-          color: #00D2E9;
-        }
-
-        .side-btn.roaster-btn.selected {
-          border-color: #FF5CAA;
-          background: rgba(255, 92, 170, 0.1);
-          color: #FF5CAA;
-        }
-
-        .amount-input {
+        .bet-amount-display {
           display: flex;
           flex-direction: column;
           gap: 8px;
         }
 
-        .amount-input label {
+        .bet-amount-display label {
           color: #9999A5;
           font-size: 14px;
         }
 
-        .amount-input input {
-          padding: 12px;
-          background: rgba(30, 30, 40, 0.5);
+        .fixed-amount {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 16px;
+          background: rgba(30, 30, 40, 0.6);
           border: 1px solid rgba(60, 75, 95, 0.3);
           border-radius: 8px;
-          color: #E6E6E6;
-          font-size: 16px;
-          outline: none;
         }
 
-        .amount-input input:focus {
-          border-color: #FFD700;
-        }
-
-        .amount-hints {
-          display: flex;
-          justify-content: space-between;
-          font-size: 12px;
+        .entry-label {
           color: #9999A5;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+
+        .amount-value {
+          font-size: 18px;
+          font-weight: 700;
         }
 
         .potential-win {
           display: flex;
           justify-content: space-between;
           padding: 12px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
           border-radius: 8px;
+          border: 1px solid;
+          transition: all 0.3s ease;
         }
 
         .potential-win span {
@@ -339,30 +363,41 @@ const BettingPanel = ({
           font-weight: 600;
         }
 
+        .voltage-button {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          width: 100%;
+        }
+
         .place-bet-btn {
-          padding: 16px;
-          background: linear-gradient(135deg, #FFD700, #FF6B6B);
-          border: none;
-          border-radius: 12px;
-          color: #000;
+          color: white;
+          background: #0D1127;
+          padding: 16px 40px 18px 40px;
+          border-radius: 50px;
+          border: 5px solid;
           font-size: 16px;
           font-weight: 600;
+          line-height: 1em;
+          letter-spacing: 0.075em;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
           transition: all 0.3s ease;
+          position: relative;
+          z-index: 1;
         }
 
         .place-bet-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+          background: color-mix(in srgb, var(--judge-color, #FFD700) 30%, #0D1127);
         }
 
         .place-bet-btn:disabled {
-          background: #666;
+          background: #333;
           cursor: not-allowed;
+          color: #666;
         }
 
         .spinner {
