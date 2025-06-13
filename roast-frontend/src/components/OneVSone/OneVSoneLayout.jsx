@@ -10,7 +10,8 @@ const OneVSoneLayout = ({
   formatTime, 
   addNotification,
   playSound,
-  currentJudge
+  currentJudge,
+  onBattleBetsUpdate
 }) => {
   const {
     // Battle state
@@ -59,6 +60,13 @@ const OneVSoneLayout = ({
       }
     }
   }, [isConnected, userAddress]);
+
+  // Update parent with betting data
+  useEffect(() => {
+    if (onBattleBetsUpdate && bets) {
+      onBattleBetsUpdate(bets);
+    }
+  }, [bets, onBattleBetsUpdate]);
 
   return (
     <>

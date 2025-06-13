@@ -378,15 +378,19 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
           // Ensure prev is always an array
           const currentDialog = Array.isArray(prev) ? prev : [];
           
-          // Prevent duplicates by checking if exchange already exists
-          const exists = currentDialog.some(ex => 
-            ex.speaker === data.exchange.speaker && 
-            ex.message === data.exchange.message &&
-            currentDialog.length === data.index
-          );
+          // Create unique key for each message
+          const messageKey = `${data.exchange.speaker}-${data.exchange.message.slice(0, 50)}`;
+          
+          // Prevent duplicates by checking if exact message already exists
+          const exists = currentDialog.some(ex => {
+            const existingKey = `${ex.speaker}-${ex.message.slice(0, 50)}`;
+            return existingKey === messageKey;
+          });
+          
           if (!exists) {
             return [...currentDialog, data.exchange];
           }
+          
           return currentDialog;
         });
       }

@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
-import { useOneVSoneBattle } from './hooks/useOneVSoneBattle';
 import { GAME_PHASES } from './constants/gameConstants';
 import { gameApi } from './services/api';
 
@@ -85,10 +84,8 @@ const App = () => {
     resetVotingState
   } = useGameState();
 
-  // OneVSone battle hook - only for betting data in header
-  const {
-    bets: battleBets
-  } = useOneVSoneBattle(userAddress, addNotification, playSound);
+  // OneVSone battle state - will be passed from child component
+  const [battleBets, setBattleBets] = useState(null);
 
   // Calculate sparks intensity based on game activity
   const getSparksIntensity = () => {
@@ -264,6 +261,7 @@ const App = () => {
             addNotification={addNotification}
             playSound={playSound}
             currentJudge={currentJudge}
+            onBattleBetsUpdate={setBattleBets}
           />
         )}
 
