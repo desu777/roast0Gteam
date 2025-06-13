@@ -11,6 +11,7 @@ import JudgeModal from './components/JudgeModal/JudgeModal';
 import HallOfFameModal from './components/HallOfFameModal/HallOfFameModal';
 import TransactionNotification from './components/TransactionNotification/TransactionNotification';
 import Footer from './components/Footer/Footer';
+import OneVSoneLayout from './components/OneVSone/OneVSoneLayout';
 
 // Styles
 import { globalStyles, appStyles } from './styles/appStyles';
@@ -20,6 +21,7 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [sparksEnabled, setSparksEnabled] = useState(false);
   const [showHallOfFame, setShowHallOfFame] = useState(false);
+  const [gameMode, setGameMode] = useState('arena'); // 'arena' | 'onevsone'
 
   // Hook do sprawdzania szerokości ekranu
   useEffect(() => {
@@ -154,6 +156,14 @@ const App = () => {
     setShowHallOfFame(false);
   };
 
+  // Game mode toggle handler
+  const handleGameModeToggle = () => {
+    setGameMode(prevMode => prevMode === 'arena' ? 'onevsone' : 'arena');
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`🎮 Switching to ${gameMode === 'arena' ? '1v1 Battle' : 'Arena'} mode`);
+    }
+  };
+
   // Dynamic theme colors based on current judge
   const getThemeColors = () => {
     const primaryColor = currentJudge?.color || '#FFD700';
@@ -193,6 +203,8 @@ const App = () => {
           prizePool={prizePool}
           onHallOfFameClick={handleHallOfFameOpen}
           currentJudge={currentJudge}
+          gameMode={gameMode}
+          onGameModeToggle={handleGameModeToggle}
         />
 
         {/* Error Display */}
@@ -203,39 +215,49 @@ const App = () => {
           </div>
         )}
 
-        {/* Main Game Layout */}
-        <GameLayout 
-          // Game State
-          currentPhase={currentPhase}
-                  currentJudge={currentJudge}
-                  timeLeft={timeLeft}
-                  formatTime={formatTime}
-                  participants={participants}
-                  roastText={roastText}
-                  setRoastText={setRoastText}
-                  userSubmitted={userSubmitted}
-                  isSubmitting={isSubmitting}
-                  isConnected={isConnected}
-                  joinRound={joinRound}
-          prizePool={prizePool}
-                  winner={winner}
-                  aiReasoning={aiReasoning}
-                  roundNumber={roundNumber}
-                  nextRoundCountdown={nextRoundCountdown}
-          userAddress={userAddress}
-          
-          // Voting State
-                  votingStats={votingStats}
-                  userVote={userVote}
-                  votingLocked={votingLocked}
-                  isVoting={isVoting}
-                  votingError={votingError}
-                  
-          // Actions
-          setShowJudgeDetails={setShowJudgeDetails}
-          castVote={castVote}
-          handleVotingComplete={handleVotingComplete}
-                />
+        {/* Main Game Layout - Conditional Rendering */}
+        {gameMode === 'arena' ? (
+          <GameLayout 
+            // Game State
+            currentPhase={currentPhase}
+            currentJudge={currentJudge}
+            timeLeft={timeLeft}
+            formatTime={formatTime}
+            participants={participants}
+            roastText={roastText}
+            setRoastText={setRoastText}
+            userSubmitted={userSubmitted}
+            isSubmitting={isSubmitting}
+            isConnected={isConnected}
+            joinRound={joinRound}
+            prizePool={prizePool}
+            winner={winner}
+            aiReasoning={aiReasoning}
+            roundNumber={roundNumber}
+            nextRoundCountdown={nextRoundCountdown}
+            userAddress={userAddress}
+            
+            // Voting State
+            votingStats={votingStats}
+            userVote={userVote}
+            votingLocked={votingLocked}
+            isVoting={isVoting}
+            votingError={votingError}
+            
+            // Actions
+            setShowJudgeDetails={setShowJudgeDetails}
+            castVote={castVote}
+            handleVotingComplete={handleVotingComplete}
+          />
+        ) : (
+          <OneVSoneLayout 
+            isConnected={isConnected}
+            userAddress={userAddress}
+            formatTime={formatTime}
+            addNotification={addNotification}
+            playSound={playSound}
+          />
+        )}
 
         {/* Judge Details Modal */}
         <JudgeModal 

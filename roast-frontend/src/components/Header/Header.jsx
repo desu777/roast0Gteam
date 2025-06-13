@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Volume2, VolumeX, Target, Users, Coins, RefreshCw, Crown, Sparkles 
+  Volume2, VolumeX, Target, Users, Coins, RefreshCw, Crown, Sparkles, Swords
 } from 'lucide-react';
 import { useAccount, useBalance } from 'wagmi';
 import ConnectWallet from '../ConnectWallet/ConnectWallet';
@@ -16,7 +16,9 @@ const Header = ({
   currentPlayerCount,
   prizePool,
   onHallOfFameClick,
-  currentJudge
+  currentJudge,
+  gameMode,
+  onGameModeToggle
 }) => {
   // Use wagmi hooks directly for basic wallet info
   const { address, isConnected, chainId } = useAccount();
@@ -97,6 +99,18 @@ const Header = ({
             >
               <Crown size={16} />
               <span>Hall of Fame</span>
+            </button>
+          )}
+          
+          {/* 1v1 Battle / Arena Toggle Button */}
+          {onGameModeToggle && (
+            <button 
+              className="stat-card game-mode-toggle-btn"
+              onClick={onGameModeToggle}
+              title={gameMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
+            >
+              <Swords size={16} />
+              <span>{gameMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
             </button>
           )}
           
