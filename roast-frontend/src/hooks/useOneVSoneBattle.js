@@ -4,6 +4,43 @@ import wsService from '../services/websocket';
 
 const BATTLE_API_URL = import.meta.env.VITE_BATTLE_API_URL || 'http://localhost:3002/api';
 
+// Calculate betting odds based on bet distribution
+const calculateOdds = (bets) => {
+  if (!bets || (!bets.og?.total && !bets.roaster?.total)) {
+    return {
+      og: { ...bets?.og, odds: '1.0x' },
+      roaster: { ...bets?.roaster, odds: '1.0x' }
+    };
+  }
+
+  const ogTotal = bets.og?.total || 0;
+  const roasterTotal = bets.roaster?.total || 0;
+  const totalPot = ogTotal + roasterTotal;
+
+  if (totalPot === 0) {
+    return {
+      og: { ...bets.og, odds: '1.0x' },
+      roaster: { ...bets.roaster, odds: '1.0x' }
+    };
+  }
+
+  // Calculate odds: (total pot / side total) with house edge
+  const houseEdge = 0.95; // 5% house edge
+  const ogOdds = ogTotal > 0 ? (totalPot / ogTotal) * houseEdge : 1.0;
+  const roasterOdds = roasterTotal > 0 ? (totalPot / roasterTotal) * houseEdge : 1.0;
+
+  return {
+    og: { 
+      ...bets.og, 
+      odds: `${Math.max(1.0, ogOdds).toFixed(1)}x` 
+    },
+    roaster: { 
+      ...bets.roaster, 
+      odds: `${Math.max(1.0, roasterOdds).toFixed(1)}x` 
+    }
+  };
+};
+
 export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
   // Battle state
   const [currentBattle, setCurrentBattle] = useState(null);
@@ -42,7 +79,10 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
         setBattleStatus(battle.status);
         setOgCharacter(battle.ogCharacter);
         setRoasterCharacter(battle.roasterCharacter);
-        setBets(battle.bets);
+        
+        // Calculate odds and set bets with odds
+        const betsWithOdds = calculateOdds(battle.bets);
+        setBets(betsWithOdds);
         setTotalPot(battle.totalPot);
         setDialog(battle.dialog || []);
         setWinner(battle.winner);

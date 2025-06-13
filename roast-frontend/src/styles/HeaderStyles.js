@@ -565,6 +565,267 @@ const HeaderStyles = `
     animation-duration: 1s;
   }
 
+  /* Game Mode Toggle Button Styles - Identical to Hall of Fame */
+  .game-mode-toggle-btn {
+    cursor: pointer;
+    background: var(--theme-primary-10, rgba(255, 215, 0, 0.1));
+    border: 1px solid var(--theme-primary-30, rgba(255, 215, 0, 0.3));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-mode-toggle-btn span {
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--theme-primary, #FFD700), #FF5CAA, #00D2E9, var(--theme-primary, #FFD700));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gameToggleText 3s linear infinite;
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes gameToggleText {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .game-mode-toggle-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--theme-primary-30, rgba(255, 215, 0, 0.3)), transparent);
+    transition: left 0.5s;
+  }
+
+  .game-mode-toggle-btn:hover {
+    background: var(--theme-primary-20, rgba(255, 215, 0, 0.2));
+    border-color: var(--theme-primary-50, rgba(255, 215, 0, 0.5));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--theme-primary-30, rgba(255, 215, 0, 0.3));
+  }
+
+  .game-mode-toggle-btn:hover span {
+    animation-duration: 1.5s;
+  }
+
+  .game-mode-toggle-btn:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px var(--theme-primary-50, rgba(255, 215, 0, 0.4));
+    background: var(--theme-primary-30, rgba(255, 215, 0, 0.25));
+    border-color: rgba(var(--theme-primary-rgb, 255, 215, 0), 0.6);
+    transition: all 0.1s ease;
+  }
+
+  .game-mode-toggle-btn:active span {
+    animation-duration: 1s;
+  }
+
+  .game-mode-toggle-btn:hover::before {
+    left: 100%;
+  }
+
+  .game-mode-toggle-btn svg {
+    color: var(--theme-primary, #FFD700);
+    filter: drop-shadow(0 0 10px var(--theme-primary, #FFD700));
+    transition: all 0.3s ease;
+    background: linear-gradient(90deg, var(--theme-primary, #FFD700), #FF5CAA, #00D2E9, var(--theme-primary, #FFD700));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gameToggleIcon 3s linear infinite;
+  }
+
+  @keyframes gameToggleIcon {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .game-mode-toggle-btn:hover svg {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 15px var(--theme-primary, #FFD700));
+    animation-duration: 1.5s;
+  }
+
+  .game-mode-toggle-btn:active svg {
+    transform: scale(1.05);
+    animation-duration: 1s;
+  }
+
+  /* Betting Stats Styles for OneVSone Mode */
+  
+  /* Bet Count Elements - Simple Style like Main Arena */
+  .bet-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    min-width: auto;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    text-align: center;
+  }
+
+  .bet-count span {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .bet-count:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* Icons with Arena Character Colors - Simple Style */
+  .bet-count svg {
+    color: var(--theme-primary, #FFD700);
+    filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700));
+    transition: all 0.3s ease;
+    animation: goldenGlow 2s ease-in-out infinite alternate;
+  }
+
+  .bet-count:hover svg {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 12px var(--theme-primary, #FFD700));
+  }
+
+  /* Odds Display - Simple Style like Main Arena */
+  .odds-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    min-width: auto;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .odds-display svg {
+    color: var(--theme-primary, #FFD700);
+    filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700));
+    animation: goldenGlow 2s ease-in-out infinite alternate;
+  }
+
+  .odds-display span {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .odds-display:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .odds-display:hover svg {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 12px var(--theme-primary, #FFD700));
+  }
+
+  /* Compact Betting Stats - Reduced Height */
+  .betting-stats-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    min-width: 120px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .betting-icon {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--theme-primary, #FFD700);
+    filter: drop-shadow(0 0 8px var(--theme-primary, #FFD700));
+    animation: goldenGlow 2s ease-in-out infinite alternate;
+  }
+
+  .betting-info-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+  }
+
+  .betting-amount {
+    font-size: 14px;
+    color: #E6E6E6;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .betting-odds {
+    font-size: 10px;
+    color: var(--theme-primary, #FFD700);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* Specific styling for team sides */
+  .betting-stats-compact.og-team .betting-icon {
+    background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: teamGradient 3s linear infinite;
+  }
+
+  /* Roaster Logo with Gradient - Mini Version of Main Logo */
+  .roaster-logo-container {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+    background-size: 200% 100%;
+    animation: roasterRainbowBackground 3s linear infinite;
+  }
+
+  .roaster-logo-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent);
+    animation: roasterLogoGlow 2s infinite alternate;
+  }
+
+  .roaster-logo-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    z-index: 2;
+    border-radius: 50%;
+  }
+
+  @keyframes roasterRainbowBackground {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  @keyframes roasterLogoGlow {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.1); opacity: 1; }
+  }
+
+  @keyframes teamGradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
   /* Mobile responsiveness */
   @media (max-width: 768px) {
     .arena-header {

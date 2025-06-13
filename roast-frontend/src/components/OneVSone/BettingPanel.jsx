@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Coins, TrendingUp, Users, AlertCircle } from 'lucide-react';
+import { Coins, AlertCircle } from 'lucide-react';
 
 const BettingPanel = ({ 
   isConnected,
@@ -68,40 +68,7 @@ const BettingPanel = ({
           </div>
         </div>
 
-        {/* Betting Stats */}
-        <div className="betting-stats">
-          <div className="stat-card og-stats">
-            <h4>0G Team</h4>
-            <div className="stat-row">
-              <Users size={14} />
-              <span>{bets?.og?.count || 0} bets</span>
-            </div>
-            <div className="stat-row">
-              <Coins size={14} />
-              <span>{(bets?.og?.total || 0).toFixed(3)} 0G</span>
-            </div>
-            <div className="stat-row">
-              <TrendingUp size={14} />
-              <span>Odds: {getOdds('og')}x</span>
-            </div>
-          </div>
 
-          <div className="stat-card roaster-stats">
-            <h4>Roaster</h4>
-            <div className="stat-row">
-              <Users size={14} />
-              <span>{bets?.roaster?.count || 0} bets</span>
-            </div>
-            <div className="stat-row">
-              <Coins size={14} />
-              <span>{(bets?.roaster?.total || 0).toFixed(3)} 0G</span>
-            </div>
-            <div className="stat-row">
-              <TrendingUp size={14} />
-              <span>Odds: {getOdds('roaster')}x</span>
-            </div>
-          </div>
-        </div>
 
         {/* Betting Form */}
         {isConnected ? (
@@ -266,45 +233,7 @@ const BettingPanel = ({
           font-weight: 600;
         }
 
-        .betting-stats {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-        }
 
-        .stat-card {
-          padding: 16px;
-          background: rgba(30, 30, 40, 0.5);
-          border-radius: 12px;
-          border: 1px solid rgba(60, 75, 95, 0.3);
-        }
-
-        .stat-card.og-stats {
-          border-color: rgba(0, 210, 233, 0.3);
-        }
-
-        .stat-card.roaster-stats {
-          border-color: rgba(255, 92, 170, 0.3);
-        }
-
-        .stat-card h4 {
-          color: #E6E6E6;
-          font-size: 16px;
-          margin: 0 0 12px 0;
-        }
-
-        .stat-row {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: #9999A5;
-          font-size: 14px;
-          margin-bottom: 8px;
-        }
-
-        .stat-row:last-child {
-          margin-bottom: 0;
-        }
 
         .betting-form {
           flex: 1;
