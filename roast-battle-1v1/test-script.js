@@ -124,7 +124,7 @@ class BattleSystemTester {
   }
 
   // Place a bet via API
-  async placeBet(playerAddress, betSide, amount = 0.5) {
+  async placeBet(playerAddress, betSide, amount = 0.05) {
     try {
       console.log(`💸 Placing bet: ${playerAddress} bets ${amount} on ${betSide}`);
       

@@ -80,6 +80,7 @@ const OneVSoneLayout = ({
               dialog={dialog}
               winner={winner}
               winnerReasoning={winnerReasoning}
+              currentJudge={currentJudge}
             />
           </div>
 
@@ -118,8 +119,23 @@ const OneVSoneLayout = ({
           overflow-y: auto;
         }
 
-        /* Responsive - maintain same heights on desktop only */
-        @media (max-width: 1200px) {
+        /* Desktop optimizations - better use of wider center column */
+        @media (min-width: 1025px) {
+          .arena-main .center-column {
+            min-width: 600px; /* Ensure minimum width for center */
+          }
+        }
+
+        /* Tablet adjustments */
+        @media (max-width: 1400px) and (min-width: 1025px) {
+          .arena-main .left-column,
+          .arena-main .right-column {
+            height: 580px;
+          }
+        }
+
+        /* Mobile landscape and smaller - stack layout */
+        @media (max-width: 1024px) {
           .arena-main .left-column,
           .arena-main .right-column {
             height: auto;
@@ -129,8 +145,30 @@ const OneVSoneLayout = ({
           .arena-main .left-column > :global(.battle-history),
           .arena-main .right-column > :global(.betting-panel) {
             height: auto;
-            max-height: 600px;
+            max-height: 400px;
             overflow-y: auto;
+          }
+          
+          /* Center column gets priority on mobile */
+          .arena-main .center-column {
+            order: -1; /* Move center to top */
+            margin-bottom: 20px;
+          }
+        }
+
+        /* Mobile portrait */
+        @media (max-width: 768px) {
+          .arena-main .left-column > :global(.battle-history),
+          .arena-main .right-column > :global(.betting-panel) {
+            max-height: 350px;
+          }
+        }
+
+        /* Small mobile */
+        @media (max-width: 480px) {
+          .arena-main .left-column > :global(.battle-history),
+          .arena-main .right-column > :global(.betting-panel) {
+            max-height: 300px;
           }
         }
       `}</style>

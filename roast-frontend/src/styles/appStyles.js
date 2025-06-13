@@ -89,10 +89,10 @@ export const appStyles = `
 
   .arena-layout {
     display: grid;
-    grid-template-columns: 380px 6fr 380px;
+    grid-template-columns: 350px 8fr 350px;
     grid-template-areas: 
       "left center right";
-    gap: 50px;
+    gap: 30px;
     align-items: start;
     width: 100%;
     max-width: 100%;
@@ -108,6 +108,7 @@ export const appStyles = `
     grid-area: center;
     min-width: 0; /* Prevents overflow */
     overflow: hidden;
+    min-height: 600px; /* Ensure minimum height */
   }
 
   .right-column {
@@ -442,136 +443,53 @@ export const appStyles = `
     to { transform: rotate(360deg); }
   }
 
-  /* Responsive Design */
-  /* Tablety i średnie ekrany - stacked layout */
-  @media (max-width: 1200px) {
+  /* Tablet and smaller desktop */
+  @media (max-width: 1400px) {
+    .arena-layout {
+      grid-template-columns: 320px 1fr 320px;
+      gap: 20px;
+    }
+  }
+
+  /* Mobile landscape and smaller */
+  @media (max-width: 1024px) {
     .arena-main {
       padding: 20px 15px;
-      max-width: 100%;
     }
-
+    
     .arena-layout {
-      display: grid;
       grid-template-columns: 1fr;
       grid-template-areas: 
         "center"
-        "right" 
-        "left";
-      gap: 20px;
-      width: 100%;
-    }
-
-    .left-column, .right-column {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .error-message {
-      margin: 15px;
-    }
-
-    .waiting-stats {
-      flex-direction: column;
+        "left"
+        "right";
       gap: 20px;
     }
-
-    .timer-section {
-      flex-direction: column;
-      gap: 8px;
-      text-align: center;
-    }
-
-    .roast-form {
-      margin-top: 24px;
+    
+    .center-column {
+      min-height: 500px;
     }
   }
 
-  /* Mobile - mniejsze adjustments */
+  /* Mobile portrait */
   @media (max-width: 768px) {
     .arena-main {
-      padding: 15px 10px;
+      padding: 20px 10px;
     }
-
-    .arena-layout {
-      gap: 15px;
-    }
-
-    .roast-form {
-      margin-top: 20px;
-    }
-
-    .roast-input textarea {
-      padding: 12px;
-      font-size: 14px;
-    }
-
-    .submit-button {
-      padding: 12px;
-      font-size: 14px;
+    
+    .center-column {
+      min-height: 450px;
     }
   }
 
-  /* Extra small mobile screens */
+  /* Small mobile */
   @media (max-width: 480px) {
     .arena-main {
-      padding: 10px 8px;
+      padding: 15px 8px;
     }
-
-    .error-message {
-      margin: 10px 8px;
-      padding: 10px 15px;
-      font-size: 13px;
-    }
-
-    .waiting-stats {
-      gap: 15px;
-    }
-
-    .stat-value {
-      font-size: 16px;
-    }
-
-    .timer-section {
-      padding: 12px 16px;
-      margin-bottom: 20px;
-    }
-
-    .timer {
-      font-size: 16px;
-    }
-
-    .participants-count {
-      font-size: 13px;
-    }
-  }
-
-  /* Very small screens */
-  @media (max-width: 360px) {
-    .arena-main {
-      padding: 8px 5px;
-    }
-
-    .arena-layout {
-      gap: 10px;
-    }
-
-    .roast-input textarea {
-      padding: 10px;
-      font-size: 13px;
-      min-height: 100px;
-    }
-
-    .submit-button {
-      padding: 10px;
-      font-size: 13px;
-    }
-
-    .timer-section {
-      padding: 10px 12px;
-    }
-
-    .char-count {
-      font-size: 11px;
+    
+    .center-column {
+      min-height: 400px;
     }
   }
 `; 
