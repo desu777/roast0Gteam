@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, Swords, Trophy, Landmark, User } from 'lucide-react';
+import { Swords, Landmark, User } from 'lucide-react';
 import { TEAM_MEMBERS } from '../../data/teamMembers';
 import { TEAM_ROASTERS } from '../../data/teamRoasters';
 import CharacterBioModal from '../CharacterBioModal/CharacterBioModal';
-import BattleDialog from './BattleDialog';
 
 const BattleArena = ({ 
   currentBattle,
@@ -15,6 +14,10 @@ const BattleArena = ({
   dialog,
   winner,
   winnerReasoning,
+  ogScore,
+  roasterScore,
+  decisiveMoment,
+  crowdFavorite,
   currentJudge
 }) => {
   const [showCharacterBio, setShowCharacterBio] = useState(null);
@@ -25,7 +28,7 @@ const BattleArena = ({
       case 'waiting_bets':
         return 'Place your bets! Battle starts when minimum bets are reached.';
       case 'countdown':
-        return `Battle starting in ${formatTime(timeLeft)}!`;
+        return 'Battle countdown in progress...';
       case 'generating':
         return 'AI is preparing an epic roast battle...';
       case 'dialog':
@@ -60,133 +63,192 @@ const BattleArena = ({
     }
   };
 
-  return (
-    <>
-      <div className="battle-arena">
-        {/* Title */}
-        <div className="arena-title">
-          <h2>
-            <Landmark 
-              className="arena-icon" 
-              style={{ color: currentJudge?.color || '#FFD700' }}
-            />
-            <span className="gradient-text">Battle Arena</span>
-          </h2>
-          <p className="status-message">{getStatusMessage()}</p>
-        </div>
-
-        {/* Characters VS Display */}
-        <div className="characters-display">
-          <div className={`character-card og-card ${winner === 'og' ? 'winner' : ''}`}>
-            <div className="character-icon" style={{ 
-                color: ogCharacter?.color,
-                border: `3px solid ${currentJudge?.color || '#FFD700'}`,
-                boxShadow: `0 0 15px ${currentJudge?.color || '#FFD700'}40`
-              }}>
-              {ogCharacter?.id ? (
-                <img 
-                  src={`/${ogCharacter.id}.jpg`} 
-                  alt={ogCharacter.name} 
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-              ) : null}
-              <div 
-                className="fallback-icon" 
-                style={{ display: ogCharacter?.id ? 'none' : 'flex' }}
-              >
-                {ogCharacter?.name?.[0] || '?'}
+  // Render main content based on battle status
+  const renderMainContent = () => {
+    switch (battleStatus) {
+      case 'generating':
+        return (
+          <div className="battle-transition">
+            <div className="transition-message">
+              <span className="status-gradient-text">Let the battle begin!</span>
+            </div>
+          </div>
+        );
+        
+      case 'dialog':
+        return (
+          <div className="battle-chat">
+            <div className="chat-header">
+              <h3>Live Battle</h3>
+            </div>
+            <div className="chat-messages">
+              {dialog.map((msg, index) => (
+                <div key={index} className={`message ${msg.speaker}`}>
+                  <div className="message-avatar">
+                    {msg.speaker === 'og' ? ogCharacter?.name?.[0] : roasterCharacter?.name?.[0]}
+                  </div>
+                  <div className="message-content">
+                    <div className="message-text">{msg.message}</div>
+                    <div className="message-impact">Impact: {msg.impact}/10</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+        
+      case 'completed':
+        return (
+          <div className="battle-results">
+            <div className="ai-question">
+              <span className="status-gradient-text">"Who won this battle?"</span>
+            </div>
+            <div className="winner-reveal">
+              <h2>{winner === 'og' ? ogCharacter?.name : roasterCharacter?.name} Wins!</h2>
+              <div className="battle-scores">
+                <div className="score-item og-score">
+                  <span>{ogCharacter?.name}: {ogScore}</span>
+                </div>
+                <div className="score-item roaster-score">
+                  <span>{roasterCharacter?.name}: {roasterScore}</span>
+                </div>
+              </div>
+              <div className="ai-reasoning">
+                <p>{winnerReasoning}</p>
+                {decisiveMoment && (
+                  <div className="decisive-moment">
+                    <strong>Decisive Moment:</strong> "{decisiveMoment}"
+                  </div>
+                )}
               </div>
             </div>
-            <h3>{ogCharacter?.name || 'Selecting...'}</h3>
-            <p>{ogCharacter?.role || '0G Team'}</p>
-            {ogCharacter?.id && (
-              <button 
-                className="bio-btn og-bio-btn"
-                onClick={() => handleShowBio(ogCharacter, 'og')}
-                style={{
-                  borderColor: currentJudge?.color || '#FFD700',
-                  color: currentJudge?.color || '#FFD700'
-                }}
-              >
-                <User size={14} />
-                <span>View Bio</span>
-              </button>
-            )}
           </div>
-
-          <div className="vs-divider">
-            <Swords 
-              size={40} 
-              className="vs-icon" 
-              style={{ color: currentJudge?.color || '#FFD700' }}
-            />
-            <span className="vs-gradient-text">VS</span>
-          </div>
-
-          <div className={`character-card roaster-card ${winner === 'roaster' ? 'winner' : ''}`}>
-            <div className="character-icon" style={{ 
-                color: roasterCharacter?.color,
-                border: `3px solid ${currentJudge?.color || '#FFD700'}`,
-                boxShadow: `0 0 15px ${currentJudge?.color || '#FFD700'}40`
-              }}>
-              <img src={`/avatars/${roasterCharacter?.id || 'default'}.png`} 
-                   alt={roasterCharacter?.name}
-                   onError={(e) => {
-                     e.target.style.display = 'none';
-                     e.target.nextSibling.style.display = 'block';
+        );
+        
+             default:
+         // Default: Characters VS Display
+         return (
+           <div className="characters-display">
+             <div className={`character-card og-card ${winner === 'og' ? 'winner' : ''}`}>
+               <div className="character-icon" style={{ 
+                   color: ogCharacter?.color,
+                   border: `3px solid ${currentJudge?.color || '#FFD700'}`,
+                   boxShadow: `0 0 15px ${currentJudge?.color || '#FFD700'}40`
+                 }}>
+                 {ogCharacter?.id ? (
+                   <img 
+                     src={`/${ogCharacter.id}.jpg`} 
+                     alt={ogCharacter.name} 
+                     onError={(e) => {
+                       e.target.style.display = 'none';
+                       e.target.nextSibling.style.display = 'block';
+                     }}
+                   />
+                 ) : null}
+                 <div 
+                   className="fallback-icon" 
+                   style={{ display: ogCharacter?.id ? 'none' : 'flex' }}
+                 >
+                   {ogCharacter?.name?.[0] || '?'}
+                 </div>
+               </div>
+               <h3>{ogCharacter?.name || 'Selecting...'}</h3>
+               <p>{ogCharacter?.role || '0G Team'}</p>
+               {ogCharacter?.id && (
+                 <button 
+                   className="bio-btn og-bio-btn"
+                   onClick={() => handleShowBio(ogCharacter, 'og')}
+                   style={{
+                     borderColor: currentJudge?.color || '#FFD700',
+                     color: currentJudge?.color || '#FFD700'
                    }}
-              />
-              <div className="fallback-icon" style={{ display: 'none' }}>
-                {roasterCharacter?.name?.[0] || '?'}
-              </div>
-            </div>
-            <h3>{roasterCharacter?.name || 'Selecting...'}</h3>
-            <p>{roasterCharacter?.role || 'Crypto Roaster'}</p>
-            {roasterCharacter?.id && (
-              <button 
-                className="bio-btn roaster-bio-btn"
-                onClick={() => handleShowBio(roasterCharacter, 'roaster')}
-                style={{
-                  borderColor: currentJudge?.color || '#FFD700',
-                  color: currentJudge?.color || '#FFD700'
-                }}
-              >
-                <User size={14} />
-                <span>View Bio</span>
-              </button>
-            )}
-          </div>
-        </div>
+                 >
+                   <User size={14} />
+                   <span>View Bio</span>
+                 </button>
+               )}
+             </div>
 
-        {/* Timer */}
-        {timeLeft > 0 && battleStatus === 'countdown' && (
-          <div className="countdown-timer">
-            <Clock size={20} />
-            <span>{formatTime(timeLeft)}</span>
-          </div>
-        )}
+             <div className="vs-divider">
+               <Swords 
+                 size={40} 
+                 className="vs-icon" 
+                 style={{ color: currentJudge?.color || '#FFD700' }}
+               />
+               <span className="vs-gradient-text">VS</span>
+             </div>
 
-        {/* Battle Dialog Component */}
-        <BattleDialog 
-          dialog={dialog}
-          battleStatus={battleStatus}
-          ogCharacter={ogCharacter}
-          roasterCharacter={roasterCharacter}
-          currentJudge={currentJudge}
-        />
+             <div className={`character-card roaster-card ${winner === 'roaster' ? 'winner' : ''}`}>
+               <div className="character-icon" style={{ 
+                   color: roasterCharacter?.color,
+                   border: `3px solid ${currentJudge?.color || '#FFD700'}`,
+                   boxShadow: `0 0 15px ${currentJudge?.color || '#FFD700'}40`
+                 }}>
+                 <img src={`/avatars/${roasterCharacter?.id || 'default'}.png`} 
+                      alt={roasterCharacter?.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                 />
+                 <div className="fallback-icon" style={{ display: 'none' }}>
+                   {roasterCharacter?.name?.[0] || '?'}
+                 </div>
+               </div>
+               <h3>{roasterCharacter?.name || 'Selecting...'}</h3>
+               <p>{roasterCharacter?.role || 'Crypto Roaster'}</p>
+               {roasterCharacter?.id && (
+                 <button 
+                   className="bio-btn roaster-bio-btn"
+                   onClick={() => handleShowBio(roasterCharacter, 'roaster')}
+                   style={{
+                     borderColor: currentJudge?.color || '#FFD700',
+                     color: currentJudge?.color || '#FFD700'
+                   }}
+                 >
+                   <User size={14} />
+                   <span>View Bio</span>
+                 </button>
+               )}
+             </div>
+           </div>
+         );
+     }
+   };
 
-        {/* Winner Display */}
-        {winner && (
-          <div className="winner-display">
-            <Trophy size={30} />
-            <h3>{winner === 'og' ? ogCharacter?.name : roasterCharacter?.name} Wins!</h3>
-            <p>{winnerReasoning}</p>
-          </div>
-        )}
-      </div>
+   return (
+     <>
+       <div className="battle-arena">
+         {/* Title */}
+         <div className="arena-title">
+           <h2>
+             <Landmark 
+               className="arena-icon" 
+               style={{ color: currentJudge?.color || '#FFD700' }}
+             />
+             <span className="gradient-text">Battle Arena</span>
+           </h2>
+         </div>
+
+         {/* Main Content - switches based on battle status */}
+         {renderMainContent()}
+
+         {/* Status and Timer */}
+         <div className="battle-status" style={{
+           background: `rgba(${currentJudge?.color ? 
+             currentJudge.color.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16)).join(', ') : 
+             '255, 215, 0'}, 0.1)`,
+           borderColor: `rgba(${currentJudge?.color ? 
+             currentJudge.color.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16)).join(', ') : 
+             '255, 215, 0'}, 0.3)`
+         }}>
+           {timeLeft > 0 && battleStatus === 'countdown' ? (
+             <span className="status-gradient-text">Battle starting in {formatTime(timeLeft)}!</span>
+           ) : (
+             <span className="status-gradient-text">{getStatusMessage()}</span>
+           )}
+         </div>
+       </div>
 
       <style jsx>{`
         .battle-arena {
@@ -197,12 +259,14 @@ const BattleArena = ({
           height: 100%;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 24px;
+          justify-content: space-between;
         }
 
         .arena-title {
           text-align: center;
-          margin-bottom: 10px;
+          flex: 0 0 auto;
+          margin-bottom: 0;
         }
 
         .arena-title h2 {
@@ -255,10 +319,7 @@ const BattleArena = ({
           }
         }
 
-        .status-message {
-          color: #9999A5;
-          font-size: 14px;
-        }
+
 
         .characters-display {
           display: flex;
@@ -266,7 +327,6 @@ const BattleArena = ({
           justify-content: space-between;
           gap: 60px;
           padding: 24px;
-          background: rgba(30, 30, 40, 0.5);
           border-radius: 12px;
           min-height: 180px;
         }
@@ -278,8 +338,8 @@ const BattleArena = ({
           border: 2px solid transparent;
           transition: all 0.3s ease;
           flex: 1;
-          max-width: 220px;
-          min-width: 200px;
+          max-width: 240px;
+          min-width: 230px;
           min-height: 140px;
           display: flex;
           flex-direction: column;
@@ -288,13 +348,13 @@ const BattleArena = ({
         }
 
         .character-card.winner {
-          border-color: #FFD700;
-          box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+          border-color: var(--theme-primary, #FFD700);
+          box-shadow: 0 0 20px var(--theme-primary-30, rgba(255, 215, 0, 0.4));
         }
 
         .character-icon {
-          width: 100px;
-          height: 100px;
+          width: 120px;
+          height: 120px;
           margin: 0 auto 12px;
           position: relative;
           border-radius: 50%;
@@ -315,7 +375,7 @@ const BattleArena = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 42px;
+          font-size: 50px;
           font-weight: bold;
           background: currentColor;
           opacity: 0.2;
@@ -380,44 +440,187 @@ const BattleArena = ({
           display: inline-block;
         }
 
-        .countdown-timer {
+        .battle-status {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          padding: 12px 24px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          padding: 16px 24px;
+          border: 1px solid;
           border-radius: 8px;
+          font-size: 16px;
+          font-weight: 500;
+          text-align: center;
+          transition: all 0.3s ease;
+        }
+
+        .status-gradient-text {
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
+          font-weight: 600;
+          display: inline-block;
+        }
+
+        /* Battle Transition Styles */
+        .battle-transition {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 180px;
+          padding: 24px;
+        }
+
+        .transition-message {
+          text-align: center;
+          font-size: 24px;
+        }
+
+        /* Battle Chat Styles */
+        .battle-chat {
+          display: flex;
+          flex-direction: column;
+          min-height: 180px;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+
+        .chat-header {
+          padding: 12px 20px;
+          background: rgba(40, 40, 50, 0.6);
+          border-bottom: 1px solid rgba(60, 75, 95, 0.3);
+          text-align: center;
+        }
+
+        .chat-header h3 {
+          color: #E6E6E6;
+          font-size: 16px;
+          margin: 0;
+        }
+
+        .chat-messages {
+          flex: 1;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+
+        .message {
+          display: flex;
+          gap: 10px;
+          align-items: flex-start;
+        }
+
+        .message.roaster {
+          flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(60, 75, 95, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #E6E6E6;
+          font-weight: bold;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+
+        .message-content {
+          flex: 1;
+          max-width: 70%;
+        }
+
+        .message-text {
+          background: rgba(60, 75, 95, 0.3);
+          padding: 8px 12px;
+          border-radius: 12px;
+          color: #E6E6E6;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .message.roaster .message-text {
+          background: rgba(255, 92, 170, 0.2);
+        }
+
+        .message-impact {
+          font-size: 11px;
+          color: #9999A5;
+          margin-top: 4px;
+          text-align: right;
+        }
+
+        .message.roaster .message-impact {
+          text-align: left;
+        }
+
+        /* Battle Results Styles */
+        .battle-results {
+          display: flex;
+          flex-direction: column;
+          min-height: 180px;
+          padding: 20px;
+          text-align: center;
+          gap: 16px;
+        }
+
+        .ai-question {
+          font-size: 18px;
+          margin-bottom: 8px;
+        }
+
+        .winner-reveal h2 {
           color: #FFD700;
           font-size: 20px;
+          margin: 0 0 12px 0;
+        }
+
+        .battle-scores {
+          display: flex;
+          justify-content: space-around;
+          margin: 12px 0;
+          gap: 20px;
+        }
+
+        .score-item {
+          padding: 8px 16px;
+          border-radius: 8px;
+          background: rgba(60, 75, 95, 0.3);
+          color: #E6E6E6;
+          font-size: 14px;
           font-weight: 600;
         }
 
-        .winner-display {
-          text-align: center;
-          padding: 20px;
-          background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 107, 107, 0.1));
-          border: 2px solid #FFD700;
-          border-radius: 12px;
-          animation: glow 2s ease-in-out infinite;
+        .ai-reasoning {
+          margin-top: 12px;
         }
 
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-          50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
-        }
-
-        .winner-display h3 {
-          color: #FFD700;
-          font-size: 24px;
-          margin: 12px 0;
-        }
-
-        .winner-display p {
+        .ai-reasoning p {
           color: #E6E6E6;
-          font-size: 16px;
+          font-size: 13px;
+          line-height: 1.4;
+          margin: 0 0 8px 0;
         }
+
+        .decisive-moment {
+          font-size: 12px;
+          color: #9999A5;
+          font-style: italic;
+        }
+
+
+
+
 
         /* Bio Button Styles */
         .bio-btn {
@@ -456,13 +659,13 @@ const BattleArena = ({
           }
           
           .character-card {
-            min-width: 140px;
-            max-width: 180px;
+            min-width: 160px;
+            max-width: 200px;
           }
           
           .character-icon {
-            width: 70px;
-            height: 70px;
+            width: 90px;
+            height: 90px;
           }
         }
 
@@ -568,9 +771,9 @@ const BattleArena = ({
             font-size: 14px;
           }
 
-          .countdown-timer {
-            padding: 10px 20px;
-            font-size: 18px;
+          .battle-status {
+            padding: 12px 20px;
+            font-size: 15px;
           }
 
           .bio-btn {
@@ -612,9 +815,9 @@ const BattleArena = ({
             font-size: 12px;
           }
 
-          .countdown-timer {
-            padding: 8px 16px;
-            font-size: 16px;
+          .battle-status {
+            padding: 10px 16px;
+            font-size: 14px;
           }
 
           .vs-icon {

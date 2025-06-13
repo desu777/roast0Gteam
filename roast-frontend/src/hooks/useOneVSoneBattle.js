@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import wsService from '../services/websocket';
+import { battleApi } from '../services/api';
+import battleWebSocket from '../services/battleWebSocket';
+import { useSendTransaction } from 'wagmi';
+import { parseEther } from 'viem';
 
 const BATTLE_API_URL = import.meta.env.VITE_BATTLE_API_URL || 'http://localhost:3002/api';
 
@@ -42,6 +44,9 @@ const calculateOdds = (bets) => {
 };
 
 export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
+  // Add wagmi transaction hook
+  const { sendTransactionAsync } = useSendTransaction();
+
   // Battle state
   const [currentBattle, setCurrentBattle] = useState(null);
   const [battleStatus, setBattleStatus] = useState('waiting_bets');
@@ -51,6 +56,12 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
   const [dialog, setDialog] = useState([]);
   const [winner, setWinner] = useState(null);
   const [winnerReasoning, setWinnerReasoning] = useState('');
+  
+  // Extended judgment data
+  const [ogScore, setOgScore] = useState(0);
+  const [roasterScore, setRoasterScore] = useState(0);
+  const [decisiveMoment, setDecisiveMoment] = useState('');
+  const [crowdFavorite, setCrowdFavorite] = useState(null);
 
   // Betting state
   const [bets, setBets] = useState({ og: { count: 0, total: 0, players: [] }, roaster: { count: 0, total: 0, players: [] } });
@@ -65,29 +76,43 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
   const [battleHistory, setBattleHistory] = useState([]);
   const [playerStats, setPlayerStats] = useState(null);
 
-  // Create axios instance for battle API
-  const battleApi = axios.create({
-    baseURL: BATTLE_API_URL,
-    timeout: 10000,
-  });
-
   // Load battle configuration
   const loadBattleConfig = useCallback(async () => {
     try {
-      const response = await battleApi.get('/battle/config');
+      // Use real config endpoint
+      const response = await battleApi.getConfig();
       
       if (response.data.success) {
         setBattleConfig(response.data.data);
+        
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🎯 Battle config loaded:', response.data.data);
+        }
       }
     } catch (error) {
-      console.error('Failed to load battle config:', error);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('Failed to load battle config:', error);
+      }
+      
+      // Fallback to default config
+      setBattleConfig({
+        betAmount: 0.05, // Match your .env BET_AMOUNT=0.05
+        countdownDuration: 90,
+        houseFeePercent: 5,
+        minBetsToStart: { og: 1, roaster: 1 },
+        network: {
+          chainId: 16601,
+          networkName: '0G-Galileo-Testnet',
+          currencySymbol: '0G'
+        }
+      });
     }
   }, []);
 
   // Load current battle
   const loadCurrentBattle = useCallback(async () => {
     try {
-      const response = await battleApi.get('/battle/current');
+      const response = await battleApi.getCurrentBattle();
       
       if (response.data.success && response.data.data) {
         const battle = response.data.data;
@@ -100,7 +125,7 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
         const betsWithOdds = calculateOdds(battle.bets);
         setBets(betsWithOdds);
         setTotalPot(battle.totalPot);
-        setDialog(battle.dialog || []);
+        setDialog(Array.isArray(battle.dialog) ? battle.dialog : []);
         setWinner(battle.winner);
         setWinnerReasoning(battle.winnerReasoning);
         
@@ -126,9 +151,8 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
         }
       }
     } catch (error) {
-      console.error('Failed to load current battle:', error);
       if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.error('Battle API error:', error.response?.data || error.message);
+        console.error('Failed to load current battle:', error.response?.data || error.message);
       }
     }
   }, [userAddress]);
@@ -136,13 +160,15 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
   // Load battle history
   const loadBattleHistory = useCallback(async () => {
     try {
-      const response = await battleApi.get('/battle/history?limit=20');
+      const response = await battleApi.getBattleHistory(20);
       
       if (response.data.success) {
         setBattleHistory(response.data.data);
       }
     } catch (error) {
-      console.error('Failed to load battle history:', error);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('Failed to load battle history:', error);
+      }
     }
   }, []);
 
@@ -151,17 +177,19 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     if (!address) return;
     
     try {
-      const response = await battleApi.get(`/battle/stats/${address}`);
+      const response = await battleApi.getPlayerStats(address);
       
       if (response.data.success) {
         setPlayerStats(response.data.data);
       }
     } catch (error) {
-      console.error('Failed to load player stats:', error);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('Failed to load player stats:', error);
+      }
     }
   }, []);
 
-  // Place bet
+  // Place bet with real transaction
   const placeBet = useCallback(async (side, amount) => {
     if (!userAddress) {
       addNotification({
@@ -176,14 +204,37 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     setIsLoadingBet(true);
     
     try {
-      // For demo purposes, generate a fake tx hash
-      const txHash = `0x${Math.random().toString(16).substr(2, 64).padEnd(64, '0')}`;
+      // Get treasury address from environment - use TREASURY_ADDRESS2 for OneVSone battles
+      const treasuryAddress = import.meta.env.VITE_TREASURY_ADDRESS2;
+      if (!treasuryAddress) {
+        throw new Error('Battle treasury address not configured (VITE_TREASURY_ADDRESS2)');
+      }
+
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🎯 Placing OneVSone bet transaction:', {
+          side,
+          amount,
+          to: treasuryAddress,
+          from: userAddress,
+          treasuryType: 'TREASURY_ADDRESS2'
+        });
+      }
+
+      // Send real transaction to battle treasury
+      const txHash = await sendTransactionAsync({
+        to: treasuryAddress,
+        value: parseEther(amount.toString()),
+      });
+
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('✅ Battle transaction sent:', txHash);
+      }
       
-      const response = await battleApi.post('/battle/bet', {
+      const response = await battleApi.placeBet({
         playerAddress: userAddress,
         betSide: side,
         betAmount: amount,
-        txHash: txHash
+        txHash: txHash // Use real transaction hash
       });
       
       if (response.data.success) {
@@ -193,27 +244,40 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
           type: 'success',
           title: 'Bet Placed!',
           message: `Your ${amount} 0G bet on ${side === 'og' ? '0G Team' : 'Roaster'} has been placed!`,
+          txHash: txHash,
           duration: 5000
         });
         
         playSound?.('success');
         
-        // Reload battle state
-        loadCurrentBattle();
+        // Update battle state
+        await loadCurrentBattle();
       }
     } catch (error) {
-      console.error('Failed to place bet:', error);
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.error('❌ Failed to place bet:', error);
+      }
+      
+      let errorMessage = 'Failed to place bet';
+      
+      if (error.message?.includes('User rejected')) {
+        errorMessage = 'Transaction was rejected';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for transaction';
+      } else if (error.message?.includes('Battle treasury address not configured')) {
+        errorMessage = 'Battle system configuration error';
+      }
       
       addNotification({
         type: 'error',
         title: 'Bet Failed',
-        message: error.response?.data?.message || 'Failed to place bet. Please try again.',
+        message: errorMessage,
         duration: 5000
       });
     } finally {
       setIsLoadingBet(false);
     }
-  }, [userAddress, loadCurrentBattle, addNotification, playSound]);
+  }, [userAddress, sendTransactionAsync, addNotification, playSound, loadCurrentBattle]);
 
   // Initial data loading
   useEffect(() => {
@@ -225,57 +289,122 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     }
   }, [loadBattleConfig, loadCurrentBattle, loadBattleHistory, loadPlayerStats, userAddress]);
 
-  // Setup WebSocket listeners
+  // Setup Battle WebSocket listeners - only connect once
   useEffect(() => {
-    // Join battle room
-    wsService.emit('join_battle_room', {});
+    // Connect to battle WebSocket server
+    battleWebSocket.connect();
 
-    // Battle state updates
-    wsService.on('battle_state', (data) => {
+    const handleBattleState = (data) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🎮 Battle state update:', data);
       }
       loadCurrentBattle();
-    });
+    };
 
-    // Battle created
-    wsService.on('battle_created', (data) => {
+    const handleBattleCreated = (data) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🎮 New battle created:', data);
       }
       loadCurrentBattle();
       setUserBet(null);
-    });
+      
+      // Reset judgment data
+      setWinner(null);
+      setWinnerReasoning('');
+      setOgScore(0);
+      setRoasterScore(0);
+      setDecisiveMoment('');
+      setCrowdFavorite(null);
+      setDialog([]);
+    };
 
-    // Bet placed
-    wsService.on('bet_placed', (data) => {
+    const handleBetPlaced = (data) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('💰 Bet placed:', data);
       }
       loadCurrentBattle();
-    });
+    };
 
-    // Countdown updates
-    wsService.on('countdown_tick', (data) => {
-      setTimeLeft(data.remaining);
-    });
+    const handleCountdownStarted = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('⏰ Countdown started:', data);
+      }
+      if (data.remaining || data.timeLeft) {
+        setTimeLeft(data.remaining || data.timeLeft);
+      }
+      setBattleStatus('countdown');
+    };
 
-    // Dialog updates
-    wsService.on('dialog_exchange', (data) => {
+    const handleCountdownTick = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('⏰ Countdown tick:', data);
+      }
+      // Handle different countdown data formats
+      if (typeof data === 'number') {
+        setTimeLeft(data);
+      } else if (data.secondsRemaining !== undefined) {
+        setTimeLeft(data.secondsRemaining);  // Backend sends this format
+      } else if (data.remaining !== undefined) {
+        setTimeLeft(data.remaining);
+      } else if (data.timeLeft !== undefined) {
+        setTimeLeft(data.timeLeft);
+      } else if (data.seconds !== undefined) {
+        setTimeLeft(data.seconds);
+      }
+    };
+
+    const handleCountdownComplete = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🏁 Countdown complete:', data);
+      }
+      setTimeLeft(0);
+      setBattleStatus('generating');
+    };
+
+    const handleDialogReady = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('💬 Dialog ready:', data);
+      }
+      setBattleStatus('dialog');
+    };
+
+    const handleDialogExchange = (data) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('💬 Dialog exchange:', data);
       }
-      setDialog(prev => [...prev, data.exchange]);
-    });
+      
+      if (data.exchange) {
+        setDialog(prev => {
+          // Ensure prev is always an array
+          const currentDialog = Array.isArray(prev) ? prev : [];
+          
+          // Prevent duplicates by checking if exchange already exists
+          const exists = currentDialog.some(ex => 
+            ex.speaker === data.exchange.speaker && 
+            ex.message === data.exchange.message &&
+            currentDialog.length === data.index
+          );
+          if (!exists) {
+            return [...currentDialog, data.exchange];
+          }
+          return currentDialog;
+        });
+      }
+    };
 
-    // Battle complete
-    wsService.on('battle_complete', (data) => {
+    const handleBattleComplete = (data) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🏆 Battle complete:', data);
       }
       setWinner(data.winner);
-      setWinnerReasoning(data.winnerReasoning);
+      setWinnerReasoning(data.reasoning || data.winnerReasoning);
       setBattleStatus('completed');
+      
+      // Set extended judgment data
+      setOgScore(data.scores?.ogScore || data.ogScore || 0);
+      setRoasterScore(data.scores?.roasterScore || data.roasterScore || 0);
+      setDecisiveMoment(data.decisiveMoment || '');
+      setCrowdFavorite(data.crowdFavorite || data.winner);
       
       // Check if user won
       if (userBet && userBet.side === data.winner) {
@@ -300,19 +429,43 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
       if (userAddress) {
         loadPlayerStats(userAddress);
       }
-    });
-
-    // Cleanup
-    return () => {
-      wsService.emit('leave_battle_room', {});
-      wsService.off('battle_state');
-      wsService.off('battle_created');
-      wsService.off('bet_placed');
-      wsService.off('countdown_tick');
-      wsService.off('dialog_exchange');
-      wsService.off('battle_complete');
     };
-  }, [userAddress, userBet, loadCurrentBattle, loadBattleHistory, loadPlayerStats, addNotification, playSound]);
+
+    const handleConnectionStatus = (data) => {
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🎯 Battle WebSocket connection status:', data);
+      }
+    };
+
+    // Add event listeners
+    battleWebSocket.on('battle_state', handleBattleState);
+    battleWebSocket.on('battle_created', handleBattleCreated);
+    battleWebSocket.on('bet_placed', handleBetPlaced);
+    battleWebSocket.on('countdown_started', handleCountdownStarted);
+    battleWebSocket.on('countdown_tick', handleCountdownTick);
+    battleWebSocket.on('countdown_complete', handleCountdownComplete);
+    battleWebSocket.on('dialog_ready', handleDialogReady);
+    battleWebSocket.on('dialog_exchange', handleDialogExchange);
+    battleWebSocket.on('battle_complete', handleBattleComplete);
+    battleWebSocket.on('connection-status', handleConnectionStatus);
+
+    // Cleanup - remove specific handlers and disconnect
+    return () => {
+      battleWebSocket.off('battle_state', handleBattleState);
+      battleWebSocket.off('battle_created', handleBattleCreated);
+      battleWebSocket.off('bet_placed', handleBetPlaced);
+      battleWebSocket.off('countdown_started', handleCountdownStarted);
+      battleWebSocket.off('countdown_tick', handleCountdownTick);
+      battleWebSocket.off('countdown_complete', handleCountdownComplete);
+      battleWebSocket.off('dialog_ready', handleDialogReady);
+      battleWebSocket.off('dialog_exchange', handleDialogExchange);
+      battleWebSocket.off('battle_complete', handleBattleComplete);
+      battleWebSocket.off('connection-status', handleConnectionStatus);
+      
+      // Disconnect WebSocket when component unmounts
+      battleWebSocket.disconnect();
+    };
+  }, []); // Empty dependency array - connect only once
 
   // Countdown timer
   useEffect(() => {
@@ -334,6 +487,12 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     dialog,
     winner,
     winnerReasoning,
+    
+    // Extended judgment data
+    ogScore,
+    roasterScore,
+    decisiveMoment,
+    crowdFavorite,
     
     // Betting state
     bets,

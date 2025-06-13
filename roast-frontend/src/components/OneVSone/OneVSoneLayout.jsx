@@ -23,6 +23,12 @@ const OneVSoneLayout = ({
     winner,
     winnerReasoning,
     
+    // Extended judgment data
+    ogScore,
+    roasterScore,
+    decisiveMoment,
+    crowdFavorite,
+    
     // Betting state
     bets,
     totalPot,
@@ -81,6 +87,10 @@ const OneVSoneLayout = ({
               dialog={dialog}
               winner={winner}
               winnerReasoning={winnerReasoning}
+              ogScore={ogScore}
+              roasterScore={roasterScore}
+              decisiveMoment={decisiveMoment}
+              crowdFavorite={crowdFavorite}
               currentJudge={currentJudge}
             />
           </div>
@@ -108,6 +118,7 @@ const OneVSoneLayout = ({
       <style jsx>{`
         /* Reuse existing arena-main styles */
         .arena-main .left-column,
+        .arena-main .center-column,
         .arena-main .right-column {
           height: 600px;
           overflow: hidden;
@@ -130,6 +141,7 @@ const OneVSoneLayout = ({
         /* Tablet adjustments */
         @media (max-width: 1400px) and (min-width: 1025px) {
           .arena-main .left-column,
+          .arena-main .center-column,
           .arena-main .right-column {
             height: 580px;
           }
@@ -138,6 +150,7 @@ const OneVSoneLayout = ({
         /* Mobile landscape and smaller - stack layout */
         @media (max-width: 1024px) {
           .arena-main .left-column,
+          .arena-main .center-column,
           .arena-main .right-column {
             height: auto;
             overflow: visible;

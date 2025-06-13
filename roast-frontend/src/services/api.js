@@ -1,12 +1,14 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const BATTLE_API_URL = import.meta.env.VITE_BATTLE_API_URL || 'http://localhost:3002/api';
 
 if (import.meta.env.VITE_TEST_ENV === 'true') {
   console.log('🌐 API Base URL:', API_BASE_URL);
+  console.log('🎯 Battle API URL:', BATTLE_API_URL);
 }
 
-// Konfiguracja axios
+// Konfiguracja axios dla głównej gry
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -15,7 +17,16 @@ const api = axios.create({
   },
 });
 
-// Interceptor dla logowania zapytań
+// Konfiguracja axios dla battle system
+const battleAxios = axios.create({
+  baseURL: BATTLE_API_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor dla logowania zapytań (główna gra)
 api.interceptors.request.use(
   (config) => {
     if (import.meta.env.VITE_TEST_ENV === 'true') {
@@ -31,7 +42,23 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor dla logowania błędów
+// Interceptor dla logowania zapytań (battle system)
+battleAxios.interceptors.request.use(
+  (config) => {
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`📤 Battle API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    }
+    return config;
+  },
+  (error) => {
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.error('📤 Battle API Request Error:', error);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor dla logowania błędów (główna gra)
 api.interceptors.response.use(
   (response) => {
     if (import.meta.env.VITE_TEST_ENV === 'true') {
@@ -47,7 +74,23 @@ api.interceptors.response.use(
   }
 );
 
-// Game API
+// Interceptor dla logowania błędów (battle system)
+battleAxios.interceptors.response.use(
+  (response) => {
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log(`📥 Battle API Response: ${response.status} ${response.config.url}`, response.data);
+    }
+    return response;
+  },
+  (error) => {
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.error('📥 Battle API Error:', error.response?.data || error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Game API (główna arena)
 export const gameApi = {
   // Pobierz aktualną rundę
   getCurrentRound: () => api.get('/game/current'),
@@ -65,6 +108,34 @@ export const gameApi = {
   // Wyślij wynik głosowania na następnego sędziego
   submitVotingResult: (characterId, totalVotes) => 
     api.post('/game/vote-next-judge', { characterId, totalVotes }),
+};
+
+// Battle API (1v1 battles)
+export const battleApi = {
+  // Pobierz aktualną bitwę
+  getCurrentBattle: () => battleAxios.get('/battle/current'),
+  
+  // Postaw zakład
+  placeBet: (data) => battleAxios.post('/battle/bet', data),
+  
+  // Pobierz historię bitew
+  getBattleHistory: (limit = 20, offset = 0) => 
+    battleAxios.get(`/battle/history?limit=${limit}&offset=${offset}`),
+  
+  // Pobierz szczegóły bitwy
+  getBattle: (battleId) => battleAxios.get(`/battle/history/${battleId}`),
+  
+  // Pobierz statystyki gracza
+  getPlayerStats: (address) => battleAxios.get(`/battle/stats/${address}`),
+  
+  // Pobierz ranking
+  getLeaderboard: (limit = 10) => battleAxios.get(`/battle/leaderboard?limit=${limit}`),
+  
+  // Pobierz konfigurację battle system
+  getConfig: () => battleAxios.get('/battle/config'),
+  
+  // Health check
+  getHealth: () => battleAxios.get('/health'),
 };
 
 // Players API
