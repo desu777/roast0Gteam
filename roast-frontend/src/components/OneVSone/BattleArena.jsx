@@ -44,11 +44,11 @@ const BattleArena = ({
 
   // Handle typing indicator for chat
   useEffect(() => {
-    if (battleStatus === 'dialog' && dialog.length > 0) {
-      const lastMessage = dialog[dialog.length - 1];
-      if (lastMessage) {
+    if (battleStatus === 'dialog') {
+      if (dialog.length === 0) {
+        // First message should be from roaster (right side)
         setShowTypingIndicator(true);
-        setCurrentTypingSpeaker(lastMessage.speaker === 'og' ? 'roaster' : 'og');
+        setCurrentTypingSpeaker('roaster');
         
         const timer = setTimeout(() => {
           setShowTypingIndicator(false);
@@ -56,6 +56,19 @@ const BattleArena = ({
         }, 2000);
         
         return () => clearTimeout(timer);
+      } else if (dialog.length > 0) {
+        const lastMessage = dialog[dialog.length - 1];
+        if (lastMessage) {
+          setShowTypingIndicator(true);
+          setCurrentTypingSpeaker(lastMessage.speaker === 'og' ? 'roaster' : 'og');
+          
+          const timer = setTimeout(() => {
+            setShowTypingIndicator(false);
+            setCurrentTypingSpeaker(null);
+          }, 2000);
+          
+          return () => clearTimeout(timer);
+        }
       }
     }
   }, [dialog, battleStatus]);
@@ -160,9 +173,6 @@ const BattleArena = ({
                   )}
                 </div>
                 <span>{ogCharacter?.name}</span>
-              </div>
-              <div className="vs-indicator">
-                <Swords size={20} style={{ color: currentJudge?.color || '#FFD700' }} />
               </div>
               <div className="participant roaster">
                 <div className="participant-avatar">
@@ -814,7 +824,8 @@ const BattleArena = ({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 20px;
+          gap: 40px;
+          padding: 0 20px;
         }
 
         .participant {
@@ -842,11 +853,7 @@ const BattleArena = ({
           object-fit: cover;
         }
 
-        .vs-indicator {
-          padding: 8px;
-          border-radius: 50%;
-          background: rgba(255, 215, 0, 0.1);
-        }
+
 
         .chat-messages {
           flex: 1;
