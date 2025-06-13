@@ -57,13 +57,37 @@ router.post('/bet',
   [
     body('playerAddress').isEthereumAddress().withMessage('Invalid Ethereum address'),
     body('betSide').isIn(['og', 'roaster']).withMessage('Invalid bet side'),
-    body('betAmount').isFloat({ min: 0.1 }).withMessage('Invalid bet amount'),
+    body('betAmount').custom((value) => {
+      const amount = parseFloat(value);
+      const expectedAmount = config.battle.betAmount; // 0.05 z .env
+      
+      if (isNaN(amount) || amount < 0.01) {
+        throw new Error('Invalid bet amount - must be a positive number');
+      }
+      
+      // Allow exact match or validate against expected amount
+      if (Math.abs(amount - expectedAmount) > 0.001) {
+        throw new Error(`Invalid bet amount - expected ${expectedAmount} 0G`);
+      }
+      
+      return true;
+    }),
     body('txHash').isHexadecimal().isLength({ min: 66, max: 66 }).withMessage('Invalid transaction hash')
   ],
   validate,
   async (req, res) => {
     try {
       const { playerAddress, betSide, betAmount, txHash } = req.body;
+      
+      if (config.logging.testEnv) {
+        logger.info('🎯 Processing bet placement', {
+          playerAddress: playerAddress.substring(0, 10) + '...',
+          betSide,
+          betAmount,
+          txHash: txHash.substring(0, 10) + '...',
+          treasuryInitialized: treasuryService.isInitialized
+        });
+      }
       
       // Verify payment if treasury is initialized
       if (treasuryService.isInitialized) {
@@ -74,11 +98,26 @@ router.post('/bet',
         );
         
         if (!isValid) {
+          if (config.logging.testEnv) {
+            logger.warn('❌ Payment verification failed', {
+              txHash: txHash.substring(0, 10) + '...',
+              betAmount,
+              playerAddress: playerAddress.substring(0, 10) + '...'
+            });
+          }
           return res.status(400).json({
             success: false,
             error: 'INVALID_PAYMENT',
             message: 'Payment transaction could not be verified'
           });
+        }
+        
+        if (config.logging.testEnv) {
+          logger.info('✅ Payment verified successfully');
+        }
+      } else {
+        if (config.logging.testEnv) {
+          logger.warn('⚠️ Treasury not initialized - skipping payment verification');
         }
       }
       
@@ -93,6 +132,15 @@ router.post('/bet',
       // Confirm bet
       await battleService.confirmBet(txHash);
       
+      if (config.logging.testEnv) {
+        logger.info('✅ Bet placed successfully', {
+          battleId: battleState.battleId,
+          playerAddress: playerAddress.substring(0, 10) + '...',
+          betSide,
+          betAmount
+        });
+      }
+      
       res.json({
         success: true,
         data: battleState,
@@ -100,6 +148,13 @@ router.post('/bet',
       });
       
     } catch (error) {
+      if (config.logging.testEnv) {
+        logger.error('❌ Failed to place bet', { 
+          error: error.message,
+          stack: error.stack 
+        });
+      }
+      
       logger.error('Failed to place bet', { error: error.message });
       
       let statusCode = 500;

@@ -4,6 +4,7 @@ const { logger } = require('./logger.service');
 const db = require('./database.service');
 const characterService = require('./character.service');
 const aiService = require('./ai.service');
+const treasuryService = require('./treasury.service');
 
 class BattleService extends EventEmitter {
   constructor() {
@@ -438,6 +439,18 @@ class BattleService extends EventEmitter {
       
       const perWinnerAmount = winners.count > 0 ? winnersPool / winners.count : 0;
       
+      if (config.logging.testEnv) {
+        logger.info('💰 Battle payout calculation:', {
+          battleId: this.currentBattle.battle_id,
+          totalPot,
+          houseFee,
+          winnersPool,
+          winnersCount: winners.count,
+          perWinnerAmount,
+          winnerSide: judgment.winner
+        });
+      }
+      
       // Update battle status
       db.updateBattleStatus(this.currentBattle.battle_id, 'completed', {
         dialog: this.currentBattle.dialog,
@@ -479,6 +492,40 @@ class BattleService extends EventEmitter {
           player.amount,
           0
         );
+      }
+      
+      // 🚀 PROCESS ACTUAL PAYOUTS!
+      if (winners.count > 0 && perWinnerAmount > 0) {
+        if (config.logging.testEnv) {
+          logger.info('💸 Processing battle payouts:', {
+            battleId: this.currentBattle.battle_id,
+            winnersCount: winners.count,
+            perWinnerAmount,
+            winners: winners.players.map(p => p.address.substring(0, 10) + '...')
+          });
+        }
+        
+        try {
+          await treasuryService.processBattlePayouts(
+            this.currentBattle.battle_id,
+            winners.players,
+            perWinnerAmount
+          );
+          
+          if (config.logging.testEnv) {
+            logger.info('✅ Battle payouts queued successfully');
+          }
+        } catch (payoutError) {
+          logger.error('❌ Failed to process battle payouts', {
+            battleId: this.currentBattle.battle_id,
+            error: payoutError.message
+          });
+        }
+      } else {
+        logger.info('💸 No payouts to process (no winners or zero amount)', {
+          winnersCount: winners.count,
+          perWinnerAmount
+        });
       }
       
       // Emit battle complete event

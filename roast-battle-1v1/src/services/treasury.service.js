@@ -14,9 +14,18 @@ class TreasuryService {
 
   async initialize() {
     try {
+      // Check if treasury is properly configured
       if (!config.treasury.privateKey || !config.treasury.address) {
-        logger.warn('Treasury service not configured - running in test mode');
+        logger.warn('Treasury service not configured - missing TREASURY_PRIVATE_KEY or TREASURY_ADDRESS');
+        if (config.server.testEnv) {
+          logger.warn('Running in TEST_ENV without treasury config - will skip payouts');
+          return;
+        }
         return;
+      }
+
+      if (config.server.testEnv) {
+        logger.info('🧪 Treasury service initializing in TEST_ENV mode with real transactions on testnet');
       }
 
       // Initialize provider
@@ -36,7 +45,8 @@ class TreasuryService {
       logger.info('Treasury service initialized', {
         address: this.wallet.address,
         balance: ethers.formatEther(balance),
-        network: config.network.networkName
+        network: config.network.networkName,
+        testMode: config.server.testEnv
       });
       
       this.isInitialized = true;
@@ -223,9 +233,25 @@ class TreasuryService {
         throw new Error('Treasury wallet not initialized');
       }
       
+      if (config.server.testEnv) {
+        logger.info('💸 Preparing payout transaction:', {
+          to: recipientAddress,
+          amount: amount.toString(),
+          from: this.wallet.address
+        });
+      }
+      
       // Check balance
       const balance = await this.getBalance();
       const amountWei = ethers.parseEther(amount.toString());
+      
+      if (config.server.testEnv) {
+        logger.info('💰 Treasury balance check:', {
+          currentBalance: ethers.formatEther(balance),
+          payoutAmount: amount.toString(),
+          sufficient: balance >= amountWei
+        });
+      }
       
       if (balance < amountWei) {
         throw new Error('Insufficient treasury balance');
@@ -243,13 +269,23 @@ class TreasuryService {
       tx.gasPrice = feeData.gasPrice;
       
       // Send transaction
-      logger.info('Sending payout transaction', {
+      logger.info('📤 Sending payout transaction', {
         to: recipientAddress,
         amount: amount.toString(),
-        gasPrice: ethers.formatUnits(tx.gasPrice, 'gwei')
+        gasPrice: ethers.formatUnits(tx.gasPrice, 'gwei'),
+        gasLimit: tx.gasLimit,
+        testMode: config.server.testEnv
       });
       
       const transaction = await this.wallet.sendTransaction(tx);
+      
+      if (config.server.testEnv) {
+        logger.info('🚀 Transaction sent, waiting for confirmation:', {
+          txHash: transaction.hash,
+          recipient: recipientAddress,
+          amount: amount.toString()
+        });
+      }
       
       // Wait for confirmation
       const receipt = await transaction.wait();
@@ -258,13 +294,24 @@ class TreasuryService {
         throw new Error('Transaction failed');
       }
       
+      if (config.server.testEnv) {
+        logger.info('✅ Payout transaction confirmed:', {
+          txHash: receipt.hash,
+          blockNumber: receipt.blockNumber,
+          gasUsed: receipt.gasUsed.toString(),
+          recipient: recipientAddress,
+          amount: amount.toString()
+        });
+      }
+      
       return receipt.hash;
       
     } catch (error) {
-      logger.error('Failed to send payout', {
+      logger.error('❌ Failed to send payout', {
         error: error.message,
         recipient: recipientAddress,
-        amount
+        amount: amount.toString(),
+        testMode: config.server.testEnv
       });
       throw error;
     }
