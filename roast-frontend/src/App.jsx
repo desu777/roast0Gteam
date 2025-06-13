@@ -274,12 +274,14 @@ const App = () => {
         />
 
         {/* Hall of Fame Modal */}
-        <HallOfFameModal 
-          isOpen={showHallOfFame}
-          onClose={handleHallOfFameClose}
-          userAddress={userAddress}
-          currentJudge={currentJudge}
-        />
+        {showHallOfFame && (
+          <HallOfFameModal 
+            isOpen={showHallOfFame}
+            onClose={handleHallOfFameClose}
+            userAddress={userAddress}
+            currentJudge={currentJudge}
+          />
+        )}
         
         {/* Transaction Notifications */}
         {notifications.map((notification, index) => (

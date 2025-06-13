@@ -65,6 +65,7 @@ const OneVSoneLayout = ({
               battleHistory={battleHistory}
               playerStats={playerStats}
               userAddress={userAddress}
+              currentJudge={currentJudge}
             />
           </div>
 

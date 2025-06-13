@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trophy, TrendingUp, TrendingDown, History, User, Coins, Users } from 'lucide-react';
 
-const BattleHistory = ({ battleHistory, playerStats, userAddress }) => {
+const BattleHistory = ({ battleHistory, playerStats, userAddress, currentJudge }) => {
   const formatAddress = (address) => {
     if (!address) return '';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -22,8 +22,12 @@ const BattleHistory = ({ battleHistory, playerStats, userAddress }) => {
       <div className="battle-history">
         <div className="history-header">
           <h3>
-            <History size={20} className="inline-icon" />
-            Battle History
+            <History 
+              size={20} 
+              className="history-icon" 
+              style={{ color: currentJudge?.color || '#FFD700' }}
+            />
+            <span className="gradient-text">Battle History</span>
           </h3>
         </div>
 
@@ -141,6 +145,7 @@ const BattleHistory = ({ battleHistory, playerStats, userAddress }) => {
         }
 
         .history-header {
+          text-align: center;
           padding-bottom: 16px;
           border-bottom: 1px solid rgba(60, 75, 95, 0.3);
         }
@@ -150,8 +155,47 @@ const BattleHistory = ({ battleHistory, playerStats, userAddress }) => {
           font-size: 20px;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
           margin: 0;
+          line-height: 1;
+        }
+
+        .gradient-text {
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
+          font-weight: 700;
+          display: inline-block;
+          line-height: 1;
+        }
+
+        @keyframes gradientFlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+
+        .history-icon {
+          filter: drop-shadow(0 0 8px currentColor);
+          animation: iconGlow 3s ease-in-out infinite alternate;
+          transition: color 0.3s ease;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+        }
+
+        @keyframes iconGlow {
+          0% { 
+            filter: drop-shadow(0 0 8px currentColor); 
+            transform: scale(1);
+          }
+          100% { 
+            filter: drop-shadow(0 0 16px currentColor); 
+            transform: scale(1.05);
+          }
         }
 
         .player-stats {
