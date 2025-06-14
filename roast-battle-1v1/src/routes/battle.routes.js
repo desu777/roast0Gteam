@@ -536,4 +536,77 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// Get unique players count
+router.get('/unique-players', async (req, res) => {
+  try {
+    const count = await battleService.getUniquePlayersCount();
+    
+    res.json({
+      success: true,
+      data: { count }
+    });
+  } catch (error) {
+    logger.error('Failed to get unique players count', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'UNIQUE_PLAYERS_FAILED',
+      message: error.message
+    });
+  }
+});
+
+// Get AI logs for specific battle
+router.get('/ai-logs/:battleId',
+  [
+    param('battleId').notEmpty().withMessage('Battle ID required')
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { battleId } = req.params;
+      
+      const logs = await battleService.getAILogs(battleId);
+      
+      res.json({
+        success: true,
+        data: logs
+      });
+    } catch (error) {
+      logger.error('Failed to get AI logs', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: 'AI_LOGS_FAILED',
+        message: error.message
+      });
+    }
+  }
+);
+
+// Get battle payouts
+router.get('/payouts/:battleId',
+  [
+    param('battleId').notEmpty().withMessage('Battle ID required')
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const { battleId } = req.params;
+      
+      const payouts = await battleService.getBattlePayouts(battleId);
+      
+      res.json({
+        success: true,
+        data: payouts
+      });
+    } catch (error) {
+      logger.error('Failed to get battle payouts', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: 'PAYOUTS_FAILED',
+        message: error.message
+      });
+    }
+  }
+);
+
 module.exports = router;

@@ -258,6 +258,16 @@ const BattleStatsPanel = ({
           100% { transform: rotate(360deg); }
         }
 
+        /* Subtle pulse animation to indicate clickability */
+        @keyframes clickableHint {
+          0%, 100% { 
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2);
+          }
+          50% { 
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+          }
+        }
+
         .total-volume-section {
           display: flex;
           justify-content: center;
@@ -309,24 +319,57 @@ const BattleStatsPanel = ({
 
         .winrate-card {
           flex: 1;
-          background: rgba(30, 30, 40, 0.6);
-          border: 1px solid rgba(60, 75, 95, 0.3);
-          border-radius: 12px;
-          padding: 12px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          padding: 12px 16px;
           text-align: center;
           display: flex;
           flex-direction: column;
           gap: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          animation: clickableHint 3s ease-in-out infinite;
         }
 
-        .og-card {
-          border-color: rgba(0, 210, 233, 0.3);
-          background: rgba(0, 210, 233, 0.05);
+        .winrate-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+          transition: left 0.4s ease;
         }
 
-        .roaster-card {
-          border-color: rgba(255, 92, 170, 0.3);
-          background: rgba(255, 92, 170, 0.05);
+        .winrate-card:hover::before {
+          left: 100%;
+        }
+
+        .winrate-card:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .winrate-card:active {
+          transform: translateY(0) scale(0.98);
+          transition: transform 0.1s ease;
+        }
+
+        .winrate-card:hover {
+          border-color: var(--judge-color, #FFD700);
+          background: rgba(var(--judge-color-rgb, 255, 215, 0), 0.1);
+          box-shadow: 0 6px 20px rgba(var(--judge-color-rgb, 255, 215, 0), 0.3);
+        }
+
+        .winrate-card:hover .winrate-header,
+        .winrate-card:hover .winrate-value {
+          color: var(--judge-color, #FFD700);
+          text-shadow: 0 0 8px rgba(var(--judge-color-rgb, 255, 215, 0), 0.5);
         }
 
         .winrate-header {
@@ -338,18 +381,19 @@ const BattleStatsPanel = ({
           font-weight: 600;
         }
 
-        .og-card .winrate-header {
-          color: #00D2E9;
-        }
-
-        .roaster-card .winrate-header {
-          color: #FF5CAA;
+        .winrate-header {
+          color: #E6E6E6;
         }
 
         .winrate-value {
           font-size: 24px;
           font-weight: 700;
-          color: #E6E6E6;
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
         }
 
         .winrate-stats {
@@ -379,24 +423,57 @@ const BattleStatsPanel = ({
 
         .performance-card {
           flex: 1;
-          background: rgba(30, 30, 40, 0.6);
-          border: 1px solid rgba(60, 75, 95, 0.3);
-          border-radius: 12px;
-          padding: 12px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          padding: 12px 16px;
           text-align: center;
           display: flex;
           flex-direction: column;
           gap: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          animation: clickableHint 3s ease-in-out infinite;
         }
 
-        .og-performance {
-          border-color: rgba(0, 210, 233, 0.3);
-          background: rgba(0, 210, 233, 0.05);
+        .performance-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+          transition: left 0.4s ease;
         }
 
-        .roaster-performance {
-          border-color: rgba(255, 92, 170, 0.3);
-          background: rgba(255, 92, 170, 0.05);
+        .performance-card:hover::before {
+          left: 100%;
+        }
+
+        .performance-card:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .performance-card:active {
+          transform: translateY(0) scale(0.98);
+          transition: transform 0.1s ease;
+        }
+
+        .performance-card:hover {
+          border-color: var(--judge-color, #FFD700);
+          background: rgba(var(--judge-color-rgb, 255, 215, 0), 0.1);
+          box-shadow: 0 6px 20px rgba(var(--judge-color-rgb, 255, 215, 0), 0.3);
+        }
+
+        .performance-card:hover .performance-label,
+        .performance-card:hover .performance-character {
+          color: var(--judge-color, #FFD700);
+          text-shadow: 0 0 8px rgba(var(--judge-color-rgb, 255, 215, 0), 0.5);
         }
 
         .performance-label {
@@ -406,18 +483,19 @@ const BattleStatsPanel = ({
           letter-spacing: 0.5px;
         }
 
-        .og-performance .performance-label {
-          color: #00D2E9;
-        }
-
-        .roaster-performance .performance-label {
-          color: #FF5CAA;
+        .performance-label {
+          color: #E6E6E6;
         }
 
         .performance-character {
           font-size: 14px;
           font-weight: 700;
-          color: #E6E6E6;
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
           text-transform: capitalize;
         }
 

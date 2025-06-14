@@ -266,8 +266,9 @@ class DatabaseService {
       };
     }
     
+    // Calculate win rate as percentage like in leaderboard
     stats.win_rate = stats.total_battles > 0 
-      ? (stats.total_wins / stats.total_battles) * 100 
+      ? parseFloat(((stats.total_wins / stats.total_battles) * 100).toFixed(2))
       : 0;
     
     return stats;
@@ -376,6 +377,23 @@ class DatabaseService {
       success ? 1 : 0,
       error
     );
+  }
+
+  getAILogs(battleId) {
+    return this.db.prepare(`
+      SELECT * FROM ai_logs 
+      WHERE battle_id = ? 
+      ORDER BY created_at ASC
+    `).all(battleId);
+  }
+
+  getUniquePlayersCount() {
+    const result = this.db.prepare(`
+      SELECT COUNT(DISTINCT player_address) as count 
+      FROM battle_stats
+    `).get();
+    
+    return result ? result.count : 0;
   }
 
   // === Utility Methods ===

@@ -602,6 +602,21 @@ class BattleService extends EventEmitter {
     return db.getLeaderboard(limit);
   }
 
+  // Get AI logs for specific battle
+  async getAILogs(battleId) {
+    return db.getAILogs(battleId);
+  }
+
+  // Get unique players count
+  async getUniquePlayersCount() {
+    return db.getUniquePlayersCount();
+  }
+
+  // Get battle payouts
+  async getBattlePayouts(battleId) {
+    return db.getPayouts(battleId);
+  }
+
   // Force end battle (admin function)
   async forceEndBattle(adminKey) {
     if (adminKey !== config.admin.key) {

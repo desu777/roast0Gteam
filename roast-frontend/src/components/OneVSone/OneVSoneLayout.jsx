@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import BattleArena from './BattleArena';
 import BattleHistory from './BattleHistory';
 import BattleStatsPanel from './BattleStatsPanel';
+import PlayerStatsModal from './PlayerStatsModal';
+import BattleHistoryModal from './BattleHistoryModal';
 import BettingPanel from './BettingPanel';
 import { useOneVSoneBattle } from '../../hooks/useOneVSoneBattle';
 
@@ -71,6 +73,15 @@ const OneVSoneLayout = ({
     }
   }, [bets, onBattleBetsUpdate]);
 
+  // Modal handlers
+  const handleClosePlayerStats = () => {
+    setShowPlayerStats(false);
+  };
+
+  const handleCloseBattleHistory = () => {
+    setShowBattleHistory(false);
+  };
+
   return (
     <>
       <main className="arena-main">
@@ -126,6 +137,21 @@ const OneVSoneLayout = ({
 
         </div>
       </main>
+
+      {/* Player Stats Modal */}
+      <PlayerStatsModal 
+        isOpen={showPlayerStats}
+        onClose={handleClosePlayerStats}
+        userAddress={userAddress}
+        currentJudge={currentJudge}
+      />
+
+      {/* Battle History Modal */}
+      <BattleHistoryModal 
+        isOpen={showBattleHistory}
+        onClose={handleCloseBattleHistory}
+        currentJudge={currentJudge}
+      />
 
       <style jsx>{`
         /* Reuse existing arena-main styles */

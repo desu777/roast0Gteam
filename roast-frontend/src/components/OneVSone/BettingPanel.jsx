@@ -166,7 +166,15 @@ const BettingPanel = ({
                     </span>
                   </div>
                 </div>
-                <div className="bet-status">
+                <div 
+                  className="bet-status"
+                  style={{
+                    '--judge-color': currentJudge?.color || '#FFD700',
+                    '--judge-color-rgb': currentJudge?.color ? 
+                      `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
+                      '255, 215, 0'
+                  }}
+                >
                   <AlertCircle size={14} />
                   <span>Waiting for battle to start...</span>
                 </div>
@@ -359,7 +367,12 @@ const BettingPanel = ({
         }
 
         .win-amount {
-          color: #FFD700;
+          background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientFlow 3s linear infinite;
           font-weight: 600;
         }
 
@@ -469,10 +482,10 @@ const BettingPanel = ({
           align-items: center;
           gap: 8px;
           padding: 12px;
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          background: rgba(var(--judge-color-rgb, 255, 215, 0), 0.1);
+          border: 1px solid rgba(var(--judge-color-rgb, 255, 215, 0), 0.3);
           border-radius: 8px;
-          color: #FFD700;
+          color: var(--judge-color, #FFD700);
           font-size: 14px;
         }
 

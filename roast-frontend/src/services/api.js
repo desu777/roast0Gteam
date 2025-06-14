@@ -139,6 +139,15 @@ export const battleApi = {
   
   // Health check
   getHealth: () => battleAxios.get('/health'),
+  
+  // Pobierz liczbę unikalnych graczy
+  getUniquePlayersCount: () => battleAxios.get('/battle/unique-players'),
+  
+  // Pobierz AI logi dla bitwy
+  getAILogs: (battleId) => battleAxios.get(`/battle/ai-logs/${battleId}`),
+  
+  // Pobierz wypłaty dla bitwy
+  getBattlePayouts: (battleId) => battleAxios.get(`/battle/payouts/${battleId}`),
 };
 
 // Players API
