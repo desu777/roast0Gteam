@@ -1,4 +1,54 @@
 export const battleArenaStyles = `
+  /* CSS Property for Border Angle Animation */
+  @property --border-angle {
+    syntax: "<angle>";
+    inherits: true;
+    initial-value: 0turn;
+  }
+
+  /* Laser Border Animation */
+  @keyframes laser-spin {
+    to {
+      --border-angle: 1turn;
+    }
+  }
+
+  /* Countdown Time Animations */
+  @keyframes countdown-glow {
+    0% {
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+      transform: scale(1);
+    }
+    100% {
+      text-shadow: 0 0 15px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes countdown-pulse {
+    0%, 100% {
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      text-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes winner-glow {
+    0% {
+      text-shadow: 0 0 10px currentColor;
+      transform: scale(1);
+    }
+    100% {
+      text-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+      transform: scale(1.02);
+    }
+  }
+
   .battle-arena {
     background: rgba(18, 18, 24, 0.9);
     border: 1px solid rgba(60, 75, 95, 0.3);
@@ -29,21 +79,14 @@ export const battleArenaStyles = `
   }
 
   .gradient-text {
-    background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientFlow 3s linear infinite;
+    color: #FFFFFF;
     font-weight: 700;
     display: inline-block;
     line-height: 1;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
   }
 
-  @keyframes gradientFlow {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
-  }
+
 
   .arena-icon {
     width: 36px;
@@ -76,12 +119,40 @@ export const battleArenaStyles = `
 
   .characters-display {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 60px;
+    justify-content: center;
+    gap: 20px;
     padding: 24px;
     border-radius: 12px;
     min-height: 180px;
+  }
+
+  .characters-status-message {
+    width: 100%;
+    text-align: center;
+    padding: 16px 24px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .characters-status-message:hover {
+    animation-play-state: paused;
+  }
+
+  .status-white-text {
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .characters-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 60px;
+    width: 100%;
   }
 
   .character-card {
@@ -91,8 +162,8 @@ export const battleArenaStyles = `
     border: 2px solid transparent;
     transition: all 0.3s ease;
     flex: 1;
-    max-width: 240px;
-    min-width: 230px;
+    max-width: 250px;
+    min-width: 240px;
     min-height: 140px;
     display: flex;
     flex-direction: column;
@@ -164,15 +235,11 @@ export const battleArenaStyles = `
   }
 
   .vs-gradient-text {
-    background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientFlow 3s linear infinite;
+    color: #FFFFFF;
     font-weight: 900;
     font-size: 18px;
     letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
   }
 
   .battle-status {
@@ -187,13 +254,9 @@ export const battleArenaStyles = `
   }
 
   .status-gradient-text {
-    background: linear-gradient(90deg, #00D2E9, #FF5CAA, #FFD700, #00D2E9);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientFlow 3s linear infinite;
+    color: #FFFFFF;
     font-weight: 700;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
   }
 
   .battle-transition {
@@ -201,7 +264,8 @@ export const battleArenaStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 180px;
+    min-height: 400px;
+    padding: 24px;
   }
 
   .transition-message {
@@ -788,9 +852,22 @@ export const battleArenaStyles = `
     }
 
     .characters-display {
-      gap: 20px;
+      gap: 16px;
       padding: 16px;
       min-height: 160px;
+    }
+
+    .characters-row {
+      gap: 20px;
+    }
+
+    .characters-status-message {
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+
+    .status-white-text {
+      font-size: 15px;
     }
 
     .character-card {
@@ -844,10 +921,23 @@ export const battleArenaStyles = `
     }
 
     .characters-display {
-      flex-direction: column;
-      gap: 16px;
+      gap: 12px;
       padding: 16px;
       min-height: auto;
+    }
+
+    .characters-row {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .characters-status-message {
+      padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+
+    .status-white-text {
+      font-size: 14px;
     }
 
     .character-card {
@@ -899,6 +989,20 @@ export const battleArenaStyles = `
     .arena-icon {
       width: 24px;
       height: 24px;
+    }
+
+    .characters-row {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .characters-status-message {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    .status-white-text {
+      font-size: 13px;
     }
 
     .character-card {

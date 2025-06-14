@@ -399,7 +399,84 @@ class DatabaseService {
       LIMIT ?
     `).all(limit);
   }
+  // Get recent battle statistics for AI balancing
+  getRecentBattleStats(limit = 20) {
+    const recentBattles = this.db.prepare(`
+      SELECT 
+        og_character_id,
+        roaster_character_id, 
+        winner_side,
+        completed_at
+      FROM battle_history 
+      ORDER BY completed_at DESC 
+      LIMIT ?
+    `).all(limit);
+    
+    // Calculate win statistics
+    const stats = {
+      total: recentBattles.length,
+      ogWins: recentBattles.filter(b => b.winner_side === 'og').length,
+      roasterWins: recentBattles.filter(b => b.winner_side === 'roaster').length,
+      ogWinRate: 0,
+      roasterWinRate: 0,
+      battles: recentBattles
+    };
+    
+    if (stats.total > 0) {
+      stats.ogWinRate = (stats.ogWins / stats.total * 100).toFixed(1);
+      stats.roasterWinRate = (stats.roasterWins / stats.total * 100).toFixed(1);
+    }
+    
+    return stats;
+  }
 
+  // Get character-specific matchup history
+  getCharacterMatchupHistory(ogCharId, roasterCharId, limit = 5) {
+    return this.db.prepare(`
+      SELECT 
+        og_character_id,
+        roaster_character_id,
+        winner_side,
+        winner_reasoning,
+        completed_at
+      FROM battle_history 
+      WHERE og_character_id = ? AND roaster_character_id = ?
+      ORDER BY completed_at DESC 
+      LIMIT ?
+    `).all(ogCharId, roasterCharId, limit);
+  }
+
+  // Get overall character win rates
+  getCharacterWinRates() {
+    const ogStats = this.db.prepare(`
+      SELECT 
+        og_character_id as character_id,
+        COUNT(*) as total_battles,
+        SUM(CASE WHEN winner_side = 'og' THEN 1 ELSE 0 END) as wins,
+        'og' as side
+      FROM battle_history 
+      GROUP BY og_character_id
+    `).all();
+    
+    const roasterStats = this.db.prepare(`
+      SELECT 
+        roaster_character_id as character_id,
+        COUNT(*) as total_battles,
+        SUM(CASE WHEN winner_side = 'roaster' THEN 1 ELSE 0 END) as wins,
+        'roaster' as side
+      FROM battle_history 
+      GROUP BY roaster_character_id
+    `).all();
+    
+    // Calculate win rates
+    const allStats = [...ogStats, ...roasterStats].map(stat => ({
+      ...stat,
+      win_rate: stat.total_battles > 0 ? (stat.wins / stat.total_battles * 100).toFixed(1) : '0.0'
+    }));
+    
+    return allStats;
+  }
+  
   close() {
     if (this.db) {
       this.db.close();

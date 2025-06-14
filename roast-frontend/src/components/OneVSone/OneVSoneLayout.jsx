@@ -171,10 +171,19 @@ const OneVSoneLayout = ({
             overflow-y: auto;
           }
           
-          /* Center column gets priority on mobile */
+          /* Mobile order: center → betting panel → battle history */
           .arena-main .center-column {
-            order: -1; /* Move center to top */
+            order: 1;
             margin-bottom: 20px;
+          }
+          
+          .arena-main .right-column {
+            order: 2;
+            margin-bottom: 20px;
+          }
+          
+          .arena-main .left-column {
+            order: 3;
           }
         }
 

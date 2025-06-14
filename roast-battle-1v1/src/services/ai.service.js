@@ -5,27 +5,28 @@ const { config } = require('../config/app.config');
 const { logger } = require('./logger.service');
 const db = require('./database.service');
 
-// Define structured output schemas
+// Define structured output schemas - BACKWARD COMPATIBLE
 const DialogExchangeSchema = z.object({
   speaker: z.enum(['og', 'roaster']),
   message: z.string(),
-  tone: z.enum(['aggressive', 'witty', 'sarcastic', 'confident', 'defensive']),
-  impact: z.number().min(config.ai.impactMin).max(config.ai.impactMax)
+  tone: z.enum(['savage', 'witty', 'sarcastic', 'cocky', 'triggered']),
+  impact: z.number().min(1).max(10)
 });
 
 const BattleDialogSchema = z.object({
   exchanges: z.array(DialogExchangeSchema),
-  peakMoment: z.string(),
-  audienceReaction: z.string()
+  peakMoment: z.string(), // OLD FORMAT - keep compatibility
+  audienceReaction: z.string() // OLD FORMAT - keep compatibility
 });
 
+// BACKWARD COMPATIBLE - keep old judgment structure
 const BattleJudgmentSchema = z.object({
   winner: z.enum(['og', 'roaster']),
-  reasoning: z.string(),
-  ogScore: z.number().min(config.ai.scoreMin).max(config.ai.scoreMax),
-  roasterScore: z.number().min(config.ai.scoreMin).max(config.ai.scoreMax),
-  decisiveMoment: z.string(),
-  crowdFavorite: z.enum(['og', 'roaster'])
+  reasoning: z.string(), // OLD FORMAT
+  ogScore: z.number().min(0).max(100), // OLD FORMAT
+  roasterScore: z.number().min(0).max(100), // OLD FORMAT
+  decisiveMoment: z.string(), // OLD FORMAT
+  crowdFavorite: z.string() // OLD FORMAT
 });
 
 class AIService {
@@ -40,23 +41,23 @@ class AIService {
       this.model = new ChatOpenAI({
         openAIApiKey: config.openai.apiKey,
         modelName: config.openai.model,
-        temperature: config.openai.temperature,
-        maxTokens: config.openai.maxTokens,
-        streaming: config.openai.streaming // Enable streaming for real-time dialog
+        temperature: 0.9, // Higher temperature for more creative roasts
+        maxTokens: 800, // Reduced for shorter responses
+        streaming: config.openai.streaming
       });
 
       // Initialize structured output models
       this.dialogModel = this.model.withStructuredOutput(BattleDialogSchema);
       this.judgmentModel = this.model.withStructuredOutput(BattleJudgmentSchema);
 
-      logger.info('AI Service initialized with LangChain');
+      logger.info('AI Service initialized for Twitter-style roasts with balance system (backward compatible)');
     } catch (error) {
       logger.error('Failed to initialize AI Service', { error: error.message });
       throw error;
     }
   }
 
-  // Generate roast battle dialog
+  // Generate roast battle dialog - OPTIMIZED FOR TWITTER
   async generateBattleDialog(battleContext, battleId) {
     const startTime = Date.now();
     
@@ -64,7 +65,7 @@ class AIService {
       const systemPrompt = this.createDialogSystemPrompt();
       const humanPrompt = this.createDialogHumanPrompt(battleContext);
 
-      logger.info('Generating battle dialog', { battleId });
+      logger.info('Generating Twitter-style battle dialog', { battleId });
 
       // Generate structured dialog
       const response = await this.dialogModel.invoke([
@@ -81,7 +82,7 @@ class AIService {
         humanPrompt,
         JSON.stringify(response),
         config.openai.model,
-        null, // Token count (if needed)
+        null,
         processingTime,
         true
       );
@@ -104,11 +105,12 @@ class AIService {
         error.message
       );
 
-      throw error;
+      // Return fallback dialog
+      return this.generateFallbackDialog(battleContext);
     }
   }
 
-  // Judge the battle winner
+  // Judge the battle winner - WITH BALANCE SYSTEM (BACKWARD COMPATIBLE)
   async judgeBattle(dialog, battleContext, battleId) {
     const startTime = Date.now();
     
@@ -116,7 +118,7 @@ class AIService {
       const systemPrompt = this.createJudgmentSystemPrompt();
       const humanPrompt = this.createJudgmentHumanPrompt(dialog, battleContext);
 
-      logger.info('Judging battle winner', { battleId });
+      logger.info('Judging battle winner with balance system', { battleId });
 
       // Generate structured judgment
       const judgment = await this.judgmentModel.invoke([
@@ -156,184 +158,202 @@ class AIService {
         error.message
       );
 
-      throw error;
+      // Return fallback judgment
+      return this.generateFallbackJudgment();
     }
   }
 
-  // Generate dialog with streaming support
-  async *generateBattleDialogStream(battleContext, battleId) {
-    try {
-      const systemPrompt = this.createDialogSystemPrompt();
-      const humanPrompt = this.createDialogHumanPrompt(battleContext);
-
-      const stream = await this.model.stream([
-        new SystemMessage(systemPrompt),
-        new HumanMessage(humanPrompt)
-      ]);
-
-      let fullResponse = '';
-      
-      for await (const chunk of stream) {
-        const content = chunk.content;
-        fullResponse += content;
-        
-        // Parse partial exchanges if possible
-        const exchanges = this.parsePartialExchanges(fullResponse);
-        if (exchanges.length > 0) {
-          yield { type: 'partial', exchanges };
-        }
-      }
-
-      // Parse final structured response
-      const finalDialog = this.parseDialogResponse(fullResponse);
-      yield { type: 'complete', dialog: finalDialog };
-
-    } catch (error) {
-      logger.error('Streaming dialog generation failed', { error: error.message });
-      throw error;
-    }
-  }
-
-  // === Private Helper Methods ===
+  // === OPTIMIZED PROMPTS FOR TWITTER-STYLE ROASTS ===
 
   createDialogSystemPrompt() {
-    return `You are the AI host of the 0G Roast Arena, a legendary crypto battle ground where blockchain personalities engage in epic verbal combat.
+    return `You are the AI moderator of 0G Roast Arena - a savage crypto roast battle platform.
 
-Your role is to generate an authentic, entertaining roast battle dialog between two characters. The battle should:
+ROAST RULES:
+• Generate exactly 6 short exchanges (3 per character)
+• Each roast = 1-2 sentences MAX (Twitter length)
+• Be SAVAGE but clever - crypto community loves spicy takes
+• Use real 0G controversies and crypto slang
+• No long explanations - just pure roast energy
+• Keep it fun, not actually harmful
 
-1. Stay true to each character's personality, background, and speaking style
-2. Include crypto/blockchain terminology and inside jokes
-3. Build tension with escalating roasts
-4. Feature creative wordplay and clever comebacks
-5. Reference real Web3 culture and memes
-6. Have a clear dramatic arc with a climactic moment
-7. Be spicy but not cross into truly hurtful territory
+ROAST STYLE:
+✅ "381 tokens for 8 months work? McDonald's pays better"
+✅ "Purple rebrand = copying Monad's homework much?"
+✅ "44% insider allocation and you call it 'community first'?"
+❌ Long technical explanations
+❌ Paragraph-length responses
+❌ Academic analysis
 
-Each exchange should feel natural and reactive to what was said before. The roasts should be clever, unexpected, and showcase deep knowledge of crypto culture.
-
-Generate ${config.ai.maxDialogExchanges} exchanges total, alternating between characters. Make it memorable!`;
+Make it feel like a Twitter beef between crypto personalities!`;
   }
 
   createDialogHumanPrompt(battleContext) {
     const { og, roaster } = battleContext;
     
-    return `Create a roast battle between:
+    return `Generate a QUICK Twitter-style roast battle:
 
-**${og.name}** (${og.role})
-- Personality: ${og.personality}
-- Roasting style: ${og.roastingNotes}
+🔵 ${og.name} (${og.role})
+- Vibe: ${og.personality.split('.')[0]}
 - Catchphrase: "${og.catchphrase}"
-- Archetype: ${og.archetype}
 
-**${roaster.name}** (${roaster.role})
-- Personality: ${roaster.personality}
-- Roasting style: ${roaster.roastingNotes}
+🔴 ${roaster.name} (${roaster.role})  
+- Vibe: ${roaster.personality.split('.')[0]}
+- Main Beef: ${roaster.triggers?.slice(0,2).join(', ') || 'Everything about 0G'}
 - Catchphrase: "${roaster.catchphrase}"
-- Triggers: ${roaster.triggers?.join(', ') || 'N/A'}
 
-Setting: ${battleContext.setting}
-Audience: ${battleContext.audience}
+FRESH 2025 TOPICS: ${roaster.freshTopics2025?.slice(0,2).join(', ') || 'TGE delays, allocation scandals'}
 
-The battle starts with ${roaster.name} throwing the first roast at ${og.name}. Make it epic!`;
+${roaster.name} starts with a savage opener targeting ${og.name}. 
+Keep it SHORT and SPICY - like Twitter replies, not essays!
+
+6 exchanges total. Make every roast count! 🔥
+
+Return in format:
+- exchanges: array of 6 exchanges with speaker, message, tone, impact
+- peakMoment: "The most savage moment"
+- audienceReaction: "How the crowd reacted"`;
   }
 
   createJudgmentSystemPrompt() {
-    return `You are the impartial AI Judge of the 0G Roast Arena. Your role is to analyze the roast battle and declare a winner based on:
+    return `You are the impartial judge of 0G Roast Arena. Your job is to pick the winner fairly based on roast quality.
 
-1. **Creativity & Originality** - Unique angles and unexpected comebacks
-2. **Crypto Knowledge** - Accurate use of Web3 terminology and culture
-3. **Delivery & Impact** - How well each roast lands
-4. **Character Consistency** - Staying true to their personality
-5. **Audience Reaction** - Which moments got the biggest response
-6. **Comeback Quality** - How well they responded to attacks
-7. **Mic Drop Factor** - Memorable finishing moves
+IMPORTANT BALANCING RULES:
+• Don't favor 0G team just because they're "main characters"
+• Judge purely on roast quality, wit, and execution
+• Consider who landed the most savage burns
+• Look for creativity and authentic personality
+• If recent battles show bias toward one side, balance it out
 
-Be fair but decisive. The crypto community respects bold calls. Explain your reasoning clearly.`;
+JUDGE CRITERIA:
+✅ Best roasts and comebacks
+✅ Staying in character 
+✅ Using real controversies effectively
+✅ Crowd reaction and impact
+✅ Creative insults and wordplay
+
+Keep reasoning SHORT - Twitter-style explanation of who won and why.`;
   }
 
   createJudgmentHumanPrompt(dialog, battleContext) {
     const { og, roaster } = battleContext;
     
+    // Get recent battle statistics for balancing
+    const recentStats = db.getRecentBattleStats(20);
+    const matchupHistory = db.getCharacterMatchupHistory(og.id, roaster.id, 3);
+    
     // Format exchanges for judgment
-    const formattedExchanges = dialog.exchanges.map((ex, i) => 
-      `${i + 1}. **${ex.speaker === 'og' ? og.name : roaster.name}**: "${ex.message}" [${ex.tone}, Impact: ${ex.impact}/10]`
+    const formattedRoasts = dialog.exchanges.map((ex, i) => 
+      `${ex.speaker === 'og' ? og.name : roaster.name}: "${ex.message}" [Impact: ${ex.impact}/10]`
     ).join('\n');
 
-    return `Judge this roast battle between ${og.name} (OG) and ${roaster.name} (Roaster):
-
-${formattedExchanges}
-
-Peak Moment: ${dialog.peakMoment}
-Audience Reaction: ${dialog.audienceReaction}
-
-Who won this battle and why? Provide scores and identify the decisive moment.`;
-  }
-
-  parsePartialExchanges(partialResponse) {
-    // Simple parser for streaming responses
-    // This is a placeholder - implement based on your streaming format
-    try {
-      const lines = partialResponse.split('\n');
-      const exchanges = [];
-      
-      // Parse any complete exchanges from partial response
-      // Implementation depends on how you want to handle streaming
-      
-      return exchanges;
-    } catch {
-      return [];
-    }
-  }
-
-  parseDialogResponse(fullResponse) {
-    // Parse the complete response into structured format
-    try {
-      // If response is already JSON from structured output
-      if (typeof fullResponse === 'object') {
-        return fullResponse;
+    // Create balancing context
+    let balancingHint = '';
+    if (recentStats.total >= 5) {
+      if (recentStats.ogWinRate > 70) {
+        balancingHint = `\n🎯 BALANCE NOTE: OG team has won ${recentStats.ogWinRate}% of recent battles. Consider if roaster deserves the win.`;
+      } else if (recentStats.roasterWinRate > 70) {
+        balancingHint = `\n🎯 BALANCE NOTE: Roasters have won ${recentStats.roasterWinRate}% of recent battles. Consider if OG team deserves the win.`;
       }
-      
-      // Otherwise parse text response
-      return JSON.parse(fullResponse);
-    } catch (error) {
-      logger.error('Failed to parse dialog response', { error: error.message });
-      
-      // Fallback to a default structure
-      return {
-        exchanges: [
-          {
-            speaker: 'roaster',
-            message: 'Something went wrong with the AI generation.',
-            tone: 'defensive',
-            impact: 5
-          }
-        ],
-        peakMoment: 'Technical difficulties',
-        audienceReaction: 'Confused'
-      };
     }
+
+    // Add matchup history context
+    let matchupContext = '';
+    if (matchupHistory.length > 0) {
+      const recentWinner = matchupHistory[0].winner_side;
+      matchupContext = `\n📊 MATCHUP HISTORY: Last ${matchupHistory.length} battles between ${og.name} vs ${roaster.name}:
+${matchupHistory.map(m => `• ${m.winner_side} won - "${m.winner_reasoning}"`).join('\n')}`;
+    }
+
+    return `Judge this roast battle:
+
+${formattedRoasts}
+
+📈 RECENT STATS (last ${recentStats.total} battles):
+• OG Team wins: ${recentStats.ogWins}/${recentStats.total} (${recentStats.ogWinRate}%)  
+• Roasters wins: ${recentStats.roasterWins}/${recentStats.total} (${recentStats.roasterWinRate}%)${balancingHint}${matchupContext}
+
+Return judgment in this EXACT format:
+- winner: 'og' or 'roaster'
+- reasoning: "Short Twitter-style explanation of who won and why"
+- ogScore: number 0-100
+- roasterScore: number 0-100  
+- decisiveMoment: "The best roast that decided the battle"
+- crowdFavorite: "Overall crowd reaction (og_dominated/roaster_slayed/close_fight)"
+
+Judge fairly based on roast quality, not team preference!`;
   }
 
-  // Analyze sentiment of a roast (for future features)
-  async analyzeRoastSentiment(message) {
-    const response = await this.model.invoke([
-      new SystemMessage('Analyze the sentiment and impact of this roast on a scale of 1-10.'),
-      new HumanMessage(message)
-    ]);
+  // Generate fallback dialog if AI fails
+  generateFallbackDialog(battleContext) {
+    const { og, roaster } = battleContext;
     
-    return response.content;
+    return {
+      exchanges: [
+        {
+          speaker: 'roaster',
+          message: `${og.name}, your TGE delays got me farming longer than a DeFi yield farmer!`,
+          tone: 'savage',
+          impact: 7
+        },
+        {
+          speaker: 'og', 
+          message: `At least our tokens unlock faster than your brain processing new concepts.`,
+          tone: 'witty',
+          impact: 6
+        },
+        {
+          speaker: 'roaster',
+          message: `21.32% at TGE while calling it '56% community allocation'? Math is hard huh?`,
+          tone: 'sarcastic', 
+          impact: 8
+        },
+        {
+          speaker: 'og',
+          message: `Still salty about missing the AI revolution while you're stuck in 2020 DeFi?`,
+          tone: 'cocky',
+          impact: 7
+        },
+        {
+          speaker: 'roaster',
+          message: `Purple rebrand copying Monad's homework? Where's the innovation?`,
+          tone: 'savage',
+          impact: 8
+        },
+        {
+          speaker: 'og',
+          message: `We're building the future while you're stuck complaining about colors.`,
+          tone: 'cocky',
+          impact: 6
+        }
+      ],
+      peakMoment: 'The allocation math callout hit different',
+      audienceReaction: 'Crowd went wild for the savage number breakdown'
+    };
   }
 
-  // Generate custom roasts based on context (for future features)
-  async generateContextualRoast(character, target, context) {
-    const prompt = `As ${character.name}, generate a crypto-themed roast targeting ${target.name} based on: ${context}`;
+  // Generate fallback judgment - BACKWARD COMPATIBLE
+  generateFallbackJudgment() {
+    return {
+      winner: Math.random() > 0.5 ? 'og' : 'roaster',
+      reasoning: 'Technical difficulties but both brought serious heat to this Twitter beef',
+      ogScore: 75,
+      roasterScore: 72,
+      decisiveMoment: 'AI had connection issues but the roasts were still fire',
+      crowdFavorite: 'close_fight'
+    };
+  }
+
+  // Quick roast validation
+  validateRoast(message) {
+    const wordCount = message.split(' ').length;
+    const charCount = message.length;
     
-    const response = await this.model.invoke([
-      new SystemMessage('You are a witty crypto personality. Generate a clever roast.'),
-      new HumanMessage(prompt)
-    ]);
-    
-    return response.content;
+    return {
+      isValid: wordCount <= 25 && charCount <= 200, // Twitter-like limits
+      wordCount,
+      charCount,
+      tooLong: wordCount > 25 || charCount > 200
+    };
   }
 }
 

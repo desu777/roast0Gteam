@@ -11,10 +11,11 @@ const BattleChatFullscreen = ({
 }) => {
   const chatEndRef = useRef(null);
 
-  // Auto-scroll chat to bottom
+  // Auto-scroll within chat container only - doesn't affect page scroll
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const chatContainer = chatEndRef.current?.parentElement;
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   }, [dialog]);
 

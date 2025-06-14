@@ -155,6 +155,7 @@ const BattleArena = ({
           winnerReasoning={winnerReasoning}
           decisiveMoment={decisiveMoment}
           getCharacterAvatar={getCharacterAvatar}
+          currentJudge={currentJudge}
         />
       );
     }
@@ -184,6 +185,9 @@ const BattleArena = ({
         winner={winner}
         currentJudge={currentJudge}
         handleShowBio={handleShowBio}
+        battleStatus={battleStatus}
+        timeLeft={timeLeft}
+        formatTime={formatTime}
       />
     );
   };
@@ -209,23 +213,7 @@ const BattleArena = ({
           {renderMainContent()}
           </div>
 
-        {/* Status and Timer - only show when not in full-screen modes */}
-        {(battleStatus !== 'dialog' && battleStatus !== 'completed') && (
-          <div className="battle-status" style={{
-            background: `rgba(${currentJudge?.color ? 
-              currentJudge.color.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16)).join(', ') : 
-              '255, 215, 0'}, 0.1)`,
-            borderColor: `rgba(${currentJudge?.color ? 
-              currentJudge.color.slice(1).match(/.{2}/g).map(hex => parseInt(hex, 16)).join(', ') : 
-              '255, 215, 0'}, 0.3)`
-          }}>
-            {timeLeft > 0 && battleStatus === 'countdown' ? (
-              <span className="status-gradient-text">Battle starting in {formatTime(timeLeft)}!</span>
-            ) : (
-              <span className="status-gradient-text">{getStatusMessage()}</span>
-            )}
-          </div>
-        )}
+
       </div>
 
       <style jsx>{battleArenaStyles}</style>

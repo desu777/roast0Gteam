@@ -305,17 +305,29 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
         console.log('🎮 New battle created:', data);
       }
-      loadCurrentBattle();
-      setUserBet(null);
       
-      // Reset judgment data
-      setWinner(null);
-      setWinnerReasoning('');
-      setOgScore(0);
-      setRoasterScore(0);
-      setDecisiveMoment('');
-      setCrowdFavorite(null);
-      setDialog([]);
+      // Only reset if this is a truly new battle (different battleId)
+      if (!currentBattle || data.battleId !== currentBattle.battleId) {
+        loadCurrentBattle();
+        setUserBet(null);
+        
+        // Reset judgment data ONLY for new battles
+        setWinner(null);
+        setWinnerReasoning('');
+        setOgScore(0);
+        setRoasterScore(0);
+        setDecisiveMoment('');
+        setCrowdFavorite(null);
+        setDialog([]);
+        
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🎮 Reset battle data for new battle:', data.battleId);
+        }
+      } else {
+        if (import.meta.env.VITE_TEST_ENV === 'true') {
+          console.log('🎮 Same battle, not resetting data:', data.battleId);
+        }
+      }
     };
 
     const handleBetPlaced = (data) => {
@@ -398,15 +410,29 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
 
     const handleBattleComplete = (data) => {
       if (import.meta.env.VITE_TEST_ENV === 'true') {
-        console.log('🏆 Battle complete:', data);
+        console.log('🏆 HOOK Battle complete received!:', data);
+        console.log('🏆 Score mapping:', {
+          'data.scores': data.scores,
+          'data.scores?.og': data.scores?.og,
+          'data.scores?.roaster': data.scores?.roaster,
+          'ogScore will be': data.scores?.og || data.scores?.ogScore || data.ogScore || 0,
+          'roasterScore will be': data.scores?.roaster || data.scores?.roasterScore || data.roasterScore || 0
+        });
       }
       setWinner(data.winner);
       setWinnerReasoning(data.reasoning || data.winnerReasoning);
       setBattleStatus('completed');
       
-      // Set extended judgment data
-      setOgScore(data.scores?.ogScore || data.ogScore || 0);
-      setRoasterScore(data.scores?.roasterScore || data.roasterScore || 0);
+      // Set extended judgment data - handle different score formats
+      const ogScoreValue = data.scores?.og || data.scores?.ogScore || data.ogScore || 0;
+      const roasterScoreValue = data.scores?.roaster || data.scores?.roasterScore || data.roasterScore || 0;
+      
+      if (import.meta.env.VITE_TEST_ENV === 'true') {
+        console.log('🏆 Setting scores:', { ogScoreValue, roasterScoreValue });
+      }
+      
+      setOgScore(ogScoreValue);
+      setRoasterScore(roasterScoreValue);
       setDecisiveMoment(data.decisiveMoment || '');
       setCrowdFavorite(data.crowdFavorite || data.winner);
       
@@ -452,6 +478,10 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
     battleWebSocket.on('dialog_exchange', handleDialogExchange);
     battleWebSocket.on('battle_complete', handleBattleComplete);
     battleWebSocket.on('connection-status', handleConnectionStatus);
+    
+    if (import.meta.env.VITE_TEST_ENV === 'true') {
+      console.log('🔗 WebSocket listeners registered, battleWebSocket:', battleWebSocket);
+    }
 
     // Cleanup - remove specific handlers and disconnect
     return () => {

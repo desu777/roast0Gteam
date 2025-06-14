@@ -461,8 +461,8 @@ export const appStyles = `
       grid-template-columns: 1fr;
       grid-template-areas: 
         "center"
-        "left"
-        "right";
+        "right"
+        "left";
       gap: 20px;
     }
     

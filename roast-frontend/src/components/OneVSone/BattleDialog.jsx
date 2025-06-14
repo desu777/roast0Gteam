@@ -14,9 +14,12 @@ const BattleDialog = ({
   const [typedText, setTypedText] = useState('');
   const chatEndRef = useRef(null);
 
-  // Auto-scroll to bottom of chat
+  // Auto-scroll within chat container only - doesn't affect page scroll
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const chatContainer = chatEndRef.current?.parentElement;
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
   }, [displayedDialog, typedText]);
 
   // Typing animation effect
