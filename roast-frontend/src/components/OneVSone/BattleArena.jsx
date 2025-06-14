@@ -22,7 +22,8 @@ const BattleArena = ({
   roasterScore,
   decisiveMoment,
   crowdFavorite,
-  currentJudge
+  currentJudge,
+  battleHistory
 }) => {
   const [showCharacterBio, setShowCharacterBio] = useState(null);
   const [bioCharacterType, setBioCharacterType] = useState('og');
@@ -30,14 +31,46 @@ const BattleArena = ({
   const [showTypingIndicator, setShowTypingIndicator] = useState(false);
   const [currentTypingSpeaker, setCurrentTypingSpeaker] = useState(null);
 
+  // Calculate round number based on battle history
+  const getRoundNumber = () => {
+    if (!battleHistory || !Array.isArray(battleHistory)) return 1;
+    // Current battle + completed battles = total rounds
+    return battleHistory.length + 1;
+  };
+
+  // Calculate character statistics from battle history
+  const getCharacterStats = (characterId, characterType) => {
+    if (!battleHistory || !Array.isArray(battleHistory) || !characterId) {
+      return { battles: 0, wins: 0, winRate: 0 };
+    }
+
+    let battles = 0;
+    let wins = 0;
+
+    battleHistory.forEach(battle => {
+      // Check if this character participated in this battle
+      if (characterType === 'og' && battle.og_character_id === characterId) {
+        battles++;
+        if (battle.winner_side === 'og') wins++;
+      } else if (characterType === 'roaster' && battle.roaster_character_id === characterId) {
+        battles++;
+        if (battle.winner_side === 'roaster') wins++;
+      }
+    });
+
+    const winRate = battles > 0 ? Math.round((wins / battles) * 100) : 0;
+
+    return { battles, wins, winRate };
+  };
+
   // Handle phase transitions with animations
   useEffect(() => {
     const handlePhaseChange = () => {
       setPhaseTransition('fade-out');
       setTimeout(() => {
         setPhaseTransition('fade-in');
-        setTimeout(() => setPhaseTransition(''), 300);
-      }, 200);
+        setTimeout(() => setPhaseTransition(''), 500);
+      }, 400);
     };
 
     if (battleStatus === 'dialog' || battleStatus === 'completed') {
@@ -188,6 +221,7 @@ const BattleArena = ({
         battleStatus={battleStatus}
         timeLeft={timeLeft}
         formatTime={formatTime}
+        getCharacterStats={getCharacterStats}
       />
     );
   };
@@ -203,7 +237,7 @@ const BattleArena = ({
               className="arena-icon" 
               style={{ color: currentJudge?.color || '#FFD700' }}
             />
-            <span className="gradient-text">Battle Arena</span>
+            <span className="gradient-text">Battle Arena Round #{getRoundNumber()}</span>
           </h2>
           </div>
         )}

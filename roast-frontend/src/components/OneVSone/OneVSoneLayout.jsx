@@ -100,6 +100,7 @@ const OneVSoneLayout = ({
               decisiveMoment={decisiveMoment}
               crowdFavorite={crowdFavorite}
               currentJudge={currentJudge}
+              battleHistory={battleHistory}
             />
           </div>
 

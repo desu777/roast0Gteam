@@ -218,6 +218,22 @@ export const battleArenaStyles = `
     font-weight: 500;
   }
 
+  .character-stats {
+    margin-top: 8px;
+    padding: 4px 8px;
+    background: rgba(40, 40, 50, 0.6);
+    border-radius: 6px;
+    border: 1px solid rgba(60, 75, 95, 0.3);
+  }
+
+  .stats-text {
+    color: #B0B0B0;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
   .vs-divider {
     display: flex;
     flex-direction: column;
@@ -352,13 +368,13 @@ export const battleArenaStyles = `
   .fade-out {
     opacity: 0;
     transform: scale(0.95);
-    transition: all 0.2s ease-out;
+    transition: all 0.4s ease-out;
   }
 
   .fade-in {
     opacity: 1;
     transform: scale(1);
-    transition: all 0.3s ease-in;
+    transition: all 0.5s ease-in;
   }
 
   /* Full-screen Chat Styles */
@@ -891,6 +907,10 @@ export const battleArenaStyles = `
       font-size: 13px;
     }
 
+    .stats-text {
+      font-size: 10px;
+    }
+
     .vs-divider {
       min-width: 60px;
     }
@@ -1020,6 +1040,10 @@ export const battleArenaStyles = `
 
     .character-card p {
       font-size: 12px;
+    }
+
+    .stats-text {
+      font-size: 9px;
     }
 
     .battle-status {

@@ -10,7 +10,8 @@ const BattleCharactersDisplay = ({
   handleShowBio,
   battleStatus,
   timeLeft,
-  formatTime
+  formatTime,
+  getCharacterStats
 }) => {
   
   const getStatusMessage = () => {
@@ -132,6 +133,18 @@ const BattleCharactersDisplay = ({
         </div>
         <h3>{ogCharacter?.name || 'Selecting...'}</h3>
         <p>{ogCharacter?.role || '0G Team'}</p>
+        {ogCharacter?.id && getCharacterStats && (
+          <div className="character-stats">
+            {(() => {
+              const stats = getCharacterStats(ogCharacter.id, 'og');
+              return (
+                <span className="stats-text">
+                  {stats.battles} battles • {stats.winRate}% win rate
+                </span>
+              );
+            })()}
+          </div>
+        )}
         {ogCharacter?.id && (
           <button 
             className="bio-btn-17"
@@ -179,6 +192,18 @@ const BattleCharactersDisplay = ({
         </div>
         <h3>{roasterCharacter?.name || 'Selecting...'}</h3>
         <p>{roasterCharacter?.role || 'Crypto Roaster'}</p>
+        {roasterCharacter?.id && getCharacterStats && (
+          <div className="character-stats">
+            {(() => {
+              const stats = getCharacterStats(roasterCharacter.id, 'roaster');
+              return (
+                <span className="stats-text">
+                  {stats.battles} battles • {stats.winRate}% win rate
+                </span>
+              );
+            })()}
+          </div>
+        )}
         {roasterCharacter?.id && (
           <button 
             className="bio-btn-17"

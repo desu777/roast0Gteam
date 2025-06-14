@@ -43,7 +43,7 @@ const BattleDialog = ({
             setCurrentMessageIndex(prev => prev + 1);
             setTypedText('');
           }
-        }, 30); // Typing speed
+        }, 50); // Typing speed - slower for better readability
         
         return () => clearInterval(typeInterval);
       }

@@ -51,9 +51,9 @@ const config = {
   // AI Dialog Configuration
   ai: {
     maxDialogExchanges: parseInt(process.env.AI_MAX_DIALOG_EXCHANGES) || 8,
-    exchangeBaseDelay: parseInt(process.env.AI_EXCHANGE_BASE_DELAY) || 2000,
-    exchangeCharDelay: parseInt(process.env.AI_EXCHANGE_CHAR_DELAY) || 20,
-    exchangeMaxDelay: parseInt(process.env.AI_EXCHANGE_MAX_DELAY) || 5000,
+    exchangeBaseDelay: parseInt(process.env.AI_EXCHANGE_BASE_DELAY) || 3500,
+    exchangeCharDelay: parseInt(process.env.AI_EXCHANGE_CHAR_DELAY) || 30,
+    exchangeMaxDelay: parseInt(process.env.AI_EXCHANGE_MAX_DELAY) || 7000,
     impactMin: parseInt(process.env.AI_IMPACT_MIN) || 1,
     impactMax: parseInt(process.env.AI_IMPACT_MAX) || 10,
     scoreMin: parseInt(process.env.AI_SCORE_MIN) || 0,
@@ -65,7 +65,7 @@ const config = {
     betAmount: parseFloat(process.env.BET_AMOUNT) || 0.5,
     countdownDuration: parseInt(process.env.COUNTDOWN_DURATION) || 90,
     countdownTimerInterval: parseInt(process.env.COUNTDOWN_TIMER_INTERVAL) || 1000,
-    battleEndDelay: parseInt(process.env.BATTLE_END_DELAY) || 10000,
+    battleEndDelay: parseInt(process.env.BATTLE_END_DELAY) || 15000,
     houseFeePercent: parseFloat(process.env.HOUSE_FEE_PERCENT) || 5,
     historyDefaultLimit: parseInt(process.env.BATTLE_HISTORY_DEFAULT_LIMIT) || 20,
     leaderboardDefaultLimit: parseInt(process.env.LEADERBOARD_DEFAULT_LIMIT) || 10,
