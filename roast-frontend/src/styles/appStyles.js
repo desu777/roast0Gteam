@@ -499,4 +499,17 @@ export const appStyles = `
       min-height: 400px;
     }
   }
+
+  /* Game Mode Transition Animations */
+  .game-mode-transition-container {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .game-mode-transition-container.fade-out {
+    opacity: 0;
+  }
+
+  .game-mode-transition-container.fade-in {
+    opacity: 1;
+  }
 `; 
