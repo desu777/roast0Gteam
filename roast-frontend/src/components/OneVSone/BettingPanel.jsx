@@ -9,6 +9,7 @@ const BettingPanel = ({
   userBet,
   isLoadingBet,
   battleStatus,
+  timeLeft,
   placeBet,
   currentBattle,
   currentJudge,
@@ -33,8 +34,11 @@ const BettingPanel = ({
   };
 
   const canPlaceBet = () => {
+    const isBettingOpen = battleStatus === 'waiting_bets' || 
+                         (battleStatus === 'countdown' && timeLeft > 10);
+    
     return isConnected && 
-           battleStatus === 'waiting_bets' && 
+           isBettingOpen && 
            !userBet && 
            selectedSide;
   };
@@ -70,7 +74,7 @@ const BettingPanel = ({
 
         {isConnected ? (
           <>
-            {battleStatus === 'waiting_bets' && !userBet ? (
+            {(battleStatus === 'waiting_bets' || (battleStatus === 'countdown' && timeLeft > 10)) && !userBet ? (
               <div className="betting-form">
                 <h4>Place Your Bet</h4>
                 
@@ -176,14 +180,28 @@ const BettingPanel = ({
                   }}
                 >
                   <AlertCircle size={14} />
-                  <span>Waiting for battle to start...</span>
+                  <span>
+                    {battleStatus === 'countdown' ? 
+                      `Battle starts in ${timeLeft}s...` : 
+                      'Waiting for battle to start...'
+                    }
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="battle-status-info">
                 <AlertCircle size={20} />
-                <p>Battle {battleStatus}!</p>
-                <p>Betting is closed for this round.</p>
+                {battleStatus === 'countdown' && timeLeft <= 10 ? (
+                  <>
+                    <p>Battle countdown!</p>
+                    <p>Betting closes in final 10 seconds.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>Battle {battleStatus}!</p>
+                    <p>Betting is closed for this round.</p>
+                  </>
+                )}
               </div>
             )}
           </>
@@ -195,7 +213,7 @@ const BettingPanel = ({
         )}
 
         <div className="min-bets-info">
-          <p>Battle starts when minimum 2 bets are placed on each side</p>
+          <p>Battle starts when minimum 1 bet is placed on each side</p>
         </div>
       </div>
 

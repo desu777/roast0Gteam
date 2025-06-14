@@ -135,7 +135,16 @@ class BattleService extends EventEmitter {
         throw new Error('NO_ACTIVE_BATTLE');
       }
       
-      if (this.currentBattle.status !== 'waiting_bets') {
+      // Allow betting during 'waiting_bets' or 'countdown' (but not in last 10 seconds of countdown)
+      if (this.currentBattle.status === 'countdown') {
+        // Check if countdown has less than 10 seconds remaining
+        const remaining = new Date(this.currentBattle.countdown_end) - new Date();
+        const secondsRemaining = Math.max(0, Math.floor(remaining / 1000));
+        
+        if (secondsRemaining <= 10) {
+          throw new Error('BETTING_CLOSED');
+        }
+      } else if (this.currentBattle.status !== 'waiting_bets') {
         throw new Error('BETTING_CLOSED');
       }
       

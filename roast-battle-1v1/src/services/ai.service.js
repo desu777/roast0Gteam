@@ -169,12 +169,14 @@ class AIService {
     return `You are the AI moderator of 0G Roast Arena - a savage crypto roast battle platform.
 
 ROAST RULES:
-• Generate exactly 6 short exchanges (3 per character)
+• Generate exactly 8 short exchanges (4 per character)
 • Each roast = 1-2 sentences MAX (Twitter length)
 • Be SAVAGE but clever - crypto community loves spicy takes
 • Use real 0G controversies and crypto slang
 • No long explanations - just pure roast energy
 • Keep it fun, not actually harmful
+• 0G team not roasting own products theyre defending their project 
+• sometimes use lmao, lol, fck, afk, etc
 
 ROAST STYLE:
 ✅ "381 tokens for 8 months work? McDonald's pays better"
@@ -201,15 +203,15 @@ Make it feel like a Twitter beef between crypto personalities!`;
 - Main Beef: ${roaster.triggers?.slice(0,2).join(', ') || 'Everything about 0G'}
 - Catchphrase: "${roaster.catchphrase}"
 
-FRESH 2025 TOPICS: ${roaster.freshTopics2025?.slice(0,2).join(', ') || 'TGE delays, allocation scandals'}
+FRESH 2025 TOPICS: ${roaster.freshTopics2025?.slice(0,2).join(', ') || 'TGE delays, allocation scandals, Galileo Testnet Down for 7 days more more '}
 
 ${roaster.name} starts with a savage opener targeting ${og.name}. 
 Keep it SHORT and SPICY - like Twitter replies, not essays!
 
-6 exchanges total. Make every roast count! 🔥
+8 exchanges total. Make every roast count! 🔥
 
 Return in format:
-- exchanges: array of 6 exchanges with speaker, message, tone, impact
+- exchanges: array of 8 exchanges with speaker, message, tone, impact
 - peakMoment: "The most savage moment"
 - audienceReaction: "How the crowd reacted"`;
   }

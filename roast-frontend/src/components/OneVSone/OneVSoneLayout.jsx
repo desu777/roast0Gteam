@@ -128,6 +128,7 @@ const OneVSoneLayout = ({
               userBet={userBet}
               isLoadingBet={isLoadingBet}
               battleStatus={battleStatus}
+              timeLeft={timeLeft}
               placeBet={placeBet}
               currentBattle={currentBattle}
               currentJudge={currentJudge}
