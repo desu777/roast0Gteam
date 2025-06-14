@@ -229,6 +229,18 @@ class DatabaseService {
     }));
   }
 
+  getAllBattleHistory() {
+    const battles = this.db.prepare(`
+      SELECT * FROM battle_history 
+      ORDER BY completed_at DESC
+    `).all();
+    
+    return battles.map(battle => ({
+      ...battle,
+      dialog: battle.dialog_json ? JSON.parse(battle.dialog_json) : null
+    }));
+  }
+
   // === Player Statistics ===
   
   getPlayerStats(playerAddress) {
@@ -475,6 +487,48 @@ class DatabaseService {
     }));
     
     return allStats;
+  }
+
+  // Get best performers for each side
+  getBestPerformers() {
+    // Get best 0G team character
+    const bestOg = this.db.prepare(`
+      SELECT 
+        og_character_id as character_id,
+        COUNT(*) as total_battles,
+        SUM(CASE WHEN winner_side = 'og' THEN 1 ELSE 0 END) as wins
+      FROM battle_history 
+      GROUP BY og_character_id
+      HAVING total_battles > 0
+      ORDER BY wins DESC, total_battles DESC
+      LIMIT 1
+    `).get();
+    
+    // Get best Roaster character
+    const bestRoaster = this.db.prepare(`
+      SELECT 
+        roaster_character_id as character_id,
+        COUNT(*) as total_battles,
+        SUM(CASE WHEN winner_side = 'roaster' THEN 1 ELSE 0 END) as wins
+      FROM battle_history 
+      GROUP BY roaster_character_id
+      HAVING total_battles > 0
+      ORDER BY wins DESC, total_battles DESC
+      LIMIT 1
+    `).get();
+    
+    return {
+      bestOg: bestOg ? {
+        ...bestOg,
+        win_rate: bestOg.total_battles > 0 ? (bestOg.wins / bestOg.total_battles * 100).toFixed(1) : '0.0',
+        side: 'og'
+      } : null,
+      bestRoaster: bestRoaster ? {
+        ...bestRoaster,
+        win_rate: bestRoaster.total_battles > 0 ? (bestRoaster.wins / bestRoaster.total_battles * 100).toFixed(1) : '0.0',
+        side: 'roaster'
+      } : null
+    };
   }
   
   close() {

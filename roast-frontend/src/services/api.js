@@ -118,6 +118,9 @@ export const battleApi = {
   // Postaw zakład
   placeBet: (data) => battleAxios.post('/battle/bet', data),
   
+  // Pobierz globalne statystyki battle
+  getBattleStats: () => battleAxios.get('/battle/stats'),
+  
   // Pobierz historię bitew
   getBattleHistory: (limit = 20, offset = 0) => 
     battleAxios.get(`/battle/history?limit=${limit}&offset=${offset}`),

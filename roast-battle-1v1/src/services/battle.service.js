@@ -576,6 +576,16 @@ class BattleService extends EventEmitter {
     return db.getBattleHistory(limit, offset);
   }
 
+  // Get all battle history for stats
+  async getAllBattleHistory() {
+    return db.getAllBattleHistory();
+  }
+
+  // Get best performers for each side
+  async getBestPerformers() {
+    return db.getBestPerformers();
+  }
+
   // Get specific battle by ID
   async getBattleById(battleId) {
     const battles = await db.getBattleHistory(1, 0);

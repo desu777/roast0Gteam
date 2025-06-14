@@ -488,4 +488,52 @@ router.get('/config', async (req, res) => {
   }
 });
 
+// Get battle global statistics
+router.get('/stats', async (req, res) => {
+  try {
+    // Get all battle history for calculations
+    const allBattles = await battleService.getAllBattleHistory();
+    
+    let totalVolume = 0;
+    let ogWins = 0;
+    let roasterWins = 0;
+    
+    allBattles.forEach(battle => {
+      totalVolume += parseFloat(battle.total_pot || 0);
+      if (battle.winner_side === 'og') {
+        ogWins++;
+      } else if (battle.winner_side === 'roaster') {
+        roasterWins++;
+      }
+    });
+    
+    const totalBattles = allBattles.length;
+    const ogWinRate = totalBattles > 0 ? ((ogWins / totalBattles) * 100).toFixed(1) : '0.0';
+    const roasterWinRate = totalBattles > 0 ? ((roasterWins / totalBattles) * 100).toFixed(1) : '0.0';
+    
+    // Get best performers
+    const bestPerformers = await battleService.getBestPerformers();
+    
+    res.json({
+      success: true,
+      data: {
+        totalVolume,
+        totalBattles,
+        ogWins,
+        roasterWins,
+        ogWinRate: parseFloat(ogWinRate),
+        roasterWinRate: parseFloat(roasterWinRate),
+        bestPerformers
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to get battle stats', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'BATTLE_STATS_FAILED',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

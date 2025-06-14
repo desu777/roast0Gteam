@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BattleArena from './BattleArena';
 import BattleHistory from './BattleHistory';
+import BattleStatsPanel from './BattleStatsPanel';
 import BettingPanel from './BettingPanel';
 import { useOneVSoneBattle } from '../../hooks/useOneVSoneBattle';
 
@@ -13,6 +14,8 @@ const OneVSoneLayout = ({
   currentJudge,
   onBattleBetsUpdate
 }) => {
+  const [showPlayerStats, setShowPlayerStats] = useState(false);
+  const [showBattleHistory, setShowBattleHistory] = useState(false);
   const {
     // Battle state
     currentBattle,
@@ -73,13 +76,13 @@ const OneVSoneLayout = ({
       <main className="arena-main">
         <div className="arena-layout">
           
-          {/* Left Column - Battle History */}
+          {/* Left Column - Battle Stats Panel */}
           <div className="left-column">
-            <BattleHistory 
-              battleHistory={battleHistory}
-              playerStats={playerStats}
-              userAddress={userAddress}
+            <BattleStatsPanel 
               currentJudge={currentJudge}
+              userAddress={userAddress}
+              onShowPlayerStats={() => setShowPlayerStats(true)}
+              onShowBattleHistory={() => setShowBattleHistory(true)}
             />
           </div>
 
@@ -133,7 +136,7 @@ const OneVSoneLayout = ({
           overflow: hidden;
         }
 
-        .arena-main .left-column > :global(.battle-history),
+        .arena-main .left-column > :global(.battle-stats-panel),
         .arena-main .right-column > :global(.betting-panel) {
           height: 100%;
           max-height: 100%;
@@ -165,7 +168,7 @@ const OneVSoneLayout = ({
             overflow: visible;
           }
 
-          .arena-main .left-column > :global(.battle-history),
+          .arena-main .left-column > :global(.battle-stats-panel),
           .arena-main .right-column > :global(.betting-panel) {
             height: auto;
             max-height: 400px;
@@ -190,7 +193,7 @@ const OneVSoneLayout = ({
 
         /* Mobile portrait */
         @media (max-width: 768px) {
-          .arena-main .left-column > :global(.battle-history),
+          .arena-main .left-column > :global(.battle-stats-panel),
           .arena-main .right-column > :global(.betting-panel) {
             max-height: 350px;
           }
@@ -198,7 +201,7 @@ const OneVSoneLayout = ({
 
         /* Small mobile */
         @media (max-width: 480px) {
-          .arena-main .left-column > :global(.battle-history),
+          .arena-main .left-column > :global(.battle-stats-panel),
           .arena-main .right-column > :global(.betting-panel) {
             max-height: 300px;
           }
