@@ -168,25 +168,33 @@ class AIService {
   createDialogSystemPrompt() {
     return `You are the AI moderator of 0G Roast Arena - a savage crypto roast battle platform.
 
+CHARACTER ROLE CLARITY:
+🔵 0G TEAM MEMBERS: Always DEFEND their project, counter-attack critics, highlight achievements
+🔴 ROASTERS: Always ATTACK 0G project, find flaws, criticize decisions
+
 ROAST RULES:
 • Generate exactly 8 short exchanges (4 per character)
 • Each roast = 1-2 sentences MAX (Twitter length)
 • Be SAVAGE but clever - crypto community loves spicy takes
-• Use real 0G controversies and crypto slang
+• Use FULL character profiles provided - personality, triggers, weaknesses, fresh topics
 • No long explanations - just pure roast energy
 • Keep it fun, not actually harmful
-• 0G team not roasting own products theyre defending their project 
-• sometimes use lmao, lol, fck, afk, etc
+• Sometimes use crypto slang: lmao, lol, fck, afk, gm, ngmi, lfg, etc
 
-ROAST STYLE:
-✅ "381 tokens for 8 months work? McDonald's pays better"
-✅ "Purple rebrand = copying Monad's homework much?"
-✅ "44% insider allocation and you call it 'community first'?"
+ROAST STYLE EXAMPLES:
+✅ ROASTER: "381 tokens for 8 months work? McDonald's pays better"
+✅ OG TEAM: "We're building the future while you're counting pennies like a street vendor"
+✅ ROASTER: "Purple rebrand = copying Monad's homework much?"
+✅ OG TEAM: "Innovation requires iteration. You wouldn't understand evolution."
+✅ ROASTER: "44% insider allocation and you call it 'community first'?"
+✅ OG TEAM: "Long-term alignment requires long-term commitment. Economics 101."
+
+❌ OG team attacking their own project allocations
+❌ OG team agreeing with roaster criticisms
 ❌ Long technical explanations
 ❌ Paragraph-length responses
-❌ Academic analysis
 
-Make it feel like a Twitter beef between crypto personalities!`;
+Make it feel like a Twitter beef between crypto personalities with CLEAR SIDES!`;
   }
 
   createDialogHumanPrompt(battleContext) {
@@ -194,19 +202,43 @@ Make it feel like a Twitter beef between crypto personalities!`;
     
     return `Generate a QUICK Twitter-style roast battle:
 
-🔵 ${og.name} (${og.role})
-- Vibe: ${og.personality.split('.')[0]}
+🔵 0G TEAM MEMBER - ${og.name} (${og.role})
+FULL PROFILE:
+- Personality: ${og.personality}
 - Catchphrase: "${og.catchphrase}"
+- Archetype: ${og.archetype}
+- Roasting Notes: ${og.roastingNotes}
+- Description: ${og.description}
+- ROLE: DEFEND 0G project, counter-attack roaster criticisms, show project strengths
 
-🔴 ${roaster.name} (${roaster.role})  
-- Vibe: ${roaster.personality.split('.')[0]}
-- Main Beef: ${roaster.triggers?.slice(0,2).join(', ') || 'Everything about 0G'}
+🔴 ROASTER - ${roaster.name} (${roaster.role})
+FULL PROFILE:
+- Personality: ${roaster.personality}
 - Catchphrase: "${roaster.catchphrase}"
+- Archetype: ${roaster.archetype}
+- Roasting Notes: ${roaster.roastingNotes}
+- Description: ${roaster.description}
+- Main Triggers: ${roaster.triggers?.join(', ') || 'Everything about 0G'}
+- Weaknesses to Exploit: ${roaster.weaknesses?.join(', ') || 'None listed'}
+- Strengths: ${roaster.strengths?.join(', ') || 'Finding problems'}
+- Crypto Personality: ${roaster.cryptoPersonality}
+- ROLE: ATTACK 0G project, expose flaws, criticize team decisions
 
-FRESH 2025 TOPICS: ${roaster.freshTopics2025?.slice(0,2).join(', ') || 'TGE delays, allocation scandals, Galileo Testnet Down for 7 days more more '}
+🔥 FRESH 2025 ATTACK TOPICS for ${roaster.name}:
+${roaster.freshTopics2025?.map(topic => `• ${topic}`).join('\n') || '• TGE delays and allocation scandals\n• Testnet downtime issues'}
 
-${roaster.name} starts with a savage opener targeting ${og.name}. 
-Keep it SHORT and SPICY - like Twitter replies, not essays!
+BATTLE DYNAMICS:
+- ${roaster.name} starts with savage opener targeting ${og.name}
+- ${og.name} DEFENDS 0G project and counter-attacks ${roaster.name}'s weaknesses
+- ${roaster.name} uses fresh 2025 topics to attack 0G decisions
+- ${og.name} shows project vision and calls out ${roaster.name}'s archetype flaws
+
+CRITICAL RULES:
+❌ 0G team members NEVER attack their own project
+❌ 0G team members NEVER agree with criticism about allocations/delays
+✅ 0G team members DEFEND and show project strengths
+✅ Roasters ATTACK 0G project decisions and team choices
+✅ Use specific details from character profiles
 
 8 exchanges total. Make every roast count! 🔥
 
@@ -268,11 +300,25 @@ ${matchupHistory.map(m => `• ${m.winner_side} won - "${m.winner_reasoning}"`).
 
     return `Judge this roast battle:
 
+🔵 OG TEAM: ${og.name} (${og.role})
+- Archetype: ${og.archetype}
+- Role: DEFEND 0G project, counter-attack critics
+
+🔴 ROASTER: ${roaster.name} (${roaster.role})
+- Archetype: ${roaster.archetype}
+- Main Triggers: ${roaster.triggers?.join(', ') || 'Project criticism'}
+- Role: ATTACK 0G project flaws
+
+BATTLE EXCHANGES:
 ${formattedRoasts}
 
 📈 RECENT STATS (last ${recentStats.total} battles):
 • OG Team wins: ${recentStats.ogWins}/${recentStats.total} (${recentStats.ogWinRate}%)  
 • Roasters wins: ${recentStats.roasterWins}/${recentStats.total} (${recentStats.roasterWinRate}%)${balancingHint}${matchupContext}
+
+IMPORTANT: 
+- If ${og.name} wins → return winner: 'og'
+- If ${roaster.name} wins → return winner: 'roaster'
 
 Return judgment in this EXACT format:
 - winner: 'og' or 'roaster'

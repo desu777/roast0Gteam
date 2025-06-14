@@ -100,21 +100,32 @@ class CharacterService {
       throw new Error(`Character not found: ${characterId}`);
     }
     
-    return {
+    // Base data for all characters
+    const baseData = {
       name: character.name,
       role: character.role,
       personality: character.personality,
       catchphrase: character.catchphrase,
       roastingNotes: character.roastingNotes,
       archetype: character.archetype,
-      // Additional context for roasters
-      ...(type === 'roaster' && {
-        triggers: character.triggers,
-        weaknesses: character.weaknesses,
-        strengths: character.strengths,
-        cryptoPersonality: character.cryptoPersonality
-      })
+      description: character.description,
+      decisionStyle: character.decisionStyle
     };
+    
+    // Additional context for roasters
+    if (type === 'roaster') {
+      return {
+        ...baseData,
+        triggers: character.triggers || [],
+        weaknesses: character.weaknesses || [],
+        strengths: character.strengths || [],
+        cryptoPersonality: character.cryptoPersonality,
+        freshTopics2025: character.freshTopics2025 || []
+      };
+    }
+    
+    // Return base data for OG characters
+    return baseData;
   }
 
   // Generate random battle matchup
