@@ -28,7 +28,7 @@ const CharacterBioModal = ({ character, onClose, characterType = 'og', currentJu
     if (characterType === 'og') {
       return `/${character.id}.jpg`;
     } else {
-      return `/avatars/${character.id}.png`;
+      return `/${character.id}.jpg`;
     }
   };
 

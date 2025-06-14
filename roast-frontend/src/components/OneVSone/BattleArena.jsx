@@ -154,7 +154,7 @@ const BattleArena = ({
     if (type === 'og') {
       return character?.id ? `/${character.id}.jpg` : null;
     } else {
-      return character?.id ? `/avatars/${character.id}.png` : null;
+      return character?.id ? `/${character.id}.jpg` : null;
     }
   };
 

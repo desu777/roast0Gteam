@@ -1,5 +1,5 @@
-import React from 'react';
-import { Swords, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Swords, User, X } from 'lucide-react';
 
 const BattleCharactersDisplay = ({ 
   phaseTransition,
@@ -13,6 +13,53 @@ const BattleCharactersDisplay = ({
   formatTime,
   getCharacterStats
 }) => {
+  
+  // State for image modal
+  const [imageModal, setImageModal] = useState(null);
+  
+  // Debug logging for character data
+  if (import.meta.env.VITE_TEST_ENV === 'true') {
+    console.log('🎭 BattleCharactersDisplay render:', {
+      ogCharacter: { id: ogCharacter?.id, name: ogCharacter?.name },
+      roasterCharacter: { id: roasterCharacter?.id, name: roasterCharacter?.name }
+    });
+  }
+  
+  // Handle image click
+  const handleImageClick = (character, type) => {
+    if (character?.id) {
+      setImageModal({
+        src: `/${character.id}.jpg`,
+        alt: character.name,
+        character: character,
+        type: type
+      });
+    }
+  };
+  
+  // Handle modal close
+  const handleModalClose = () => {
+    setImageModal(null);
+  };
+  
+  // Handle ESC key
+  React.useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && imageModal) {
+        handleModalClose();
+      }
+    };
+    
+    if (imageModal) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden'; // Prevent background scroll
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [imageModal]);
   
   const getStatusMessage = () => {
     const judgeColor = currentJudge?.color || '#FFD700';
@@ -68,6 +115,7 @@ const BattleCharactersDisplay = ({
   };
 
   return (
+    <>
     <div className={`characters-display ${phaseTransition}`}>
       {/* Status Message */}
       <div 
@@ -117,7 +165,9 @@ const BattleCharactersDisplay = ({
           {ogCharacter?.id ? (
             <img 
               src={`/${ogCharacter.id}.jpg`} 
-              alt={ogCharacter.name} 
+              alt={ogCharacter.name}
+              onClick={() => handleImageClick(ogCharacter, 'og')}
+              style={{ cursor: 'pointer' }}
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'block';
@@ -179,14 +229,30 @@ const BattleCharactersDisplay = ({
             border: `3px solid ${currentJudge?.color || '#FFD700'}`,
             boxShadow: `0 0 15px ${currentJudge?.color || '#FFD700'}40`
           }}>
-          <img src={`/avatars/${roasterCharacter?.id || 'default'}.png`} 
-               alt={roasterCharacter?.name}
-               onError={(e) => {
-                 e.target.style.display = 'none';
-                 e.target.nextSibling.style.display = 'block';
-               }}
-          />
-          <div className="fallback-icon" style={{ display: 'none' }}>
+          {roasterCharacter?.id ? (
+            <img src={`/${roasterCharacter.id}.jpg`} 
+                 alt={roasterCharacter?.name}
+                 onClick={() => handleImageClick(roasterCharacter, 'roaster')}
+                 style={{ cursor: 'pointer' }}
+                 onError={(e) => {
+                   if (import.meta.env.VITE_TEST_ENV === 'true') {
+                     console.log('🖼️ Roaster image failed to load:', `/${roasterCharacter.id}.jpg`);
+                   }
+                   e.target.style.display = 'none';
+                   e.target.nextSibling.style.display = 'block';
+                 }}
+                 onLoad={() => {
+                   if (import.meta.env.VITE_TEST_ENV === 'true') {
+                     console.log('🖼️ Roaster image loaded successfully:', `/${roasterCharacter.id}.jpg`);
+                   }
+                 }}
+            />
+          ) : (
+            <>
+              {import.meta.env.VITE_TEST_ENV === 'true' && console.log('🖼️ No roasterCharacter.id:', roasterCharacter)}
+            </>
+          )}
+          <div className="fallback-icon" style={{ display: roasterCharacter?.id ? 'none' : 'flex' }}>
             {roasterCharacter?.name?.[0] || '?'}
           </div>
         </div>
@@ -224,6 +290,169 @@ const BattleCharactersDisplay = ({
       </div>
       </div>
     </div>
+    
+    {/* Image Modal */}
+    {imageModal && (
+      <div 
+        className="image-modal-overlay"
+        onClick={handleModalClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'modalFadeIn 0.3s ease-out'
+        }}
+      >
+        <div 
+          className="image-modal-content"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'relative',
+            width: '500px',
+            height: '600px',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            background: 'rgba(30, 30, 40, 0.9)',
+            borderRadius: '12px',
+            border: `2px solid ${currentJudge?.color || '#FFD700'}`,
+            boxShadow: `0 0 30px ${currentJudge?.color || '#FFD700'}40`,
+            padding: '20px',
+            animation: 'modalSlideIn 0.3s ease-out',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={handleModalClose}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: `1px solid ${currentJudge?.color || '#FFD700'}`,
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#FFFFFF',
+              transition: 'all 0.3s ease',
+              zIndex: 10001
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = currentJudge?.color || '#FFD700';
+              e.target.style.color = '#000000';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.color = '#FFFFFF';
+            }}
+          >
+            <X size={16} />
+          </button>
+          
+          {/* Character Info Header */}
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '16px',
+            color: '#FFFFFF',
+            flexShrink: 0
+          }}>
+            <h3 style={{
+              margin: '0 0 4px 0',
+              color: currentJudge?.color || '#FFD700',
+              fontSize: '24px',
+              fontWeight: '700'
+            }}>
+              {imageModal.character.name}
+            </h3>
+            <p style={{
+              margin: '0',
+              color: '#CCCCCC',
+              fontSize: '16px'
+            }}>
+              {imageModal.character.role}
+            </p>
+          </div>
+          
+          {/* Image */}
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '16px',
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 0
+          }}>
+            <img
+              src={imageModal.src}
+              alt={imageModal.alt}
+              style={{
+                width: '100%',
+                height: '100%',
+                maxWidth: '400px',
+                maxHeight: '400px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                border: `2px solid ${currentJudge?.color || '#FFD700'}40`,
+                boxShadow: `0 0 20px ${currentJudge?.color || '#FFD700'}20`
+              }}
+            />
+          </div>
+          
+          {/* Team Badge */}
+          <div style={{
+            textAlign: 'center',
+            flexShrink: 0
+          }}>
+            <span style={{
+              display: 'inline-block',
+              padding: '6px 12px',
+              background: imageModal.type === 'og' 
+                ? 'linear-gradient(45deg, #00D2E9, #FF5CAA)' 
+                : 'linear-gradient(45deg, #E74C3C, #FF6B6B)',
+              borderRadius: '20px',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: '600',
+              textTransform: 'uppercase'
+            }}>
+              {imageModal.type === 'og' ? '0G Team' : 'Crypto Roaster'}
+            </span>
+          </div>
+        </div>
+      </div>
+    )}
+    
+    <style jsx>{`
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes modalSlideIn {
+        from { 
+          opacity: 0;
+          transform: scale(0.9) translateY(-20px);
+        }
+        to { 
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+    `}</style>
+    </>
   );
 };
 

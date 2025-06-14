@@ -91,7 +91,7 @@ const BattleDialog = ({
                   />
                 ) : msg.speaker === 'roaster' && roasterCharacter?.id ? (
                   <img 
-                    src={`/avatars/${roasterCharacter.id}.png`}
+                    src={`/${roasterCharacter.id}.jpg`}
                     alt=""
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -136,7 +136,7 @@ const BattleDialog = ({
                   />
                 ) : dialog[currentMessageIndex]?.speaker === 'roaster' && roasterCharacter?.id ? (
                   <img 
-                    src={`/avatars/${roasterCharacter.id}.png`}
+                    src={`/${roasterCharacter.id}.jpg`}
                     alt=""
                     onError={(e) => {
                       e.target.style.display = 'none';

@@ -21,7 +21,7 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [sparksEnabled, setSparksEnabled] = useState(false);
   const [showHallOfFame, setShowHallOfFame] = useState(false);
-  const [gameMode, setGameMode] = useState('arena'); // 'arena' | 'onevsone'
+  const [gameMode, setGameMode] = useState('onevsone'); // 'arena' | 'onevsone'
 
   // Hook do sprawdzania szerokości ekranu
   useEffect(() => {

@@ -6,7 +6,7 @@ const CharacterBio = ({ character, characterType, onBack }) => {
     if (characterType === 'og') {
       return `/${character.id}.jpg`;
     } else {
-      return `/avatars/${character.id}.png`;
+      return `/${character.id}.jpg`;
     }
   };
 

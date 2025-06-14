@@ -4,7 +4,7 @@ import { User } from 'lucide-react';
 const TeamMemberCard = ({ member, onClick, isRoaster = false }) => {
   const getImageSrc = () => {
     if (isRoaster) {
-      return `/avatars/${member.id}.png`;
+      return `/${member.id}.jpg`;
     } else {
       return `/${member.id}.jpg`;
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, ExternalLink } from 'lucide-react';
+import { Crown, ExternalLink } from 'lucide-react';
 import { treasuryApi } from '../../services/api';
 
 const RecentWinners = () => {
@@ -72,7 +72,7 @@ const RecentWinners = () => {
     return (
       <div className="recent-winners">
         <div className="winners-header">
-          <Trophy size={20} />
+          <Crown size={20} />
           <h3>Recent Winners</h3>
         </div>
         <div className="loading-message">Loading winners...</div>
@@ -85,7 +85,7 @@ const RecentWinners = () => {
     return (
       <div className="recent-winners">
         <div className="winners-header">
-          <Trophy size={20} />
+          <Crown size={20} />
           <h3>Recent Winners</h3>
         </div>
         <div className="no-winners">No winners yet!</div>
@@ -98,7 +98,7 @@ const RecentWinners = () => {
     <>
       <div className="recent-winners">
         <div className="winners-header">
-          <Trophy size={20} />
+          <Crown size={20} />
           <h3>Recent Winners</h3>
         </div>
         

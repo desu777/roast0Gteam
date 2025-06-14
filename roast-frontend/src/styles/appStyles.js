@@ -89,10 +89,10 @@ export const appStyles = `
 
   .arena-layout {
     display: grid;
-    grid-template-columns: 350px 8fr 350px;
+    grid-template-columns: 400px 24fr 400px;
     grid-template-areas: 
       "left center right";
-    gap: 30px;
+    gap: 40px;
     align-items: start;
     width: 100%;
     max-width: 100%;
@@ -109,6 +109,13 @@ export const appStyles = `
     min-width: 0; /* Prevents overflow */
     overflow: hidden;
     min-height: 600px; /* Ensure minimum height */
+  }
+
+  /* Desktop optimizations - ensure center column gets proper space */
+  @media (min-width: 1025px) {
+    .center-column {
+      min-width: 700px; /* Ensure minimum width for center - BIGGER than OneVSone */
+    }
   }
 
   .right-column {
@@ -446,8 +453,8 @@ export const appStyles = `
   /* Tablet and smaller desktop */
   @media (max-width: 1400px) {
     .arena-layout {
-      grid-template-columns: 320px 1fr 320px;
-      gap: 20px;
+      grid-template-columns: 350px 3fr 350px;
+      gap: 30px;
     }
   }
 

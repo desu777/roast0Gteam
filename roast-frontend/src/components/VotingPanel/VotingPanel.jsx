@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Heart, Lock, Trophy, Vote, Crown, Sparkles, Loader } from 'lucide-react';
+import { Heart, Lock, Trophy, Zap, Crown, Sparkles, Loader } from 'lucide-react';
 import { TEAM_MEMBERS } from '../../data/teamMembers';
 
 const VotingPanel = ({ 
@@ -73,7 +73,7 @@ const VotingPanel = ({
     <>
       <div className="voting-panel">
         <div className="voting-header">
-          <h3><Vote size={18} /> Vote for Next Judge</h3>
+          <h3><Zap size={18} /> Vote for Next Judge</h3>
           <div className="voting-status">
             {isVotingDisabled && !votingLocked && (
               <div className="voting-closing">
