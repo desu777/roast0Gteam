@@ -199,6 +199,94 @@ const HeaderStyles = `
     100% { transform: scale(1); }
   }
 
+  /* Interactive Stats Buttons */
+  .interactive-stat {
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    animation: clickableHint 3s ease-in-out infinite;
+  }
+
+  .interactive-stat:hover {
+    cursor: pointer !important;
+  }
+
+  .interactive-stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 0.4s ease;
+  }
+
+  .interactive-stat::after {
+    content: '👆';
+    position: absolute;
+    top: -25px;
+    right: -10px;
+    font-size: 16px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    animation: cursorBounce 2s ease-in-out infinite;
+  }
+
+  .interactive-stat:hover::before {
+    left: 100%;
+  }
+
+  .interactive-stat:hover::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .interactive-stat:hover {
+    cursor: pointer !important;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(var(--judge-color-rgb, 255, 215, 0), 0.3);
+    border-color: var(--judge-color, #FFD700);
+    background: rgba(var(--judge-color-rgb, 255, 215, 0), 0.1);
+  }
+
+  .interactive-stat:active {
+    transform: translateY(-1px) scale(1.01);
+    transition: transform 0.1s ease;
+  }
+
+  /* Subtle pulse animation to indicate clickability */
+  @keyframes clickableHint {
+    0%, 100% { 
+      box-shadow: 0 0 0 0 rgba(var(--judge-color-rgb, 255, 215, 0), 0.4);
+    }
+    50% { 
+      box-shadow: 0 0 0 4px rgba(var(--judge-color-rgb, 255, 215, 0), 0.1);
+    }
+  }
+
+  /* Cursor bounce animation */
+  @keyframes cursorBounce {
+    0%, 100% { transform: translateY(0) rotate(-10deg); }
+    50% { transform: translateY(-5px) rotate(-15deg); }
+  }
+
+  /* Add judge color glow effect for interactive elements */
+  .interactive-stat:hover .betting-icon,
+  .interactive-stat:hover svg {
+    filter: drop-shadow(0 0 6px var(--judge-color, #FFD700));
+    color: var(--judge-color, #FFD700);
+  }
+
+  .interactive-stat:hover .betting-amount,
+  .interactive-stat:hover span {
+    color: var(--judge-color, #FFD700);
+    text-shadow: 0 0 8px rgba(var(--judge-color-rgb, 255, 215, 0), 0.5);
+  }
+
   /* Wallet Connected Button - Clean design like on screenshots */
   .wallet-connected-btn {
     display: flex;
