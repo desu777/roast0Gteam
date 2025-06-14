@@ -532,15 +532,6 @@ const HeaderStyles = `
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
-    transition: opacity 0.3s ease-in-out;
-  }
-
-  .stats-bar.fade-out {
-    opacity: 0;
-  }
-
-  .stats-bar.fade-in {
-    opacity: 1;
   }
 
   .stat-card {
@@ -901,9 +892,11 @@ const HeaderStyles = `
   }
 
   .roaster-logo-icon {
-    width: 100%;
-    height: 100%;
+    width: 20px;
+    height: 20px;
     object-fit: contain;
+    z-index: 2;
+    border-radius: 50%;
   }
 
   @keyframes roasterRainbowBackground {
@@ -1010,12 +1003,6 @@ const HeaderStyles = `
     .avatar-gradient::after {
       width: 14px;
       height: 14px;
-    }
-  }
-
-  @media (max-width: 1200px) {
-    .stats-bar {
-      gap: 10px;
     }
   }
 `;

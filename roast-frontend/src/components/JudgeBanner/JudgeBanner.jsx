@@ -56,10 +56,6 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           border: 1px solid rgba(60, 75, 95, 0.3);
           position: relative;
           overflow: hidden;
-          animation: judgePresence 4s ease-in-out infinite alternate;
-          box-shadow: 0 0 30px rgba(${currentJudge?.color ? 
-            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
-            '255, 215, 0'}, 0.1);
         }
 
         .current-judge-banner::before {
@@ -69,31 +65,8 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(
-            90deg, 
-            transparent 0%, 
-            rgba(255, 255, 255, 0.03) 50%, 
-            transparent 100%
-          );
-          background-size: 200% 100%;
+          background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.02), transparent);
           z-index: 1;
-          animation: shimmer 6s linear infinite;
-        }
-
-        .current-judge-banner::after {
-          content: '';
-          position: absolute;
-          top: -2px;
-          left: -2px;
-          right: -2px;
-          bottom: -2px;
-          background: linear-gradient(45deg, 
-            ${currentJudge?.color || '#FFD700'}40, 
-            transparent, 
-            ${currentJudge?.color || '#FFD700'}40);
-          border-radius: 22px;
-          z-index: 0;
-          animation: borderGlow 3s ease-in-out infinite alternate;
         }
 
         .judge-intro {
@@ -128,11 +101,8 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          box-shadow: 0 0 20px rgba(${currentJudge?.color ? 
-            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
-            '255, 215, 0'}, 0.3);
-          border: 3px solid ${currentJudge?.color || '#FFD700'}80;
-          animation: avatarFloat 3s ease-in-out infinite alternate;
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+          border: 3px solid rgba(255, 255, 255, 0.1);
         }
 
         .judge-nft-image {
@@ -218,57 +188,6 @@ const JudgeBanner = ({ currentJudge, setShowJudgeDetails }) => {
         .judge-twitter-handle:hover {
           opacity: 1;
           transform: translateX(2px);
-        }
-
-        /* Elegant Judge Animations */
-        @keyframes judgePresence {
-          0% {
-            box-shadow: 0 0 30px rgba(${currentJudge?.color ? 
-              `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
-              '255, 215, 0'}, 0.1);
-            transform: translateY(0px);
-          }
-          100% {
-            box-shadow: 0 0 40px rgba(${currentJudge?.color ? 
-              `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
-              '255, 215, 0'}, 0.2);
-            transform: translateY(-2px);
-          }
-        }
-
-        @keyframes shimmer {
-          0% {
-            background-position: -200% 0;
-          }
-          100% {
-            background-position: 200% 0;
-          }
-        }
-
-        @keyframes borderGlow {
-          0% {
-            opacity: 0.3;
-            transform: scale(1);
-          }
-          100% {
-            opacity: 0.6;
-            transform: scale(1.01);
-          }
-        }
-
-        @keyframes avatarFloat {
-          0% {
-            transform: translateY(0px) scale(1);
-            box-shadow: 0 0 20px rgba(${currentJudge?.color ? 
-              `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
-              '255, 215, 0'}, 0.3);
-          }
-          100% {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 0 25px rgba(${currentJudge?.color ? 
-              `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` : 
-              '255, 215, 0'}, 0.4);
-          }
         }
 
         /* Responsive Design */

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Volume2, VolumeX, Target, Users, Coins, RefreshCw, Crown, Sparkles, Swords, Crosshair
 } from 'lucide-react';
@@ -39,21 +39,6 @@ const Header = ({
     type: null,
     data: null
   });
-
-  // State for game mode transition
-  const [displayMode, setDisplayMode] = useState(gameMode);
-  const [transitionClass, setTransitionClass] = useState('');
-
-  useEffect(() => {
-    if (gameMode !== displayMode) {
-      setTransitionClass('fade-out');
-      setTimeout(() => {
-        setDisplayMode(gameMode);
-        setTransitionClass('fade-in');
-        setTimeout(() => setTransitionClass(''), 300); // Reset class after animation
-      }, 300); // Match CSS transition duration
-    }
-  }, [gameMode, displayMode]);
 
   // Format balance for display
   const formatBalance = (balance) => {
@@ -130,8 +115,8 @@ const Header = ({
         </div>
 
         {/* Stats Bar */}
-        <div className={`stats-bar ${transitionClass}`}>
-          {displayMode === 'onevsone' ? (
+        <div className="stats-bar">
+          {gameMode === 'onevsone' ? (
             // OneVSone Mode - Betting Stats Layout
             <>
               {/* 0G Team Bets Count */}
@@ -171,10 +156,10 @@ const Header = ({
                 <button 
                   className="stat-card game-mode-toggle-btn"
                   onClick={onGameModeToggle}
-                  title={displayMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
+                  title={gameMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
                 >
                   <Swords size={16} />
-                  <span>{displayMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
+                  <span>{gameMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
                 </button>
               )}
 
@@ -242,10 +227,10 @@ const Header = ({
                 <button 
                   className="stat-card game-mode-toggle-btn"
                   onClick={onGameModeToggle}
-                  title={displayMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
+                  title={gameMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
                 >
                   <Swords size={16} />
-                  <span>{displayMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
+                  <span>{gameMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
                 </button>
               )}
               

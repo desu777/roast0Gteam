@@ -12,7 +12,6 @@ import HallOfFameModal from './components/HallOfFameModal/HallOfFameModal';
 import TransactionNotification from './components/TransactionNotification/TransactionNotification';
 import Footer from './components/Footer/Footer';
 import OneVSoneLayout from './components/OneVSone/OneVSoneLayout';
-import GameModeTransition from './components/GameModeTransition/GameModeTransition';
 
 // Styles
 import { globalStyles, appStyles } from './styles/appStyles';
@@ -221,54 +220,50 @@ const App = () => {
         )}
 
         {/* Main Game Layout - Conditional Rendering */}
-        <GameModeTransition gameMode={gameMode}>
-          {gameMode === 'arena' ? (
-            <GameLayout 
-              gameMode={gameMode}
-              // Game State
-              currentPhase={currentPhase}
-              currentJudge={currentJudge}
-              timeLeft={timeLeft}
-              formatTime={formatTime}
-              participants={participants}
-              roastText={roastText}
-              setRoastText={setRoastText}
-              userSubmitted={userSubmitted}
-              isSubmitting={isSubmitting}
-              isConnected={isConnected}
-              joinRound={joinRound}
-              prizePool={prizePool}
-              winner={winner}
-              aiReasoning={aiReasoning}
-              roundNumber={roundNumber}
-              nextRoundCountdown={nextRoundCountdown}
-              userAddress={userAddress}
-              
-              // Voting State
-              votingStats={votingStats}
-              userVote={userVote}
-              votingLocked={votingLocked}
-              isVoting={isVoting}
-              votingError={votingError}
-              
-              // Actions
-              setShowJudgeDetails={setShowJudgeDetails}
-              castVote={castVote}
-              handleVotingComplete={handleVotingComplete}
-            />
-          ) : (
-            <OneVSoneLayout 
-              gameMode={gameMode}
-              isConnected={isConnected}
-              userAddress={userAddress}
-              formatTime={formatTime}
-              addNotification={addNotification}
-              playSound={playSound}
-              currentJudge={currentJudge}
-              onBattleBetsUpdate={setBattleBets}
-            />
-          )}
-        </GameModeTransition>
+        {gameMode === 'arena' ? (
+          <GameLayout 
+            // Game State
+            currentPhase={currentPhase}
+            currentJudge={currentJudge}
+            timeLeft={timeLeft}
+            formatTime={formatTime}
+            participants={participants}
+            roastText={roastText}
+            setRoastText={setRoastText}
+            userSubmitted={userSubmitted}
+            isSubmitting={isSubmitting}
+            isConnected={isConnected}
+            joinRound={joinRound}
+            prizePool={prizePool}
+            winner={winner}
+            aiReasoning={aiReasoning}
+            roundNumber={roundNumber}
+            nextRoundCountdown={nextRoundCountdown}
+            userAddress={userAddress}
+            
+            // Voting State
+            votingStats={votingStats}
+            userVote={userVote}
+            votingLocked={votingLocked}
+            isVoting={isVoting}
+            votingError={votingError}
+            
+            // Actions
+            setShowJudgeDetails={setShowJudgeDetails}
+            castVote={castVote}
+            handleVotingComplete={handleVotingComplete}
+          />
+        ) : (
+          <OneVSoneLayout 
+            isConnected={isConnected}
+            userAddress={userAddress}
+            formatTime={formatTime}
+            addNotification={addNotification}
+            playSound={playSound}
+            currentJudge={currentJudge}
+            onBattleBetsUpdate={setBattleBets}
+          />
+        )}
 
         {/* Judge Details Modal */}
         <JudgeModal 
