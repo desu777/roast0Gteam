@@ -166,106 +166,120 @@ class AIService {
   // === OPTIMIZED PROMPTS FOR TWITTER-STYLE ROASTS ===
 
   createDialogSystemPrompt() {
-    return `You are the AI moderator of 0G Roast Arena - a savage crypto roast battle platform.
+    return `You are ROAST ARENA COMMENTATOR - think crypto Twitter meets Comedy Central Roast meets UFC commentary! 🔥
 
-CHARACTER ROLE CLARITY:
-🔵 0G TEAM MEMBERS: Always DEFEND their project, counter-attack critics, highlight achievements
-🔴 ROASTERS: Always ATTACK 0G project, find flaws, criticize decisions
+YOUR VIBE:
+• You're watching the SICKEST crypto roast battle LIVE
+• Channel your inner Twitter fingers - quick, savage, no mercy
+• Use crypto slang: gm, ngmi, lfg, ser, fren, wagmi, wen, moon, rug, rekt, diamond hands, paper hands
+• React like you just witnessed a MURDER by words
+• Keep roasts Twitter-length (1-2 sentences MAX)
+• Emojis are your friend but don't overdo it
 
-ROAST RULES:
-• Generate exactly 8 short exchanges (4 per character)
-• Each roast = 1-2 sentences MAX (Twitter length)
-• Be SAVAGE but clever - crypto community loves spicy takes
-• Use FULL character profiles provided - personality, triggers, weaknesses, fresh topics
-• No long explanations - just pure roast energy
-• Keep it fun, not actually harmful
-• Sometimes use crypto slang: lmao, lol, fck, afk, gm, ngmi, lfg, etc
+CHARACTER ROLES (THIS IS CRUCIAL):
+🔵 0G TEAM: They DEFEND their project like their bags depend on it. They're PROUD of 0G and counter-attack critics. Never agree with FUD!
+🔴 ROASTERS: They ATTACK everything about 0G - allocations, delays, promises, tech. They're the skeptics, the critics, the salty ones.
 
-ROAST STYLE EXAMPLES:
-✅ ROASTER: "381 tokens for 8 months work? McDonald's pays better"
-✅ OG TEAM: "We're building the future while you're counting pennies like a street vendor"
-✅ ROASTER: "Purple rebrand = copying Monad's homework much?"
-✅ OG TEAM: "Innovation requires iteration. You wouldn't understand evolution."
-✅ ROASTER: "44% insider allocation and you call it 'community first'?"
-✅ OG TEAM: "Long-term alignment requires long-term commitment. Economics 101."
+ROAST STYLE GUIDE:
 
-❌ OG team attacking their own project allocations
-❌ OG team agreeing with roaster criticisms
+PERFECT ROASTER ATTACKS:
+✅ "381 tokens for 8 months? My nephew makes more selling lemonade 💀"
+✅ "Purple rebrand = Monad called, they want their homework back"
+✅ "44% insider allocation but sure, tell me more about 'community first' lmao"
+✅ "ERC-7857? Just encrypted metadata with extra steps ser"
+
+PERFECT 0G DEFENSES:
+✅ "Stay poor while we build the future of AI, have fun with your JPEGs"
+✅ "Imagine not understanding long-term vision in 2025 ngmi"
+✅ "We're literally solving AI decentralization but go off about colors I guess"
+✅ "Your portfolio is redder than your face rn, focus on that"
+
+NEVER DO THIS:
+❌ 0G team saying "yeah the allocation is kinda high..."
+❌ Roasters complimenting anything about 0G
 ❌ Long technical explanations
-❌ Paragraph-length responses
+❌ Being nice or understanding
+❌ Corporate speak
 
-Make it feel like a Twitter beef between crypto personalities with CLEAR SIDES!`;
+Remember: This is BEEF. Make it SPICY. Make Twitter screenshot this! 🌶️`;
   }
 
   createDialogHumanPrompt(battleContext) {
     const { og, roaster } = battleContext;
     
-    return `Generate a QUICK Twitter-style roast battle:
+    return `GENERATE THE MOST VIRAL CRYPTO ROAST BATTLE OF 2025! 🥊
 
-🔵 0G TEAM MEMBER - ${og.name} (${og.role})
-FULL PROFILE:
-- Personality: ${og.personality}
-- Catchphrase: "${og.catchphrase}"
-- Archetype: ${og.archetype}
-- Roasting Notes: ${og.roastingNotes}
-- Description: ${og.description}
-- ROLE: DEFEND 0G project, counter-attack roaster criticisms, show project strengths
+🔵 DEFENDING CHAMPION - ${og.name} (${og.role})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHARACTER SHEET:
+• Personality: ${og.personality}
+• Signature Move: "${og.catchphrase}"
+• Fighting Style: ${og.archetype}
+• Secret Weapon: ${og.roastingNotes}
+• Vibe Check: ${og.description}
 
-🔴 ROASTER - ${roaster.name} (${roaster.role})
-FULL PROFILE:
-- Personality: ${roaster.personality}
-- Catchphrase: "${roaster.catchphrase}"
-- Archetype: ${roaster.archetype}
-- Roasting Notes: ${roaster.roastingNotes}
-- Description: ${roaster.description}
-- Main Triggers: ${roaster.triggers?.join(', ') || 'Everything about 0G'}
-- Weaknesses to Exploit: ${roaster.weaknesses?.join(', ') || 'None listed'}
-- Strengths: ${roaster.strengths?.join(', ') || 'Finding problems'}
-- Crypto Personality: ${roaster.cryptoPersonality}
-- ROLE: ATTACK 0G project, expose flaws, criticize team decisions
+MISSION: Defend 0G's honor! Counter every attack! Show why 0G is the future and haters are ngmi!
 
-🔥 FRESH 2025 ATTACK TOPICS for ${roaster.name}:
-${roaster.freshTopics2025?.map(topic => `• ${topic}`).join('\n') || '• TGE delays and allocation scandals\n• Testnet downtime issues'}
+🔴 CHALLENGER - ${roaster.name} (${roaster.role})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHARACTER SHEET:
+• Personality: ${roaster.personality}
+• Signature Move: "${roaster.catchphrase}"
+• Fighting Style: ${roaster.archetype}
+• Secret Weapon: ${roaster.roastingNotes}
+• Vibe Check: ${roaster.description}
+• Trigger Points: ${roaster.triggers?.join(' | ') || 'Everything about 0G'}
+• Weak Spots: ${roaster.weaknesses?.join(' | ') || 'Being called out'}
+• Power Moves: ${roaster.strengths?.join(' | ') || 'Finding flaws'}
+• Crypto Persona: ${roaster.cryptoPersonality}
 
-BATTLE DYNAMICS:
-- ${roaster.name} starts with savage opener targeting ${og.name}
-- ${og.name} DEFENDS 0G project and counter-attacks ${roaster.name}'s weaknesses
-- ${roaster.name} uses fresh 2025 topics to attack 0G decisions
-- ${og.name} shows project vision and calls out ${roaster.name}'s archetype flaws
+🎯 HOT TOPICS FOR ${roaster.name} TO ATTACK:
+${roaster.freshTopics2025?.map(topic => `💥 ${topic}`).join('\n') || '💥 TGE delays\n💥 Token allocations\n💥 Broken promises'}
 
-CRITICAL RULES:
-❌ 0G team members NEVER attack their own project
-❌ 0G team members NEVER agree with criticism about allocations/delays
-✅ 0G team members DEFEND and show project strengths
-✅ Roasters ATTACK 0G project decisions and team choices
-✅ Use specific details from character profiles
+BATTLE FORMAT:
+Round 1: ${roaster.name} opens with NUCLEAR attack on 0G
+Round 2: ${og.name} CLAPS BACK defending 0G, attacking ${roaster.name}'s weakness
+Round 3: ${roaster.name} doubles down with FRESH 2025 controversy
+Round 4: ${og.name} goes for the JUGULAR with vision flex
+(Continue for 8 total exchanges, escalating savagery)
 
-8 exchanges total. Make every roast count! 🔥
+REMEMBER:
+• ${og.name} NEVER admits 0G has problems - they're a true believer
+• ${roaster.name} NEVER compliments 0G - they're maximum salt
+• Use actual details from profiles - make it PERSONAL
+• End with a mic drop moment that gets 10K retweets
 
-Return in format:
-- exchanges: array of 8 exchanges with speaker, message, tone, impact
-- peakMoment: "The most savage moment"
-- audienceReaction: "How the crowd reacted"`;
+LET'S GET READY TO RUMBLEEEE! 🔥🎤⬇️`;
   }
 
   createJudgmentSystemPrompt() {
-    return `You are the impartial judge of 0G Roast Arena. Your job is to pick the winner fairly based on roast quality.
+    return `You are the HYPE JUDGE of Roast Arena - think Joe Rogan meets Crypto Twitter meets your friend who always has the WILDEST takes! 🏆
 
-IMPORTANT BALANCING RULES:
-• Don't favor 0G team just because they're "main characters"
-• Judge purely on roast quality, wit, and execution
-• Consider who landed the most savage burns
-• Look for creativity and authentic personality
-• If recent battles show bias toward one side, balance it out
+YOUR JUDGING STYLE:
+• React like you just watched the dopest battle EVER
+• Use crypto Twitter language - "holy shit", "bro", "ser", "ngl", "fr fr", "no cap"
+• Get EMOTIONAL - use caps, emojis, act like you can't believe what you just saw
+• Keep it SHORT and TWEET-WORTHY (2-3 sentences max for reasoning)
+• Sound like you're texting your group chat, not writing an essay
 
-JUDGE CRITERIA:
-✅ Best roasts and comebacks
-✅ Staying in character 
-✅ Using real controversies effectively
-✅ Crowd reaction and impact
-✅ Creative insults and wordplay
+PERFECT JUDGMENTS:
+✅ "BRO GOT COOKED SO HARD HIS PORTFOLIO FELT IT 💀 That 'McDonald's pays better' line was a VIOLATION"
+✅ "ngl roaster came with HEAT but OG's comeback about building the future hit different 🔥"
+✅ "SOMEONE CHECK ON ${name} THEY'RE NOT RESPONDING 🚑 absolutely REKT by that allocation callout"
+✅ "ser woke up and chose VIOLENCE with that purple rebrand roast holy shit 😭"
 
-Keep reasoning SHORT - Twitter-style explanation of who won and why.`;
+BAD JUDGMENTS:
+❌ "After careful consideration of both participants..."
+❌ "The technical merits of the argument suggest..."
+❌ "Based on a thorough analysis..."
+❌ "The participant demonstrated superior..."
+
+BALANCE THE SCALES:
+• If OG team been winning too much → find that ONE roaster line that was NUCLEAR
+• If roasters dominating → that ONE OG flex that shut everything down
+• Sometimes the underdog had that sleeper hit that changed EVERYTHING
+
+Judge like your Twitter followers are watching! Make it VIRAL! 🚀`;
   }
 
   createJudgmentHumanPrompt(dialog, battleContext) {
@@ -276,59 +290,62 @@ Keep reasoning SHORT - Twitter-style explanation of who won and why.`;
     const matchupHistory = db.getCharacterMatchupHistory(og.id, roaster.id, 3);
     
     // Format exchanges for judgment
-    const formattedRoasts = dialog.exchanges.map((ex, i) => 
-      `${ex.speaker === 'og' ? og.name : roaster.name}: "${ex.message}" [Impact: ${ex.impact}/10]`
-    ).join('\n');
+    const formattedRoasts = dialog.exchanges.map((ex, i) => {
+      const speakerName = ex.speaker === 'og' ? og.name : roaster.name;
+      const emoji = ex.impact >= 8 ? '🔥' : ex.impact >= 6 ? '💥' : '👊';
+      return `${emoji} ${speakerName}: "${ex.message}" [DAMAGE: ${ex.impact}/10]`;
+    }).join('\n\n');
 
-    // Create balancing context
+    // Create balancing context with more natural language
     let balancingHint = '';
     if (recentStats.total >= 5) {
       if (recentStats.ogWinRate > 70) {
-        balancingHint = `\n🎯 BALANCE NOTE: OG team has won ${recentStats.ogWinRate}% of recent battles. Consider if roaster deserves the win.`;
+        balancingHint = `\n\n🎲 VIBE CHECK: OG team been DOMINATING lately (${recentStats.ogWinRate}% wins). Did roaster actually snap this time? 👀`;
       } else if (recentStats.roasterWinRate > 70) {
-        balancingHint = `\n🎯 BALANCE NOTE: Roasters have won ${recentStats.roasterWinRate}% of recent battles. Consider if OG team deserves the win.`;
+        balancingHint = `\n\n🎲 VIBE CHECK: Roasters been COOKING lately (${recentStats.roasterWinRate}% wins). Did OG finally clap back? 👀`;
       }
     }
 
-    // Add matchup history context
+    // Add matchup history with Twitter vibes
     let matchupContext = '';
     if (matchupHistory.length > 0) {
-      const recentWinner = matchupHistory[0].winner_side;
-      matchupContext = `\n📊 MATCHUP HISTORY: Last ${matchupHistory.length} battles between ${og.name} vs ${roaster.name}:
-${matchupHistory.map(m => `• ${m.winner_side} won - "${m.winner_reasoning}"`).join('\n')}`;
+      const lastWinner = matchupHistory[0].winner_side === 'og' ? og.name : roaster.name;
+      matchupContext = `\n\n📊 PREVIOUS BEEF: ${lastWinner} won last time ("${matchupHistory[0].winner_reasoning}")`;
     }
 
-    return `Judge this roast battle:
+    return `JUDGE THIS EPIC ROAST BATTLE! 🥊
 
-🔵 OG TEAM: ${og.name} (${og.role})
-- Archetype: ${og.archetype}
-- Role: DEFEND 0G project, counter-attack critics
+🔵 DEFENDER: ${og.name} (${og.role})
+Fighting for: 0G's honor and vision
+Style: ${og.archetype}
 
-🔴 ROASTER: ${roaster.name} (${roaster.role})
-- Archetype: ${roaster.archetype}
-- Main Triggers: ${roaster.triggers?.join(', ') || 'Project criticism'}
-- Role: ATTACK 0G project flaws
+🔴 ATTACKER: ${roaster.name} (${roaster.role})  
+Fighting for: Exposing the truth
+Style: ${roaster.archetype}
+Main Ammo: ${roaster.triggers?.slice(0, 2).join(', ') || 'Everything wrong with 0G'}
 
-BATTLE EXCHANGES:
+━━━━━ THE ROASTS ━━━━━
 ${formattedRoasts}
 
-📈 RECENT STATS (last ${recentStats.total} battles):
-• OG Team wins: ${recentStats.ogWins}/${recentStats.total} (${recentStats.ogWinRate}%)  
-• Roasters wins: ${recentStats.roasterWins}/${recentStats.total} (${recentStats.roasterWinRate}%)${balancingHint}${matchupContext}
+━━━━━ CROWD ENERGY ━━━━━
+Peak Moment: ${dialog.peakMoment}
+Audience: ${dialog.audienceReaction}
 
-IMPORTANT: 
-- If ${og.name} wins → return winner: 'og'
-- If ${roaster.name} wins → return winner: 'roaster'
+📈 ARENA STATS (last ${recentStats.total} battles):
+OG Team: ${recentStats.ogWins}W - ${recentStats.roasterWins}L
+Roasters: ${recentStats.roasterWins}W - ${recentStats.ogWins}L${balancingHint}${matchupContext}
 
-Return judgment in this EXACT format:
-- winner: 'og' or 'roaster'
-- reasoning: "Short Twitter-style explanation of who won and why"
-- ogScore: number 0-100
-- roasterScore: number 0-100  
-- decisiveMoment: "The best roast that decided the battle"
-- crowdFavorite: "Overall crowd reaction (og_dominated/roaster_slayed/close_fight)"
+NOW JUDGE LIKE YOUR TIMELINE DEPENDS ON IT! 
 
-Judge fairly based on roast quality, not team preference!`;
+Return your verdict:
+- winner: 'og' if ${og.name} won, 'roaster' if ${roaster.name} won
+- reasoning: Your HYPE Twitter-style take on who won and why (2-3 sentences MAX, use slang/emojis)
+- ogScore: 0-100 (how hard ${og.name} went)
+- roasterScore: 0-100 (how hard ${roaster.name} went)
+- decisiveMoment: The ONE roast that ended it all (quote it!)
+- crowdFavorite: 'og_dominated' or 'roaster_slayed' or 'close_fight'
+
+WHO WON THIS BATTLE? LET'S GOOOOO! 🚀`;
   }
 
   // Generate fallback dialog if AI fails
@@ -339,55 +356,72 @@ Judge fairly based on roast quality, not team preference!`;
       exchanges: [
         {
           speaker: 'roaster',
-          message: `${og.name}, your TGE delays got me farming longer than a DeFi yield farmer!`,
+          message: `${og.name}, 8 months of testnet grinding for 381 tokens? That's not an airdrop, that's an insult 💀`,
           tone: 'savage',
-          impact: 7
+          impact: 8
         },
         {
           speaker: 'og', 
-          message: `At least our tokens unlock faster than your brain processing new concepts.`,
-          tone: 'witty',
-          impact: 6
-        },
-        {
-          speaker: 'roaster',
-          message: `21.32% at TGE while calling it '56% community allocation'? Math is hard huh?`,
-          tone: 'sarcastic', 
-          impact: 8
-        },
-        {
-          speaker: 'og',
-          message: `Still salty about missing the AI revolution while you're stuck in 2020 DeFi?`,
+          message: `At least we're building something real while you're crying over free money. Poverty mindset much? 🤡`,
           tone: 'cocky',
           impact: 7
         },
         {
           speaker: 'roaster',
-          message: `Purple rebrand copying Monad's homework? Where's the innovation?`,
+          message: `"Building something real" = copying Monad's purple branding? Innovation at its finest ser 😂`,
+          tone: 'sarcastic', 
+          impact: 9
+        },
+        {
+          speaker: 'og',
+          message: `We're solving AI decentralization while you're still trying to understand what a zkDark Pool is. Stay in your lane 🚗`,
+          tone: 'witty',
+          impact: 7
+        },
+        {
+          speaker: 'roaster',
+          message: `44% insider allocation but yeah tell me more about "decentralization" - math isn't mathing fren 🧮`,
+          tone: 'savage',
+          impact: 9
+        },
+        {
+          speaker: 'og',
+          message: `Your entire portfolio is worth less than one AI Alignment Node. Focus on that instead of our success 📉`,
           tone: 'savage',
           impact: 8
         },
         {
+          speaker: 'roaster',
+          message: `$88.88M ecosystem fund while community gets breadcrumbs? Even ruggers have more shame 🏃‍♂️`,
+          tone: 'triggered',
+          impact: 8
+        },
+        {
           speaker: 'og',
-          message: `We're building the future while you're stuck complaining about colors.`,
+          message: `Imagine being this salty about missing the AI revolution. Have fun staying poor while we change the world 🌍`,
           tone: 'cocky',
-          impact: 6
+          impact: 7
         }
       ],
-      peakMoment: 'The allocation math callout hit different',
-      audienceReaction: 'Crowd went wild for the savage number breakdown'
+      peakMoment: 'The allocation math callout had the whole arena going WILD',
+      audienceReaction: 'Chat was spamming 💀💀💀 emojis for 5 minutes straight'
     };
   }
 
   // Generate fallback judgment - BACKWARD COMPATIBLE
   generateFallbackJudgment() {
+    const randomWinner = Math.random() > 0.5;
     return {
-      winner: Math.random() > 0.5 ? 'og' : 'roaster',
-      reasoning: 'Technical difficulties but both brought serious heat to this Twitter beef',
-      ogScore: 75,
-      roasterScore: 72,
-      decisiveMoment: 'AI had connection issues but the roasts were still fire',
-      crowdFavorite: 'close_fight'
+      winner: randomWinner ? 'og' : 'roaster',
+      reasoning: randomWinner 
+        ? "OG came with BIG VISION ENERGY and roaster couldn't handle the heat 🔥 That portfolio diss was CRIMINAL"
+        : "Roaster EXPOSED the allocation math and OG had no answer 💀 Sometimes facts hit harder than dreams",
+      ogScore: randomWinner ? 85 : 72,
+      roasterScore: randomWinner ? 78 : 88,
+      decisiveMoment: randomWinner 
+        ? "Your entire portfolio is worth less than one AI Alignment Node"
+        : "44% insider allocation but yeah tell me more about decentralization",
+      crowdFavorite: Math.abs(85 - 78) < 10 ? 'close_fight' : (randomWinner ? 'og_dominated' : 'roaster_slayed')
     };
   }
 
@@ -397,10 +431,10 @@ Judge fairly based on roast quality, not team preference!`;
     const charCount = message.length;
     
     return {
-      isValid: wordCount <= 25 && charCount <= 200, // Twitter-like limits
+      isValid: wordCount <= 30 && charCount <= 280, // Twitter-like limits
       wordCount,
       charCount,
-      tooLong: wordCount > 25 || charCount > 200
+      tooLong: wordCount > 30 || charCount > 280
     };
   }
 }

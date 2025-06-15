@@ -12,9 +12,12 @@ const BattleStatsPanel = ({
   const [loading, setLoading] = useState(true);
 
   // Load battle statistics
-  const loadBattleStats = async () => {
+  const loadBattleStats = async (isInitialLoad = false) => {
     try {
-      setLoading(true);
+      // Only show loading on initial load, not on refreshes
+      if (isInitialLoad) {
+        setLoading(true);
+      }
       const response = await battleApi.getBattleStats();
       
       if (response.data.success) {
@@ -25,15 +28,18 @@ const BattleStatsPanel = ({
         console.error('Failed to load battle stats:', error);
       }
     } finally {
-      setLoading(false);
+      // Only hide loading if it was shown
+      if (isInitialLoad) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    loadBattleStats();
+    loadBattleStats(true); // Initial load with loading state
     
-    // Refresh stats every 30 seconds
-    const interval = setInterval(loadBattleStats, 30000);
+    // Refresh stats every 60 seconds (silent refresh)
+    const interval = setInterval(() => loadBattleStats(false), 60000);
     return () => clearInterval(interval);
   }, []);
 
