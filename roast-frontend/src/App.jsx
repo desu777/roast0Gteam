@@ -13,6 +13,7 @@ import TransactionNotification from './components/TransactionNotification/Transa
 import Footer from './components/Footer/Footer';
 import OneVSoneLayout from './components/OneVSone/OneVSoneLayout';
 
+
 // Styles
 import { globalStyles, appStyles } from './styles/appStyles';
 

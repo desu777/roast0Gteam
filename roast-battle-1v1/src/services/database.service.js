@@ -429,6 +429,20 @@ class DatabaseService {
       LIMIT ?
     `).all(limit);
   }
+  // Get last completed battle for anti-repetition
+  getLastCompletedBattle() {
+    return this.db.prepare(`
+      SELECT 
+        og_character_id,
+        roaster_character_id,
+        winner_side,
+        completed_at
+      FROM battle_history 
+      ORDER BY completed_at DESC 
+      LIMIT 1
+    `).get();
+  }
+
   // Get recent battle statistics for AI balancing
   getRecentBattleStats(limit = 20) {
     const recentBattles = this.db.prepare(`

@@ -45,7 +45,15 @@ const BattleStatsPanel = ({
 
   return (
     <>
-      <div className="battle-stats-panel">
+      <div 
+        className="battle-stats-panel"
+        style={{
+          '--judge-color': currentJudge?.color || '#FFD700',
+          '--judge-color-rgb': currentJudge?.color ? 
+            `${parseInt(currentJudge.color.slice(1, 3), 16)}, ${parseInt(currentJudge.color.slice(3, 5), 16)}, ${parseInt(currentJudge.color.slice(5, 7), 16)}` :
+            '255, 215, 0'
+        }}
+      >
         <div className="panel-header">
           <h3 className="stats-title">
             <BarChart3 size={20} className="stats-icon" style={{ color: currentJudge?.color || '#FFD700' }} />
@@ -143,8 +151,7 @@ const BattleStatsPanel = ({
                   className="action-btn player-stats-btn"
                   onClick={onShowPlayerStats}
                   style={{
-                    borderColor: currentJudge?.color || '#FFD700',
-                    '--judge-color': currentJudge?.color || '#FFD700'
+                    borderColor: currentJudge?.color || '#FFD700'
                   }}
                 >
                   <Users size={16} />
@@ -157,8 +164,7 @@ const BattleStatsPanel = ({
                   className="action-btn battle-history-btn"
                   onClick={onShowBattleHistory}
                   style={{
-                    borderColor: currentJudge?.color || '#FFD700',
-                    '--judge-color': currentJudge?.color || '#FFD700'
+                    borderColor: currentJudge?.color || '#FFD700'
                   }}
                 >
                   <History size={16} />

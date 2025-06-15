@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Volume2, VolumeX, Target, Users, Coins, RefreshCw, Crown, Sparkles, Swords, Crosshair
+  Volume2, VolumeX, Target, Users, Coins, RefreshCw, Crown, Sparkles, Crosshair, Swords, ArrowRight
 } from 'lucide-react';
 import { useAccount, useBalance } from 'wagmi';
 import ConnectWallet from '../ConnectWallet/ConnectWallet';
@@ -85,6 +85,38 @@ const Header = ({
               <p>Global Battle Room - AI Judges Every Round</p>
             </div>
           </div>
+
+          {/* Central Game Mode Toggle in Header */}
+          {onGameModeToggle && (
+            <div className="header-game-mode-toggle">
+              <button 
+                className="header-toggle-btn"
+                onClick={onGameModeToggle}
+                title={gameMode === 'arena' ? 'Switch to 1v1 Battle Mode' : 'Switch to Arena Mode'}
+              >
+                <div className="toggle-content">
+                  <div className="current-mode-section">
+                    <div className="mode-icon">
+                      <Swords size={16} />
+                    </div>
+                    <div className="mode-text">
+                      <span className="current-label">Current Mode:</span>
+                      <span className="current-mode">{gameMode === 'arena' ? 'Arena Battle' : '1v1 Battle'}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="switch-indicator">
+                    <ArrowRight size={12} />
+                  </div>
+                  
+                  <div className="next-mode-section">
+                    <span className="switch-to">Switch to</span>
+                    <span className="next-mode">{gameMode === 'arena' ? '1v1 Battle' : 'Arena Mode'}</span>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
           
           <div className="header-controls">
             <div className="controls-group">
@@ -151,18 +183,6 @@ const Header = ({
                 </div>
               </button>
 
-              {/* 1v1 Battle / Arena Toggle Button */}
-              {onGameModeToggle && (
-                <button 
-                  className="stat-card game-mode-toggle-btn"
-                  onClick={onGameModeToggle}
-                  title={gameMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
-                >
-                  <Swords size={16} />
-                  <span>{gameMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
-                </button>
-              )}
-
               {/* Roaster Betting Stats - Compact */}
               <button 
                 className="stat-card betting-stats-compact roaster interactive-stat"
@@ -219,18 +239,6 @@ const Header = ({
                 >
                   <Crown size={16} />
                   <span>Hall of Fame</span>
-                </button>
-              )}
-              
-              {/* 1v1 Battle / Arena Toggle Button */}
-              {onGameModeToggle && (
-                <button 
-                  className="stat-card game-mode-toggle-btn"
-                  onClick={onGameModeToggle}
-                  title={gameMode === 'arena' ? 'Switch to 1v1 Battle' : 'Switch to Arena'}
-                >
-                  <Swords size={16} />
-                  <span>{gameMode === 'arena' ? '1v1 Battle' : 'Arena'}</span>
                 </button>
               )}
               

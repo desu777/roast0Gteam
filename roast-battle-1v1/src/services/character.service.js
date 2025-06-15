@@ -34,24 +34,44 @@ class CharacterService {
     }
   }
 
-  // Get random OG character
-  getRandomOGCharacter() {
+  // Get random OG character (with anti-repetition)
+  getRandomOGCharacter(excludeIds = []) {
     if (!this.charactersLoaded) {
       throw new Error('Characters not loaded');
     }
     
-    const randomIndex = Math.floor(Math.random() * this.ogCharacters.length);
-    return this.ogCharacters[randomIndex];
+    // Filter out excluded characters
+    const availableCharacters = this.ogCharacters.filter(char => 
+      !excludeIds.includes(char.id)
+    );
+    
+    // If no characters available after filtering, use all characters (edge case)
+    const charactersToChooseFrom = availableCharacters.length > 0 
+      ? availableCharacters 
+      : this.ogCharacters;
+    
+    const randomIndex = Math.floor(Math.random() * charactersToChooseFrom.length);
+    return charactersToChooseFrom[randomIndex];
   }
 
-  // Get random roaster character
-  getRandomRoasterCharacter() {
+  // Get random roaster character (with anti-repetition)
+  getRandomRoasterCharacter(excludeIds = []) {
     if (!this.charactersLoaded) {
       throw new Error('Characters not loaded');
     }
     
-    const randomIndex = Math.floor(Math.random() * this.roasterCharacters.length);
-    return this.roasterCharacters[randomIndex];
+    // Filter out excluded characters
+    const availableCharacters = this.roasterCharacters.filter(char => 
+      !excludeIds.includes(char.id)
+    );
+    
+    // If no characters available after filtering, use all characters (edge case)
+    const charactersToChooseFrom = availableCharacters.length > 0 
+      ? availableCharacters 
+      : this.roasterCharacters;
+    
+    const randomIndex = Math.floor(Math.random() * charactersToChooseFrom.length);
+    return charactersToChooseFrom[randomIndex];
   }
 
   // Get specific character by ID
@@ -128,10 +148,29 @@ class CharacterService {
     return baseData;
   }
 
-  // Generate random battle matchup
+  // Generate random battle matchup (with anti-repetition)
   generateRandomMatchup() {
-    const ogCharacter = this.getRandomOGCharacter();
-    const roasterCharacter = this.getRandomRoasterCharacter();
+    const db = require('./database.service');
+    
+    try {
+      // Get last completed battle to avoid repetition
+      const lastBattle = db.getLastCompletedBattle();
+      
+      // Create exclude lists based on last battle
+      const excludeOgIds = lastBattle ? [lastBattle.og_character_id] : [];
+      const excludeRoasterIds = lastBattle ? [lastBattle.roaster_character_id] : [];
+      
+      // Get random characters excluding those from last battle
+      const ogCharacter = this.getRandomOGCharacter(excludeOgIds);
+      const roasterCharacter = this.getRandomRoasterCharacter(excludeRoasterIds);
+      
+      logger.info('Generated random matchup', {
+        og: ogCharacter.id,
+        roaster: roasterCharacter.id,
+        excludedOg: excludeOgIds,
+        excludedRoaster: excludeRoasterIds,
+        hasLastBattle: !!lastBattle
+      });
     
     return {
       og: this.getCharacterForBattle(ogCharacter.id, 'og'),
@@ -142,6 +181,24 @@ class CharacterService {
         roaster: this.getCharacterPersonality(roasterCharacter.id, 'roaster')
       }
     };
+    } catch (error) {
+      logger.error('Failed to generate matchup, falling back to simple random', { 
+        error: error.message 
+      });
+      
+      // Fallback to simple random selection if anti-repetition fails
+      const ogCharacter = this.getRandomOGCharacter();
+      const roasterCharacter = this.getRandomRoasterCharacter();
+      
+      return {
+        og: this.getCharacterForBattle(ogCharacter.id, 'og'),
+        roaster: this.getCharacterForBattle(roasterCharacter.id, 'roaster'),
+        personalities: {
+          og: this.getCharacterPersonality(ogCharacter.id, 'og'),
+          roaster: this.getCharacterPersonality(roasterCharacter.id, 'roaster')
+        }
+      };
+    }
   }
 
   // Check if characters are compatible opponents
