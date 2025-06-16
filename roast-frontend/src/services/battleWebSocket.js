@@ -255,7 +255,7 @@ class BattleWebSocketService {
   }
 
   // Get battle history
-  getBattleHistory(limit = 20, offset = 0) {
+  getBattleHistory(limit = 1000000, offset = 0) {
     if (this.socket && this.isConnected) {
       this.socket.emit('get_battle_history', { limit, offset });
     }

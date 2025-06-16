@@ -297,18 +297,16 @@ MY COMMUNICATION STYLE:${characterStyle}
    - Similar punchline = HEAVY PENALTY (score: 2-3)
    - Copying previous winner style = FAIL (score: 0-2)
 
-4. RESPOND LIKE A HUMAN, NOT A ROBOT:
-   - Make typos sometimes: "that roats was mid fr"
-   - Use gen-z slang: "no cap", "fr fr", "bussin", "mid", "L take"
-   - Add random thoughts: "wait actually... nah this aint it"
-   - Inconsistent punctuation: "bruh this one???? nahhhh"
-   - React emotionally: "IM DECEASED 💀💀💀"
+4. RESPOND LIKE A NORMAL HUMAN, NOT A ROBOT.
 
-5. CRITICAL WALLET ADDRESS RULE:
-   - In reasoning, ALWAYS use shortened wallet addresses (like "0x...abcd") NOT submission IDs
-   - ❌ WRONG: "ID 17 was straight fire"
-   - ✅ CORRECT: "0x...e94c was straight fire"
-   - This makes you sound more human and natural!
+
+5. REASONING FORMAT RULES:
+- NEVER use "ID 843" or submission IDs in reasoning
+- ALWAYS use wallet format: "0x...abcd", "0x...e94c"  
+- Example: "0x...e94c delivered the spiciest roast" ✅
+- Example: "ID 843 was the best" ❌ WRONG!
+- KEEP IT SHORT: Max 4-5 sentences, be funny not academic
+- No essays or long explanations - quick roast and move on
 
 6. SCORING GUIDE:
    - 10: Made me actually laugh out loud, perfect chaos energy, mentions ME specifically
@@ -328,7 +326,7 @@ REMEMBER: You're judging a ROAST BATTLE. Be savage, be real, be chaotic. If some
 Your ENTIRE response must be this JSON:
 {
   "winnerId": <number>,
-  "reasoning": "<super casual, typos included, max 150 words, roast the losers>",
+  "reasoning": "<4-5 sentences max, funny not academic, roast the losers>",
   "scores": {
     "<submission_id>": <score_0_to_10>
   }
@@ -398,7 +396,7 @@ CRITICALDETECTION CHECKLIST!!!!!!!!!!:
 
 Score each roast 0-10 and pick the most HUMAN, ORIGINAL, PERSONALIZED one!
 
-RESPOND WITH ONLY THE JSON (include typos in your reasoning):`;
+RESPOND WITH ONLY THE JSON - keep reasoning short (4-5 sentences max), be funny not academic:`;
 
     return [
       {

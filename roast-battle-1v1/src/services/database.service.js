@@ -216,7 +216,7 @@ class DatabaseService {
     );
   }
 
-  getBattleHistory(limit = 20, offset = 0) {
+  getBattleHistory(limit = 1000000, offset = 0) {
     const battles = this.db.prepare(`
       SELECT * FROM battle_history 
       ORDER BY completed_at DESC 

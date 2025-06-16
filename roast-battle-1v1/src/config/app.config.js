@@ -67,7 +67,7 @@ const config = {
     countdownTimerInterval: parseInt(process.env.COUNTDOWN_TIMER_INTERVAL) || 1000,
     battleEndDelay: parseInt(process.env.BATTLE_END_DELAY) || 15000,
     houseFeePercent: parseFloat(process.env.HOUSE_FEE_PERCENT) || 5,
-    historyDefaultLimit: parseInt(process.env.BATTLE_HISTORY_DEFAULT_LIMIT) || 20,
+    historyDefaultLimit: parseInt(process.env.BATTLE_HISTORY_DEFAULT_LIMIT) || 1000000,
     leaderboardDefaultLimit: parseInt(process.env.LEADERBOARD_DEFAULT_LIMIT) || 10,
     minBetsToStart: {
       og: 1,

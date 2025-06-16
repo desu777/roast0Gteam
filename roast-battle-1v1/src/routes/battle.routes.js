@@ -187,7 +187,7 @@ router.post('/bet',
 // Get battle history
 router.get('/history',
   [
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Invalid limit'),
+    query('limit').optional().isInt({ min: 1, max: 1000000 }).withMessage('Invalid limit'),
     query('offset').optional().isInt({ min: 0 }).withMessage('Invalid offset')
   ],
   validate,
@@ -284,7 +284,7 @@ router.get('/stats/:address',
 // Get leaderboard
 router.get('/leaderboard',
   [
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Invalid limit')
+    query('limit').optional().isInt({ min: 1, max: 1000000 }).withMessage('Invalid limit')
   ],
   validate,
   async (req, res) => {

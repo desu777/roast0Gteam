@@ -122,7 +122,7 @@ export const battleApi = {
   getBattleStats: () => battleAxios.get('/battle/stats'),
   
   // Pobierz historię bitew
-  getBattleHistory: (limit = 20, offset = 0) => 
+  getBattleHistory: (limit = 1000000, offset = 0) => 
     battleAxios.get(`/battle/history?limit=${limit}&offset=${offset}`),
   
   // Pobierz szczegóły bitwy

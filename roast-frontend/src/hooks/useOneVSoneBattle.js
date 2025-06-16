@@ -160,7 +160,7 @@ export const useOneVSoneBattle = (userAddress, addNotification, playSound) => {
   // Load battle history
   const loadBattleHistory = useCallback(async () => {
     try {
-      const response = await battleApi.getBattleHistory(20);
+      const response = await battleApi.getBattleHistory(1000000);
       
       if (response.data.success) {
         setBattleHistory(response.data.data);
